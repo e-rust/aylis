@@ -152,10 +152,30 @@ fn click_selects_row_and_column_and_wheel_scrolls() {
     assert_eq!(rec_no(&mut s), Some(4));
     assert_eq!(grid(&s).selected_column(), 1);
 
-    s.ui.wheel(s.form, WheelEvent { position: PointF::new(100.0, 100.0), delta: PointF::new(0.0, -40.0), ..Default::default() });
-    assert_eq!(grid(&s).top_row(), 3, "uma volta da roda = 3 linhas");
+    // Um dente chega com o passo do app (`WHEEL_LINE`) já multiplicado.
+    s.ui.wheel(s.form, WheelEvent { position: PointF::new(100.0, 100.0), delta: PointF::new(0.0, -WHEEL_LINE), lines: true, ..Default::default() });
+    assert_eq!(grid(&s).top_row(), 3, "um dente da roda = 3 linhas");
     s.ui.wheel(s.form, WheelEvent { position: PointF::new(100.0, 100.0), delta: PointF::new(0.0, 4000.0), ..Default::default() });
     assert_eq!(grid(&s).top_row(), 0);
+}
+
+/// A grade rolava `delta/40*3` linhas, e o delta de um dente já vem multiplicado pelo
+/// `wheel_step` do app: com o passo padrão (100), ~8 linhas por dente. Um dente é 3 linhas com
+/// qualquer passo; o touchpad (pontos) anda uma linha a cada `row_height`, como as outras listas.
+#[test]
+fn one_wheel_notch_scrolls_three_rows_whatever_the_app_step() {
+    for step in [WHEEL_LINE, 40.0, 250.0] {
+        let mut s = setup(100);
+        s.ui.set_scroll_options(ScrollOptions { wheel_step: step, ..Default::default() });
+        s.ui.wheel(s.form, WheelEvent { position: PointF::new(100.0, 100.0), delta: PointF::new(0.0, -step), lines: true, ..Default::default() });
+        assert_eq!(grid(&s).top_row(), 3, "passo {step}: um dente = 3 linhas");
+    }
+    let mut s = setup(100);
+    // Touchpad: 75 pontos com linhas de 30 = 2 linhas, e o resto (15) soma no próximo.
+    s.ui.wheel(s.form, WheelEvent { position: PointF::new(100.0, 100.0), delta: PointF::new(0.0, -75.0), ..Default::default() });
+    assert_eq!(grid(&s).top_row(), 2);
+    s.ui.wheel(s.form, WheelEvent { position: PointF::new(100.0, 100.0), delta: PointF::new(0.0, -15.0), ..Default::default() });
+    assert_eq!(grid(&s).top_row(), 3);
 }
 
 #[test]
@@ -434,4 +454,27 @@ fn clicking_a_title_still_sorts() {
     let titles: Vec<String> = grid(&s).grid_columns().iter().map(|c| c.title.clone()).collect();
     assert_eq!(titles, ["Código", "Nome", "Valor"], "a ordem das colunas não muda");
     assert!(s.ui.get::<ClientDataSet>(s.cds).unwrap().index_field_names.to_lowercase().contains("nome"));
+}
+
+/// As colunas eram calculadas uma vez, e o `display_width` (ou o título) do campo mudado em
+/// execução não mudava a coluna. O cursor e as linhas ficam onde estavam.
+#[test]
+fn changing_a_field_at_run_time_rebuilds_its_column() {
+    let mut s = setup(100);
+    data_set(&mut s.ui, s.cds).move_to(5).unwrap();
+    let before = grid(&s).grid_columns()[1].width;
+    assert_ne!(before, 320.0);
+    let nome = view(&s.ui, s.cds).field_id("nome").unwrap();
+    s.ui.set_prop(nome, "display_width", 320.0).unwrap();
+    s.ui.set_prop(nome, "display_label", "Razão social").unwrap();
+    s.ui.process_posted();
+    let col = &grid(&s).grid_columns()[1];
+    assert_eq!(col.width, 320.0, "a coluna acompanha o display_width");
+    assert_eq!(col.title, "Razão social");
+    assert_eq!(rec_no(&mut s), Some(5), "o cursor fica");
+    // Esconder o campo tira a coluna.
+    let id = view(&s.ui, s.cds).field_id("id").unwrap();
+    s.ui.set_prop(id, "visible", false).unwrap();
+    s.ui.process_posted();
+    assert_eq!(grid(&s).grid_columns().len(), 2);
 }

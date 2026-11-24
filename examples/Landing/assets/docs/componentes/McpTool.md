@@ -1,6 +1,6 @@
 # McpTool
 
-Uma ferramenta do app para o agente (filha de um `McpServer`). `tool_name` é o nome que ele chama (vazio: o nome do componente), `description` diz quando usar, e `params` os parâmetros: um JSON Schema (`{"type": "object", "properties": {..}}`), só as propriedades (`{"cliente": {"type": "string"}}`) ou a forma curta `cliente: string, quantidade: integer, obs?: string` (o `?` marca o opcional).
+Uma ferramenta do app para o agente (filha de um `McpServer`). `tool_name` é o nome que ele chama (vazio: o nome do componente), `title` o nome para pessoas, `description` diz quando usar, e `params` os parâmetros: um JSON Schema (`{"type": "object", "properties": {..}}`), só as propriedades (`{"cliente": {"type": "string"}}`) ou a forma curta `cliente: string, quantidade: integer, obs?: string` (o `?` marca o opcional).
 
 **Paleta:** System · **componente não visual**
 
@@ -11,9 +11,13 @@ Uma ferramenta do app para o agente (filha de um `McpServer`). `tool_name` é o 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `tool_name` | Nome da ferramenta | texto | O nome que o agente chama; vazio: o nome do componente. |
+| `title` | Título | texto | O nome para pessoas (o cliente mostra); vazio: nenhum. |
 | `description` | Descrição | texto | O que a ferramenta faz e quando usar (o agente lê para escolher). |
 | `params` | Parâmetros | texto | Os parâmetros: um JSON Schema, só as propriedades ou a forma curta `cliente: string, quantidade: integer, obs?: string` (`?`: opcional); vazio: nenhum. |
+| `output_schema` | Formato da resposta | texto | O formato da resposta (JSON Schema, só as propriedades ou a forma curta); vazio: livre. |
 | `read_only` | Somente leitura | lógico | Avisa o agente que a ferramenta só lê, não muda nada. |
+| `destructive` | Destrutiva | lógico | Avisa que a ferramenta pode apagar ou estragar dados (sem `read_only`). |
+| `idempotent` | Idempotente | lógico | Avisa que repetir a chamada com os mesmos argumentos não muda mais nada. |
 | `enabled` | Habilitado | lógico | Oferecida ao agente; desligada, ele não a vê. |
 
 ## Eventos

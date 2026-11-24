@@ -16,8 +16,10 @@ Grade de registros ligada a um `DataSource`: colunas pelos campos do dataset, ed
 | `row_height` | Altura da linha | número | A altura de cada linha, em pontos. |
 | `fixed_columns` | Colunas fixas | inteiro | Quantas colunas da esquerda ficam paradas ao rolar para os lados (0: nenhuma). |
 | `cursor_color` | Cor da linha atual | cor | A borda da célula atual; `None` usa a cor de destaque (`primary`) do tema. |
-| `indicator` | Coluna indicadora | lógico | A coluna da esquerda com a seta do registro atual; sem ela, a grade começa nos dados (relatório do InsightDB, 11/11). |
+| `indicator` | Coluna indicadora | lógico | A coluna da esquerda com a seta do registro atual; sem ela, a grade começa nos dados. |
 | `highlight_current` | Destacar a linha atual | lógico | O fundo destacado na linha do registro atual; sem ele, só a seleção e o passar do mouse. |
+| `empty_text` | Texto sem registros | texto | O texto da grade sem registros (vazio: "Sem registros", traduzido). |
+| `frame` | Moldura própria | lógico | O fundo e a moldura próprios da grade (o card); desligado, ela pinta só o conteúdo e fica sem a segunda caixa dentro de um `Panel` com borda. |
 
 ### Comportamento
 

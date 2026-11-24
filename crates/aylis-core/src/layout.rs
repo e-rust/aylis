@@ -51,7 +51,7 @@ impl Ui {
     fn update_layout_once(&mut self) {
         if self.layout_dirty {
             self.layout();
-        } else if !self.dirty_forms.is_empty() {
+        } else if !self.dirty_forms.is_empty() || !self.dirty_parts.is_empty() {
             // Só os forms que mudaram (refaz o pai do
             // controle, e não a aplicação inteira).
             let _profile = crate::profile::scope(crate::profile::Lane::Layout, || "layout de form".into());
@@ -64,16 +64,71 @@ impl Ui {
             }
             let forms: Vec<ComponentId> = self.roots().iter().copied().filter(|r| self.dirty_forms.contains(r)).collect();
             self.dirty_forms.clear();
+            let parts = self.parts_to_lay_out(&forms);
             // Onde cada controle estava: depois do layout, só quem mudou de lugar, de tamanho
             // ou de visibilidade é repintado (o que mudou por dentro já marcou a área dele).
-            let before: Vec<(ComponentId, Option<RectF>, bool)> = forms.iter().flat_map(|&f| self.placed(f)).collect();
-            self.layout_roots(&forms);
+            let before: Vec<(ComponentId, Option<RectF>, bool)> = forms.iter().chain(&parts).flat_map(|&f| self.placed(f)).collect();
+            if !forms.is_empty() {
+                self.layout_roots(&forms);
+            }
+            if !parts.is_empty() {
+                self.layout_parts(&parts);
+            }
             for (id, rect, visible) in before {
                 if self.absolute_rect(id) != rect || self.cb(id).is_some_and(|cb| cb.visible()) != visible {
                     self.damage(id);
                 }
             }
         }
+    }
+
+    /// Os contêineres marcados por [`Ui::invalidate_part`] que ainda pedem layout: fora dos
+    /// forms que serão refeitos inteiros (`forms`), sem um ancestral também marcado e à vista
+    /// (o ramo escondido fica para quando aparecer, como no layout do form inteiro).
+    fn parts_to_lay_out(&mut self, forms: &[ComponentId]) -> Vec<ComponentId> {
+        let marked = std::mem::take(&mut self.dirty_parts);
+        let mut parts = Vec::new();
+        'parts: for &part in &marked {
+            if !self.contains(part) || !self.cb(part).is_some_and(|cb| cb.visible()) {
+                continue;
+            }
+            let mut up = self.parent(part);
+            while let Some(a) = up {
+                if marked.contains(&a) || forms.contains(&a) {
+                    continue 'parts;
+                }
+                if self.parent(a).is_some() && !self.cb(a).is_some_and(|cb| cb.visible()) {
+                    continue 'parts;
+                }
+                up = self.parent(a);
+            }
+            parts.push(part);
+        }
+        parts
+    }
+
+    /// Refaz o layout só dentro de cada contêiner de `parts` (o lugar e o tamanho deles ficam
+    /// como estão), e dispara os `on_resize` de quem mudou de tamanho.
+    fn layout_parts(&mut self, parts: &[ComponentId]) {
+        let mut resized = Vec::new();
+        let mut roots = Vec::new();
+        for &part in parts {
+            self.realign(part, &mut resized);
+            let root = self.root_of(part);
+            if !roots.contains(&root) {
+                roots.push(root);
+            }
+        }
+        for root in roots {
+            self.place_followers(root);
+        }
+        for &id in &resized {
+            self.with_component(id, |c, ctx| c.resized(ctx));
+        }
+        for id in resized {
+            self.queue_event(id, "on_resize", EventArgs::None);
+        }
+        self.process_events();
     }
 
     /// Os controles de `root` (sem ele) com a posição no form e a visibilidade.
@@ -100,6 +155,7 @@ impl Ui {
         }
         self.layout_dirty = false;
         self.dirty_forms.clear();
+        self.dirty_parts.clear();
         let roots = self.roots().to_vec();
         self.layout_roots(&roots);
         self.request_repaint();
@@ -247,6 +303,12 @@ impl Ui {
             if let Some(cb) = self.cb_mut(child) {
                 if cb.visible() && !cb.align().is_dock() {
                     place(cb, area, full);
+                } else if !cb.visible() && cb.align() == Align::None {
+                    // O escondido não é posto, mas a referência das âncoras nasce agora, com o
+                    // pai do tamanho em que foi desenhado: ao aparecer depois de o pai crescer,
+                    // ele vai para onde as âncoras mandam (antes, tomava o pai de então como
+                    // referência e ficava no lugar do desenho).
+                    note_anchor_ref(cb, full.size());
                 }
             }
         }
@@ -587,6 +649,14 @@ fn anchored(cb: &mut ControlBase, parent: SizeF) -> RectF {
         anchors.contains(Anchors::BOTTOM),
     );
     RectF::new(x, y, width.max(0.0), height.max(0.0))
+}
+
+/// Guarda a referência das âncoras de `cb` (o pai com o tamanho `parent`), se ainda não há.
+fn note_anchor_ref(cb: &mut ControlBase, parent: SizeF) {
+    if cb.anchors() != Anchors::default() && cb.anchor_ref.is_none() {
+        let rect = RectF::new(cb.left(), cb.top(), cb.width(), cb.height());
+        cb.anchor_ref = Some(AnchorRef { parent, rect });
+    }
 }
 
 /// Um eixo das âncoras: (posição, tamanho) dado quanto o pai cresceu.

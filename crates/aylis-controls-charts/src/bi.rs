@@ -402,7 +402,7 @@ impl Component for PivotTable {
         canvas.save();
         canvas.clip_round_rect(r, 10.0);
         let fmt = |v: f64| format_number(v, self.decimals as usize, &locale);
-        let line = Stroke::new(ctx.theme.color("border"), 1.0);
+        let line = Stroke::new(crate::chart::grid_color(ctx), 1.0);
         let mut num = text.clone();
         num.h_align = TextAlign::Trailing;
         let mut num_bold = num.clone();

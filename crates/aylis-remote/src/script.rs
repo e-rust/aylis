@@ -175,7 +175,7 @@ pub fn parse_key(text: &str) -> Result<KeyEvent, String> {
             }
         }
     };
-    Ok(KeyEvent { key, modifiers, repeat: false })
+    Ok(KeyEvent { key, modifiers, repeat: false, form: None })
 }
 
 /// O estado pedido no roteiro (`"state"`): uma lista com o valor de cada consulta.

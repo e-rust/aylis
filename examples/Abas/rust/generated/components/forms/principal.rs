@@ -31,6 +31,7 @@ impl FrmPrincipal {
     /// Monta a instância de um frmPrincipal recém-criado (o `register` liga). Um componente que
     /// sumiu do form ou mudou de classe impede o form de abrir, com a lista do que não bate.
     pub fn bind(ui: &mut Ui, root: ComponentId) -> Result<Box<dyn std::any::Any>, String> {
+        #[allow(unused_mut)] // um form sem componentes não acrescenta nada
         let mut problems: Vec<String> = Vec::new();
         let instance = Self {
             form: Form { id: root },
@@ -52,7 +53,8 @@ impl FrmPrincipal {
     }
 
     /// Os componentes do frmPrincipal aberto (o primeiro, se houver dois), sem o estado: valem
-    /// também enquanto um handler dele roda, quando o `get` dá `None`.
+    /// também enquanto um handler dele roda, quando o `get` dá `None`. É o caminho no
+    /// código que um handler do próprio frmPrincipal chama (no handler mesmo, o `self`).
     pub fn components(ui: &Ui) -> Option<FrmPrincipalComponents> {
         ui.form_components(ui.find_path("frmPrincipal")?)
     }
@@ -87,6 +89,10 @@ impl FrmPrincipal {
     }
 
     /// O frmPrincipal aberto (o primeiro, se houver dois), para outro form ler ou mexer nele.
+    ///
+    /// Dentro de um handler do próprio frmPrincipal, dá `None`: a instância está emprestada ao
+    /// handler que roda. Ali, use o `self` do handler ou, no código chamado por ele,
+    /// [`components`](Self::components) (em debug, o `None` por empréstimo avisa no stderr).
     pub fn get(ui: &Ui) -> Option<&FrmPrincipal> {
         ui.form_instance(ui.find_path("frmPrincipal")?)
     }

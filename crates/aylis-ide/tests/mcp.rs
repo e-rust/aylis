@@ -128,6 +128,18 @@ fn an_agent_drives_the_project_over_mcp() {
     assert!(settings.contains("2.1.0"), "{settings}");
     let saved = std::fs::read_to_string(&state.borrow().project.as_ref().unwrap().path).unwrap();
     assert!(saved.contains("2.1.0"), "salvo no .aylisproj: {saved}");
+    // A instância única, a captura da tela e a versão da tag do git pelo mesmo caminho: o
+    // texto e o booleano, este
+    // também como texto (o agente manda das duas formas).
+    for (key, value) in [("single_instance", json!("user")), ("allow_screen_capture", json!(true)), ("publish.version_from_git_tag", json!("true"))] {
+        let (err, msg) = call(ui, port, "set_project_setting", json!({ "key": key, "value": value }));
+        assert!(!err, "{key}: {msg}");
+    }
+    {
+        let st = state.borrow();
+        let p = st.project.as_ref().unwrap();
+        assert_eq!((p.single_instance.as_str(), p.allow_screen_capture, p.publish.version_from_git_tag), ("user", true, true));
+    }
 
     assert!(!call(ui, port, "set_target", json!({ "target": "web" })).0);
     assert_eq!(state.borrow().run_target, aylis_tools::Target::Web);

@@ -766,3 +766,49 @@ selection	Seleção	Selection	Selección	Sélection	Auswahl	Выделение	�
 list	Lista	List	Lista	Liste	Liste	Список	列表	リスト	القائمة	তালিকা	सूची	Daftar
 sort_descending	Ordem decrescente	Sort descending	Orden descendente	Tri décroissant	Absteigend sortiert	По убыванию	降序	降順	ترتيب تنازلي	অবরোহী ক্রম	अवरोही क्रम	Urut menurun
 sort_part	Coluna da ordem	Sort column	Columna del orden	Colonne de tri	Sortierspalte	Столбец сортировки	排序列	並べ替えの列	عمود الترتيب	সাজানোর কলাম	क्रम स्तंभ	Kolom urutan
+highlight_index	Ponto destacado	Highlighted point	Punto destacado	Point mis en évidence	Hervorgehobener Punkt	Выделенная точка	突出显示的点	強調表示する点	النقطة المميزة	হাইলাইট করা বিন্দু	हाइलाइट किया गया बिंदु	Titik yang disorot
+select_range	Selecionar faixa	Select range	Seleccionar rango	Sélectionner une plage	Bereich auswählen	Выбор диапазона	选择范围	範囲を選択	تحديد نطاق	পরিসর নির্বাচন	श्रेणी चुनें	Pilih rentang
+empty_text	Texto sem registros	Empty text	Texto sin registros	Texte sans enregistrements	Text ohne Datensätze	Текст без записей	无记录时的文本	レコードがないときの文字	النص عند عدم وجود سجلات	রেকর্ড না থাকলে লেখা	रिकॉर्ड न होने पर पाठ	Teks tanpa catatan
+frame	Moldura própria	Own frame	Marco propio	Cadre propre	Eigener Rahmen	Собственная рамка	自带边框	独自の枠	إطار خاص	নিজস্ব ফ্রেম	अपना फ़्रेम	Bingkai sendiri
+sync	Sincronizar com	Sync with	Sincronizar con	Synchroniser avec	Synchronisieren mit	Синхронизировать с	同步到	同期先	مزامنة مع	সিঙ্ক করুন	सिंक करें	Sinkronkan dengan
+border_width	Largura da borda	Border width	Ancho del borde	Épaisseur de la bordure	Rahmenbreite	Толщина рамки	边框宽度	枠線の幅	عرض الحد	সীমানার প্রস্থ	सीमा की चौड़ाई	Lebar batas
+ChartSync.cursor	Cursor no eixo X	X axis cursor	Cursor en el eje X	Curseur sur l'axe X	Cursor auf der X-Achse	Курсор по оси X	X 轴光标	X 軸のカーソル	المؤشر على المحور X	X অক্ষে কার্সর	X अक्ष पर कर्सर	Kursor sumbu X
+ChartSync.range	Janela do eixo X	X axis window	Ventana del eje X	Fenêtre de l'axe X	Fenster der X-Achse	Окно оси X	X 轴窗口	X 軸の範囲	نافذة المحور X	X অক্ষের পরিসর	X अक्ष की सीमा	Jendela sumbu X
+stroke_dash	Tracejado do traço	Stroke dash	Discontinuo del trazo	Pointillé du trait	Strichmuster	Штрих линии	描边虚线	線の破線	تقطيع الخط	রেখার ড্যাশ	रेखा डैश	Garis putus-putus
+syntax_tokens	Tokens do realce	Highlight tokens	Tokens de resaltado	Jetons de coloration	Hervorhebungstoken	Токены подсветки	高亮标记	ハイライトトークン	رموز التمييز	হাইলাইট টোকেন	हाइलाइट टोकन	Token penyorotan
+keyword_color	Cor das palavras-chave	Keyword color	Color de palabras clave	Couleur des mots-clés	Schlüsselwortfarbe	Цвет ключевых слов	关键字颜色	キーワードの色	لون الكلمات المفتاحية	কীওয়ার্ডের রং	कीवर्ड रंग	Warna kata kunci
+type_color	Cor dos tipos	Type color	Color de tipos	Couleur des types	Typfarbe	Цвет типов	类型颜色	型の色	لون الأنواع	টাইপের রং	प्रकार रंग	Warna tipe
+string_color	Cor dos textos	String color	Color de cadenas	Couleur des chaînes	Zeichenkettenfarbe	Цвет строк	字符串颜色	文字列の色	لون النصوص	স্ট্রিংয়ের রং	स्ट्रिंग रंग	Warna string
+number_color	Cor dos números	Number color	Color de números	Couleur des nombres	Zahlenfarbe	Цвет чисел	数字颜色	数値の色	لون الأرقام	সংখ্যার রং	संख्या रंग	Warna angka
+comment_color	Cor dos comentários	Comment color	Color de comentarios	Couleur des commentaires	Kommentarfarbe	Цвет комментариев	注释颜色	コメントの色	لون التعليقات	মন্তব্যের রং	टिप्पणी रंग	Warna komentar
+function_color	Cor das funções	Function color	Color de funciones	Couleur des fonctions	Funktionsfarbe	Цвет функций	函数颜色	関数の色	لون الدوال	ফাংশনের রং	फ़ंक्शन रंग	Warna fungsi
+icon_color	Cor do ícone	Icon color	Color del icono	Couleur de l'icône	Symbolfarbe	Цвет значка	图标颜色	アイコンの色	لون الأيقونة	আইকনের রং	आइकन का रंग	Warna ikon
+input	Campo de texto	Text field	Campo de texto	Champ de texte	Textfeld	Текстовое поле	文本框	テキスト欄	حقل نصي	টেক্সট ফিল্ড	टेक्स्ट फ़ील्ड	Kolom teks
+card_width	Largura do cartão	Card width	Ancho de la tarjeta	Largeur de la carte	Kartenbreite	Ширина карточки	卡片宽度	カードの幅	عرض البطاقة	কার্ডের প্রস্থ	कार्ड की चौड़ाई	Lebar kartu
+query_delay	Espera da busca	Search delay	Espera de búsqueda	Délai de recherche	Suchverzögerung	Задержка поиска	搜索延迟	検索の待ち時間	مهلة البحث	অনুসন্ধানের বিলম্ব	खोज में देरी	Jeda pencarian
+hover_preview	Prévia ao passar o mouse	Hover preview	Vista previa al pasar	Aperçu au survol	Vorschau beim Überfahren	Предпросмотр при наведении	悬停预览	ホバー時のプレビュー	معاينة عند التمرير	হোভারে প্রিভিউ	होवर पर पूर्वावलोकन	Pratinjau saat diarahkan
+hit_tabs_only	Mouse só nas abas	Mouse on tabs only	Ratón solo en las pestañas	Souris sur les onglets seulement	Maus nur auf Registern	Мышь только на вкладках	仅标签响应鼠标	マウスはタブのみ	الفأرة على علامات التبويب فقط	শুধু ট্যাবে মাউস	माउस केवल टैब पर	Mouse hanya di tab
+base_url	Endereço base	Base URL	URL base	URL de base	Basis-URL	Базовый адрес	基础地址	ベース URL	العنوان الأساسي	মূল ঠিকানা	बेस पता	URL dasar
+headers	Cabeçalhos	Headers	Encabezados	En-têtes	Header	Заголовки	请求头	ヘッダー	الترويسات	হেডার	हेडर	Header
+max_response_size	Maior resposta	Max response size	Tamaño máximo de respuesta	Taille max. de réponse	Max. Antwortgröße	Макс. размер ответа	最大响应大小	最大応答サイズ	أقصى حجم للاستجابة	সর্বোচ্চ উত্তরের আকার	अधिकतम उत्तर आकार	Ukuran respons maks.
+max_redirects	Máximo de redirecionamentos	Max redirects	Máximo de redirecciones	Redirections max.	Max. Weiterleitungen	Макс. перенаправлений	最大重定向次数	最大リダイレクト数	أقصى عدد لإعادات التوجيه	সর্বোচ্চ পুনর্নির্দেশ	अधिकतम रीडायरेक्ट	Pengalihan maks.
+allow_http	Aceitar HTTP sem TLS	Allow HTTP without TLS	Permitir HTTP sin TLS	Autoriser HTTP sans TLS	HTTP ohne TLS erlauben	Разрешить HTTP без TLS	允许无 TLS 的 HTTP	TLS なしの HTTP を許可	السماح بـ HTTP دون TLS	TLS ছাড়া HTTP অনুমতি	TLS के बिना HTTP की अनुमति	Izinkan HTTP tanpa TLS
+busy	Ocupado	Busy	Ocupado	Occupé	Beschäftigt	Занят	忙碌	処理中	مشغول	ব্যস্ত	व्यस्त	Sibuk
+protocols	Subprotocolos	Subprotocols	Subprotocolos	Sous-protocoles	Subprotokolle	Подпротоколы	子协议	サブプロトコル	البروتوكولات الفرعية	সাবপ্রোটোকল	सबप्रोटोकॉल	Subprotokol
+auto_reconnect	Reconectar sozinho	Auto reconnect	Reconectar automáticamente	Reconnexion automatique	Automatisch neu verbinden	Автопереподключение	自动重连	自動再接続	إعادة الاتصال تلقائيًا	স্বয়ংক্রিয় পুনঃসংযোগ	स्वतः पुनः कनेक्ट	Sambung ulang otomatis
+reconnect_delay	Espera para reconectar	Reconnect delay	Espera para reconectar	Délai de reconnexion	Wiederverbindungsverzögerung	Задержка переподключения	重连延迟	再接続の待ち時間	مهلة إعادة الاتصال	পুনঃসংযোগের বিলম্ব	पुनः कनेक्ट विलंब	Jeda sambung ulang
+reconnect_max_delay	Maior espera para reconectar	Max reconnect delay	Espera máxima para reconectar	Délai max. de reconnexion	Max. Wiederverbindungsverzögerung	Макс. задержка переподключения	最大重连延迟	再接続の最大待ち時間	أقصى مهلة لإعادة الاتصال	সর্বোচ্চ পুনঃসংযোগ বিলম্ব	अधिकतम पुनः कनेक्ट विलंब	Jeda sambung ulang maks.
+connect_timeout	Tempo limite para conectar	Connect timeout	Tiempo límite de conexión	Délai de connexion	Verbindungs-Zeitlimit	Тайм-аут подключения	连接超时	接続タイムアウト	مهلة الاتصال	সংযোগের সময়সীমা	कनेक्ट टाइमआउट	Batas waktu koneksi
+max_message_size	Maior mensagem	Max message size	Tamaño máximo de mensaje	Taille max. de message	Max. Nachrichtengröße	Макс. размер сообщения	最大消息大小	最大メッセージサイズ	أقصى حجم للرسالة	সর্বোচ্চ বার্তার আকার	अधिकतम संदेश आकार	Ukuran pesan maks.
+allow_insecure	Aceitar sem TLS	Allow without TLS	Permitir sin TLS	Autoriser sans TLS	Ohne TLS erlauben	Разрешить без TLS	允许无 TLS	TLS なしを許可	السماح دون TLS	TLS ছাড়া অনুমতি	TLS के बिना अनुमति	Izinkan tanpa TLS
+server_version	Versão do servidor	Server version	Versión del servidor	Version du serveur	Serverversion	Версия сервера	服务器版本	サーバーのバージョン	إصدار الخادم	সার্ভারের সংস্করণ	सर्वर संस्करण	Versi server
+output_schema	Formato da resposta	Output schema	Esquema de salida	Schéma de sortie	Ausgabeschema	Схема ответа	输出模式	出力スキーマ	مخطط الإخراج	আউটপুট স্কিমা	आउटपुट स्कीमा	Skema keluaran
+destructive	Destrutiva	Destructive	Destructiva	Destructrice	Destruktiv	Разрушительная	破坏性	破壊的	مدمّرة	ধ্বংসাত্মক	विनाशकारी	Destruktif
+idempotent	Idempotente	Idempotent	Idempotente	Idempotente	Idempotent	Идемпотентная	幂等	冪等	متساوية القوة	ইডেমপোটেন্ট	इडेम्पोटेंट	Idempoten
+uri	Endereço (URI)	URI	URI	URI	URI	URI	URI	URI	المعرّف (URI)	ইউআরআই	यूआरआई	URI
+resource_name	Nome do recurso	Resource name	Nombre del recurso	Nom de la ressource	Ressourcenname	Имя ресурса	资源名称	リソース名	اسم المورد	রিসোর্সের নাম	संसाधन का नाम	Nama sumber daya
+mime_type	Tipo do conteúdo	MIME type	Tipo MIME	Type MIME	MIME-Typ	MIME-тип	MIME 类型	MIME タイプ	نوع MIME	MIME ধরন	MIME प्रकार	Tipe MIME
+prompt_name	Nome do prompt	Prompt name	Nombre del prompt	Nom du prompt	Prompt-Name	Имя промпта	提示名称	プロンプト名	اسم الموجّه	প্রম্পটের নাম	प्रॉम्प्ट का नाम	Nama prompt
+arguments	Argumentos	Arguments	Argumentos	Arguments	Argumente	Аргументы	参数	引数	الوسائط	আর্গুমেন্ট	तर्क	Argumen
+user_agent	Identificação do cliente (User-Agent)	User agent	Agente de usuario	Agent utilisateur	User-Agent	User-Agent	用户代理	ユーザーエージェント	وكيل المستخدم	ইউজার এজেন্ট	यूज़र एजेंट	Agen pengguna
+request_timeout	Prazo do pedido	Request timeout	Tiempo límite de la solicitud	Délai de la requête	Anfrage-Zeitlimit	Тайм-аут запроса	请求超时	リクエストのタイムアウト	مهلة الطلب	অনুরোধের সময়সীমা	अनुरोध टाइमआउट	Batas waktu permintaan

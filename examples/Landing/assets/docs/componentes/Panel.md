@@ -22,6 +22,7 @@ Painel: um `Rectangle` com o estilo `Panel` do tema (fundo, borda e cantos).
 | `gradient_radial` | Degradê circular | lógico | Gradiente radial: `fill` no centro até `fill2` na borda (o menor raio do retângulo). |
 | `stroke` | Cor do traço | cor | Cor da borda; vazio: a do tema. |
 | `stroke_width` | Largura do traço | número | Espessura da borda, em pontos (0 = sem borda); vazio: a do tema. |
+| `stroke_dash` | Tracejado do traço | lista de números (separados por `;`) | O tracejado da borda: traço e vão em pontos, alternados (`"6;4"`, `"1.5;3"`); `"0"` é contínua; vazio: o do tema (`border_style`). |
 | `radius` | Raio dos cantos | número ou lista de números | Raio dos cantos: um número, ou `[cima-esquerda, cima-direita, baixo-direita, baixo-esquerda]`. Negativo curva o canto para fora (a aba que se funde no painel). Vazio: o do tema. |
 
 ### Comportamento

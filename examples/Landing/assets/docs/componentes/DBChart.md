@@ -27,6 +27,7 @@ Gráfico ligado a um DataSource: um ponto por registro, o rótulo de `label_fiel
 | `colors` | Cores | texto | As cores, em ordem (`#2563EB;#16A34A`): das séries e, na pizza e na rosca, das fatias (sem elas, as fatias usam a paleta do gráfico, não a cor das séries). |
 | `center_text` | Texto do centro | texto | O texto no meio da rosca: vazio = o total; `-` = nada; ou um texto (`{total}` vira o total). |
 | `slice_labels` | Rótulos das fatias | texto | Os rótulos das fatias: `percent` (dentro), `outside` (nome e percentual fora, com uma linha) ou `none`. |
+| `border_width` | Largura da borda | número | A largura da moldura (vazia: a do estilo do tema). |
 
 ### Comportamento
 
@@ -34,6 +35,8 @@ Gráfico ligado a um DataSource: um ponto por registro, o rótulo de `label_fiel
 |---|---|---|---|
 | `animate` | Animar | lógico | Animação ao trocar os dados. |
 | `zoom` | Zoom | lógico | Roda do mouse aproxima, arrastar anda, duplo clique volta (eixo X). |
+| `sync` | Sincronizar com | componente | O `ChartSync` que liga este gráfico a outros pelo eixo X: o mouse aqui move o cursor de todos, e o zoom e a seleção por faixa mudam a janela de todos. |
+| `select_range` | Selecionar faixa | lógico | Arrastar no gráfico seleciona uma faixa do eixo X e aproxima nela (com o `sync`, muda a janela dos ligados); duplo clique volta ao eixo todo. Sem ele, com o `zoom`, arrastar anda. |
 
 ### Dados
 
@@ -47,6 +50,7 @@ Gráfico ligado a um DataSource: um ponto por registro, o rótulo de `label_fiel
 | `json` | Dados (JSON) | texto | Os dados no formato do Chart.js (vazio: `labels` e `series`). |
 | `clicked_series` | Série clicada | inteiro | O último ponto clicado (série e índice; -1 = nenhum). |
 | `clicked_index` | Item clicado | inteiro | O índice do último ponto clicado na série (-1 = nenhum). |
+| `highlight_index` | Ponto destacado | inteiro | Destaca o ponto (a coluna) deste índice pelo código, com a dica, como o mouse em cima (-1: nenhum; o mouse no gráfico vale mais). |
 
 ### Posição e tamanho
 
@@ -59,23 +63,27 @@ Gráfico ligado a um DataSource: um ponto por registro, o rótulo de `label_fiel
 | `reverse` | Invertido | lógico | Eixo Y invertido (o menor em cima). |
 | `time_axis` | Eixo de tempo | lógico | Os rótulos são datas (`2026-10-27`, `2026-10-27 14:30`): o eixo X é de tempo. |
 
+## Eventos
+
+| Evento | Quando | No Object Inspector | Pergunta |
+|---|---|---|---|
+| `on_hover` | — | — |  |
+
 ## Em código
 
 No form, o `DBChart1` com o evento ligado (no Object Inspector, na aba Eventos):
 
 ```json
-{ "class": "DBChart", "name": "DBChart1" }
+{ "class": "DBChart", "name": "DBChart1", "on_hover": "db_chart1_hover" }
 ```
 
 E o handler, um método do form (`self.DBChart1` já é um `DBChart`):
 
 ```rust
 impl FrmPrincipal {
-    pub fn form_show(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
+    pub fn db_chart1_hover(&mut self, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs) {
         let atual = self.DBChart1.label_field(ui);
         self.DBChart1.set_label_field(ui, format!("{atual}!"));
     }
 }
 ```
-
-(Sem eventos próprios: o exemplo usa o `on_show` do form.)

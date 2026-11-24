@@ -47,9 +47,12 @@ pub(crate) fn list(event_loop: &ActiveEventLoop, modes: bool) -> Vec<Monitor> {
             let (p, s) = (m.position(), m.size());
             let device = device(&m);
             #[cfg(windows)]
-            let name = names.get(&device).cloned().filter(|n| !n.is_empty()).unwrap_or_else(|| device.clone());
+            let (name, device_path) = match names.get(&device) {
+                Some((name, path)) => (if name.is_empty() { device.clone() } else { name.clone() }, path.clone()),
+                None => (device.clone(), String::new()),
+            };
             #[cfg(not(windows))]
-            let name = device.clone();
+            let (name, device_path) = (device.clone(), device_path(&m));
             #[cfg(windows)]
             let work = windows::work_area(&m);
             #[cfg(not(windows))]
@@ -67,6 +70,7 @@ pub(crate) fn list(event_loop: &ActiveEventLoop, modes: bool) -> Vec<Monitor> {
                 name,
                 primary: primary.as_ref() == Some(&m),
                 device,
+                device_path,
                 x: p.x,
                 y: p.y,
                 width: s.width,
@@ -81,6 +85,25 @@ pub(crate) fn list(event_loop: &ActiveEventLoop, modes: bool) -> Vec<Monitor> {
             }
         })
         .collect()
+}
+
+/// A identidade do aparelho fora do Windows (o `device_path`): no macOS, o número do monitor
+/// (`CGDirectDisplayID`, que se mantém enquanto o monitor fica ligado na mesma porta); no Linux,
+/// o nome da saída (`DP-1`, que muda com a porta); no celular e no navegador, vazio.
+#[cfg(not(windows))]
+fn device_path(handle: &MonitorHandle) -> String {
+    #[cfg(target_os = "macos")]
+    {
+        use winit::platform::macos::MonitorHandleExtMacOS;
+        return format!("cg:{}", handle.native_id());
+    }
+    #[cfg(all(target_os = "linux", not(target_os = "android")))]
+    return handle.name().unwrap_or_default();
+    #[allow(unreachable_code)]
+    {
+        let _ = handle;
+        String::new()
+    }
 }
 
 /// O índice do monitor na lista (pelo nome do sistema).
@@ -108,8 +131,9 @@ mod windows {
         String::from_utf16_lossy(&chars[..end])
     }
 
-    /// O nome de cada monitor ligado (`\\.\DISPLAY1` → "XB273K V5").
-    pub(super) fn friendly_names() -> HashMap<String, String> {
+    /// O nome e o caminho do aparelho de cada monitor ligado (`\\.\DISPLAY1` → "XB273K V5" e
+    /// `\\?\DISPLAY#ACR0A7F#...`, a identidade que sobrevive à troca de porta).
+    pub(super) fn friendly_names() -> HashMap<String, (String, String)> {
         let mut names = HashMap::new();
         // SAFETY: os buffers têm o tamanho que o próprio sistema informou; os pacotes de
         // pergunta levam o tamanho e o tipo certos no cabeçalho.
@@ -139,7 +163,7 @@ mod windows {
                     id: path.targetInfo.id,
                 };
                 if DisplayConfigGetDeviceInfo(&mut source.header) == 0 && DisplayConfigGetDeviceInfo(&mut target.header) == 0 {
-                    names.insert(text(&source.viewGdiDeviceName), text(&target.monitorFriendlyDeviceName));
+                    names.insert(text(&source.viewGdiDeviceName), (text(&target.monitorFriendlyDeviceName), text(&target.monitorDevicePath)));
                 }
             }
         }

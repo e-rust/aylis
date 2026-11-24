@@ -242,6 +242,9 @@ impl Visual {
     }
 }
 
+/// A margem em volta do balão em [`Ui::render_drag_label`] (a sombra cabe nela), em unidades.
+pub const DRAG_LABEL_MARGIN: f32 = 8.0;
+
 impl Ui {
     /// Pinta o form `root` e todos os descendentes visíveis. Recalcula o layout antes,
     /// se for preciso.
@@ -577,21 +580,55 @@ impl Ui {
             // O rótulo vai embaixo da imagem, não por cima dela.
             label_at = PointF::new(r.x, r.bottom() + 4.0);
         }
-        if label.is_empty() {
+        // A plataforma que mostra a imagem numa janela própria mostra o rótulo também numa
+        // (`render_drag_label`): pintado aqui, ele sumia na borda da janela de origem.
+        if label.is_empty() || self.native_drag_image {
             return;
         }
+        self.paint_drag_label(canvas, &label, label_at);
+    }
+
+    /// O estilo do rótulo do arrasto (o `Hint` do tema) e o tamanho do balão para `label`, com
+    /// a medida de texto `measure`.
+    fn drag_label_layout(&self, label: &str, measure: impl FnOnce(&str, &TextStyle) -> f32) -> (ResolvedStyle, TextStyle, crate::geometry::SizeF) {
         let style = self.theme.resolve(&["Hint"], "", ControlState::default());
         let mut ts = crate::canvas::TextStyle { font: style.font.clone(), color: style.text, ..Default::default() };
         ts.trimming = crate::text::Trimming::Character;
         let pad = style.padding;
-        let w = canvas.measure_text(&label, &ts).width.min(320.0) + pad.left + pad.right + 1.0;
+        let w = measure(label, &ts).min(320.0) + pad.left + pad.right + 1.0;
         let h = (ts.font.size * 1.4).round() + pad.top + pad.bottom;
-        let rect = RectF::new(label_at.x, label_at.y, w, h);
+        (style, ts, crate::geometry::SizeF::new(w, h))
+    }
+
+    /// O balão do rótulo do arrasto com o canto em `at`.
+    fn paint_drag_label(&self, canvas: &mut dyn Canvas, label: &str, at: PointF) {
+        let (style, ts, size) = self.drag_label_layout(label, |l, ts| canvas.measure_text(l, ts).width);
+        let pad = style.padding;
+        let rect = RectF::new(at.x, at.y, size.width, size.height);
         if let Some(shadow) = &style.shadow {
             canvas.draw_shadow(rect, style.radius, shadow);
         }
         canvas.fill_rect(rect, style.radius, &crate::canvas::Brush::Solid(style.fill.with_opacity(0.92)));
-        canvas.draw_text(&label, RectF::new(rect.x + pad.left, rect.y + pad.top, w - pad.left - pad.right, h - pad.top - pad.bottom), &ts);
+        canvas.draw_text(label, RectF::new(rect.x + pad.left, rect.y + pad.top, size.width - pad.left - pad.right, size.height - pad.top - pad.bottom), &ts);
+    }
+
+    /// O rótulo de um arrasto (o texto de [`drag_view`](Self::drag_view)) desenhado fora da
+    /// tela, para a plataforma que o mostra numa janela própria junto do cursor
+    /// ([`set_native_drag_image`](Self::set_native_drag_image)): pixels RGBA sem
+    /// pré-multiplicar, com `scale` pixels por unidade e fundo transparente, e uma margem de
+    /// [`DRAG_LABEL_MARGIN`] em volta (a sombra). (largura, altura, pixels); `None` sem texto
+    /// ou sem o desenho fora da tela.
+    pub fn render_drag_label(&self, label: &str, scale: f32) -> Option<(u32, u32, Vec<u8>)> {
+        if label.is_empty() || !(scale > 0.0) {
+            return None;
+        }
+        let service = self.services().offscreen.as_ref()?;
+        let (_, _, size) = self.drag_label_layout(label, |l, ts| self.measure_text(l, ts).width);
+        let m = DRAG_LABEL_MARGIN;
+        let (w, h) = (((size.width + 2.0 * m) * scale).ceil() as u32, ((size.height + 2.0 * m) * scale).ceil() as u32);
+        crate::image::checked_size(w, h).ok()?;
+        let rgba = service.render_rgba(w, h, scale, crate::Color::TRANSPARENT, &mut |canvas| self.paint_drag_label(canvas, label, PointF::new(m, m)))?;
+        Some((w, h, rgba))
     }
 
     /// O balão da dica aberta, por cima de tudo, perto do mouse (estilo `Hint` do tema).
@@ -1502,6 +1539,9 @@ impl Canvas for Mirror<'_> {
     fn measure_text(&mut self, text: &str, style: &TextStyle) -> crate::SizeF {
         self.inner.measure_text(text, style)
     }
+    fn measure_text_wrapped(&mut self, text: &str, style: &TextStyle, max_width: f32) -> crate::SizeF {
+        self.inner.measure_text_wrapped(text, style, max_width)
+    }
     fn draw_image(&mut self, image: &crate::Image, src: crate::RectF, dest: crate::RectF, opacity: f32) {
         self.inner.draw_image(image, src, Self::rect(dest), opacity);
     }
@@ -1525,6 +1565,9 @@ impl Canvas for Mirror<'_> {
     }
     fn begin_mask(&mut self) {
         self.inner.begin_mask();
+    }
+    fn begin_luminance_mask(&mut self) {
+        self.inner.begin_luminance_mask();
     }
     fn end_mask(&mut self) {
         self.inner.end_mask();

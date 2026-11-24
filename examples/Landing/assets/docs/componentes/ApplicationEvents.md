@@ -1,6 +1,6 @@
 # ApplicationEvents
 
-Os eventos da aplicação inteira, num componente não visual de qualquer form: `on_key_down` e `on_key_press` recebem as teclas antes de todos (antes do form com `key_preview` e do controle com foco; engolir ou trocar a tecla vale como lá), e `on_exception` recebe todo erro de handler e de componente (o `ExceptionEvent`): com ele ligado, a caixa de erro padrão não aparece.
+Os eventos da aplicação inteira, num componente não visual de qualquer form: `on_key_down` e `on_key_press` recebem as teclas antes de todos (antes do form com `key_preview` e do controle com foco; engolir ou trocar a tecla vale como lá), e `on_exception` recebe todo erro de handler e de componente (o `ExceptionEvent`): com ele ligado, a caixa de erro padrão não aparece. Com o `single_instance` do projeto, `on_second_instance` recebe os argumentos de outra abertura do app (que sai logo depois; a janela já veio para a frente). O form em que a tecla chegou está no `form` do `KeyEvent`.
 
 **Paleta:** System · **componente não visual**
 
@@ -20,6 +20,7 @@ Os eventos da aplicação inteira, num componente não visual de qualquer form: 
 | `on_key_press` | — | — | sim: `key` |
 | `on_exception` | — | — |  |
 | `on_terminate` | — | — |  |
+| `on_second_instance` | — | — |  |
 
 **Veja também:** [Interceptar eventos num lugar só](../guias/interceptador.md)
 

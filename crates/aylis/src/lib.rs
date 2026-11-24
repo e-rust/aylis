@@ -17,7 +17,7 @@
 //! | [`docview`] | DocViewer (PDF, XLSX/XLS/ODS/CSV, DOCX/ODT, sem programa externo) |
 //! | [`webview`] | WebView (navegador embutido: WebView2, WKWebView, iframe) |
 //! | [`scene3d`] | Model3D (modelos glTF/GLB animados, com controles por cima) |
-//! | [`mcp`] | McpServer e McpTool: o app como servidor MCP (agentes de IA usam o app pelos componentes) |
+//! | [`mcp`] | McpServer, McpTool, McpResource e McpPrompt: o app como servidor MCP (agentes de IA usam o app pelos componentes) |
 //! | [`project`] | projetos (`.aylisproj`), geração de código |
 //! | [`platform`] | janelas (desktop, celular, navegador) |
 //! | [`headless`] | o modo sem plataforma: testes e fotos sem janela (clicar, digitar, avançar o relógio, PNG) |
@@ -66,6 +66,12 @@ pub use aylis_core as core;
 /// `aylis::tr("Gravando")`, `aylis::tr_with("{0} de {1}", &[&a, &b])`.
 pub use aylis_core::{tr, tr_with};
 
+/// Utilitários de texto para o app: [`text::fold`] (sem acento e sem maiúscula, para comparar
+/// numa busca), a mesma função do `AutoComplete` e da `CommandPalette`.
+pub mod text {
+    pub use aylis_controls::fold;
+}
+
 /// Carrega as traduções do projeto embutido (`locales/<idioma>.json`) para o [`tr`], sem o
 /// `Ui`: o app que precisa traduzir antes de a janela existir. Com a janela aberta, o
 /// [`Application::set_language`] faz isto e traduz a tela.
@@ -106,8 +112,61 @@ pub use aylis_project as project;
 
 /// O que o código de um form costuma usar: `use aylis::prelude::*;`.
 pub mod prelude {
-    pub use aylis_controls::*;
+    // Os controles por uma lista explícita, e não `aylis_controls::*`: as structs que têm o
+    // nome de um registro do acesso tipado (`TreeNode`, `MapMarker`, `PushButton`...) ficam de
+    // fora, senão `use aylis::prelude::*` junto de `use generated::*` deixa o nome ambíguo. Elas seguem pelo caminho completo
+    // (`aylis::controls::TreeNode`). O teste `prelude_names` do `aylis-tools` confere.
+    pub use aylis_controls::{
+        action_sheet, ActionSheet, ActivityIndicator, ActivityRings, Aggregate, AjaxBar, Analytics, AngleDial,
+        AnimatedText, AppBar, AppBarSize, ApplicationEvents, AppLink, apply_mask, AutoComplete, Avatar,
+        AvatarGroup, BackgroundService, Badge, BadgeAnchor, Banner, Battery, bi, Biometrics, Bitmap,
+        block_end, Bluetooth, BLUETOOTH_DEVICE, BLUETOOTH_VALUE, BluetoothValue, Bookmark, BorderStyle,
+        BottomNavigation, BottomSheet, Breadcrumb, BusyAction, BusyWatcher, Button, ButtonGroup, Calendar,
+        CalendarEventClick, CalendarView, CALL_RECORD, Card, CaretStyle, Carousel, Chart, CHART_SERIES,
+        ChartKind, ChartSync, ChatBubble, ChatMessage, ChatView, check_rules, CheckBox, Chip, ChipGroup,
+        Clipboard, CloseAction, CodeEditor, ColorEdit, ColorPicker, ComboArrow, ComboBox, CommandPalette,
+        Compass, confirm, Conveyor, CropBox, CropSelection, CursorConfine, DataModule, DateEdit, DateTimeEdit,
+        Day, days_in_month, Diagnostic, DialogKind, DirectionPad, Divider, DlgKind, docking, DragImage,
+        DrawMode, EasingEditor, Edit, ElectricalSymbol, EmergencyStop, emoji_groups, emoji_list, EmojiInfo,
+        EmojiPicker, EmptyState, EventCalendar, EventInterceptor, EventRecorder, ExceptionEvent, Expander,
+        Fan, field, FileDropZone, FileInput, find_matches, FlowLayout, FlowMeter, fold, Form, format_time,
+        FormPosition, FpsMeter, Frame, FrameTimer, FrameView, FullScreenMode, Gamepad, GATT_CHARACTERISTIC,
+        Gauge, GraphCable, GraphNode, GraphSelection, GridLayout, GroupBox, HEADER_COLUMN, hotkey_text,
+        HotkeyEdit, IconPosition, IconView, image_list, IMAGE_LIST_ITEM, IMAGE_SIZE, ImageList, ImageView,
+        industrial, InnerLoading, InterceptScope, Joystick, KeepAwake, Kinder, Knob, Label, Layout,
+        LegendPosition, LevelMeter, LightSensor, LineDirection, list_header, LIST_VIEW_ITEM, ListBox,
+        ListHeader, ListItem, ListOrientation, ListView, LoadingIndicator, Location, LockScreen, looks,
+        LowerPanel, MainMenu, Manometer, MAP_MARKER, MAP_POINT, MapPoint, MapView, markup_plain, markup_runs,
+        markup_spans, MarkupSpan, MarkupTable, MediaCard, Memo, MenuItem, message_dlg, MessageDialog,
+        MessageStatus, MotionSensor, Motor, name_color, NavigationDrawer, NavigationRail, Network, Nfc,
+        NFC_RECORD, NodeGraph, Notification, NOTIFICATION_BUTTON, notify, NotifyAction, NumberBox, OpenDialog,
+        OptionGroup, OptionKind, OtpInput, PageControl, Pagination, paint_glass, paint_spinner, PaintCanvas,
+        PaintTool, PAIRED_DEVICE, PALETTE_SELECTION, PaletteSelection, Panel, Parallax, parse_events,
+        parse_filter, parse_hex, parse_shortcut, parse_time, PERMISSION_ANSWER, PERMISSION_REASON,
+        PERMISSION_RESULT, PermissionAnswer, PermissionResult, Permissions, Phone, Picture, Pipe, PointStyle,
+        Popover, PopoverPlacement, PopupEdit, PopupMenu, Port, Presence, ProgressBar, ProgressCircle, project,
+        prompt, ProximitySensor, Pump, PUSH_BUTTON, PushButtons, PushNotifications, PushTrigger, quasar,
+        RadioButton, RadioGroup, RangeSlider, Rating, RecordButton, recorder, Recording, RECORDING_EXTENSION,
+        Rectangle, recycler, register, RenderSettings, RICH_EDITOR_TOOLBAR, RichBlock, RichBlockKind,
+        RichEditor, RichFormat, Ringtone, RowSource, SaveDialog, Screen, ScreenItem, ScreenLayout, scroll_bar,
+        ScrollBarMode, ScrollBox, search, SeekBar, SegmentedControl, SelectionMode, SelectorSwitch, Series,
+        SeriesFill, SeriesKind, set_dialog_icon, set_prompt_required, SevenSegment, ShadowEditor, shapes,
+        SHARED_CONTENT, SharedContent, show_message, SideSheet, SignalLight, SignalState, Silo, Sizer,
+        SkeletonLoader, SlideItem, SmoothScroll, SnackAction, Snackbar, snackbar, SpeedDial, SpinnerKind,
+        SplitButton, Splitter, StatusBar, Stepper, Suggestion, SwipeAction, Switch, Symbol, SyncEvent,
+        SyncKind, syntax, SystemBars, Tab, TabControl, TabDrop, TabItem, TableSeparator, TabMove, TabPosition,
+        TabStrip, TankLevel, Taskbar, TEXT_EFFECT, textmate, textmate_theme, Thermometer, TimeEdit, Timeline,
+        TimePicker, Timer, TimingEditor, TitleAlign, TitleBar, toast, ToastKind, ToastStack, ToolBar,
+        TrackBar, trader, TrayIcon, TREE_NODE, TreeLeafLayout, TreeNodeRects, TreeView, unproject, UpDown,
+        Uploader, UrlScheme, validate_form, ValueFormat, Valve, ValveState, Vibration, VirtualList,
+        WakeAppAction, Waveform, WheelPicker, window_state_commands, WindowCorners, WindowSettings,
+        WindowSettingsScope, WindowShape, WindowState, Wire,
+    };
     pub use aylis_core::*;
+    // Do `aylis_core::*`, as duas que também são registros do acesso tipado (o mesmo motivo):
+    // a importação privada esconde o nome do `*` público (`aylis::core::JumpTask` segue valendo).
+    #[allow(unused_imports, hidden_glob_reexports)]
+    use aylis_core::{JumpTask, ThumbButton};
     #[cfg(feature = "data")]
     pub use aylis_data::{
         ApplyMode, ApplyResult, Change, ChangeKind, ClientDataSet, DataSet, DataSource, Date, DateTime, Decimal, Delta, Field, FieldKind, FieldType,
@@ -115,9 +174,9 @@ pub mod prelude {
         FieldValue, GetTextRequest, MasterChange, ServerQuery, SetTextRequest,
     };
     #[cfg(feature = "dbcontrols")]
-    pub use aylis_dbcontrols::{BandKind, Column, ColumnKind, ColumnLayout, ColumnSpec, DBChart, DBImage, DataGrid, DataNavigator, DataRepeater, GridColumn, HorizontalWheel, NavButton};
+    pub use aylis_dbcontrols::{BandKind, Column, ColumnKind, ColumnLayout, DBChart, DBImage, DataGrid, DataNavigator, DataRepeater, GridColumn, HorizontalWheel, NavButton};
     #[cfg(feature = "media")]
-    pub use aylis_media::{AudioSpectrum, CameraQuality, MediaInfo, MediaPlayer, MediaTagsInfo, MixSource, OutputSpec, MediaSession, Playlist, RepeatMode, SpectrumStyle, VideoPlayer};
+    pub use aylis_media::{AudioSpectrum, CameraQuality, MediaInfo, MediaPlayer, MediaTagsInfo, MediaSession, Playlist, RepeatMode, SpectrumStyle, VideoPlayer};
     #[cfg(feature = "vector")]
     pub use aylis_vector::{Lottie, Svg};
     #[cfg(feature = "markdown")]
@@ -129,7 +188,13 @@ pub mod prelude {
     #[cfg(feature = "3d")]
     pub use aylis_3d::Model3D;
     #[cfg(feature = "mcp")]
-    pub use aylis_remote::mcp::{McpServer, McpTool};
+    pub use aylis_remote::mcp::{McpPrompt, McpResource, McpResult, McpServer, McpTool};
+    #[cfg(feature = "http")]
+    pub use aylis_core::providers::{HttpRequest, HttpResponse};
+    #[cfg(feature = "http")]
+    pub use aylis_providers::net::{HttpClient, HttpResult};
+    #[cfg(feature = "websocket")]
+    pub use aylis_providers::net::{WebSocketClient, WebSocketClose};
 
     pub use crate::Application;
 }
@@ -212,6 +277,7 @@ pub mod classes {
         ListView: aylis_controls::ListView => "Additional",
         TreeView: aylis_controls::TreeView => "Additional",
         Chart: aylis_controls::Chart => "Additional",
+        ChartSync: aylis_controls::ChartSync => "Additional",
         TabControl: aylis_controls::TabControl => "Layouts",
         TabItem: aylis_controls::TabItem => "Layouts",
         Expander: aylis_controls::Expander => "Layouts",
@@ -310,6 +376,7 @@ pub mod classes {
         SkeletonLoader: aylis_controls::SkeletonLoader => "Additional",
         ProgressCircle: aylis_controls::ProgressCircle => "Standard",
         EmptyState: aylis_controls::EmptyState => "Additional",
+        ToastStack: aylis_controls::ToastStack => "Additional",
         Pagination: aylis_controls::Pagination => "Additional",
         Stepper: aylis_controls::Stepper => "Additional",
         Timeline: aylis_controls::Timeline => "Additional",
@@ -401,6 +468,12 @@ pub mod classes {
         #[cfg(feature = "3d")] Model3D: aylis_3d::Model3D => "3D",
         #[cfg(feature = "mcp")] McpServer: aylis_remote::mcp::McpServer => "System",
         #[cfg(feature = "mcp")] McpTool: aylis_remote::mcp::McpTool => "System",
+        #[cfg(feature = "mcp")] McpResource: aylis_remote::mcp::McpResource => "System",
+        #[cfg(feature = "mcp")] McpPrompt: aylis_remote::mcp::McpPrompt => "System",
+        #[cfg(feature = "http")] HttpClient: aylis_providers::net::HttpClient => "System",
+        #[cfg(feature = "http")] AylisHttpProvider: aylis_providers::net::AylisHttpProvider => "Providers",
+        #[cfg(feature = "websocket")] WebSocketClient: aylis_providers::net::WebSocketClient => "System",
+        #[cfg(feature = "websocket")] AylisWebSocketProvider: aylis_providers::net::AylisWebSocketProvider => "Providers",
     }
 
     /// O símbolo elétrico, com os subtipos da paleta.
@@ -458,6 +531,25 @@ pub use web_remote::run_remote_web;
 
 pub type Error = Box<dyn std::error::Error>;
 
+static APP_VERSION: std::sync::RwLock<String> = std::sync::RwLock::new(String::new());
+
+/// A versão do app em execução: a que a publicação gravou (a `publish.version` do projeto ou,
+/// com `publish.version_from_git_tag`, a da última tag do git no build), a mesma dos dados do
+/// `.exe`, do Android e dos pacotes do Linux. Vale em qualquer handler, sem o [`Application`]
+/// (que também tem, em `project.version()`). Vazia antes de o app abrir o projeto.
+pub fn app_version() -> String {
+    APP_VERSION.read().map(|v| v.clone()).unwrap_or_default()
+}
+
+fn set_app_version(version: &str) {
+    if let Ok(mut v) = APP_VERSION.write() {
+        *v = version.to_string();
+    }
+    // A versão que o `McpServer` mostra ao agente quando o `server_version` está vazio.
+    #[cfg(feature = "mcp")]
+    aylis_remote::mcp::stdio::set_app_version(version);
+}
+
 /// O projeto embutido pelo `build.rs` (`aylis_build::project()`), mais a pasta dele e o
 /// registro só das classes que os forms usam, para [`Application::bundled`]. Use dentro
 /// do crate do projeto.
@@ -494,7 +586,8 @@ pub struct EmbeddedProject {
 /// O aplicativo de um projeto: abre o `.aylisproj`,
 /// registra todas as classes, aplica tema e idioma, liga os arquivos do projeto (assets) e
 /// cria os forms marcados como "criar no início". Os outros forms são criados com
-/// `ui.create_form("frmClientes")`.
+/// `ui.create_form("frmClientes")`. O `on_create` dos DataModules criados no início chega no
+/// [`run`](Self::run), depois de o app registrar os handlers (`generated::register`).
 pub struct Application {
     pub ui: Ui,
     pub project: aylis_project::Project,
@@ -504,6 +597,8 @@ pub struct Application {
     from_disk: bool,
     /// A pasta do `placements.json` ([`Application::set_placements_dir`]).
     placements_dir: Option<std::path::PathBuf>,
+    /// Os DataModules criados no início, com o `on_create` esperando o [`run`](Self::run).
+    created: Vec<ComponentId>,
 }
 
 impl Application {
@@ -532,7 +627,11 @@ impl Application {
         let from_disk = cfg!(feature = "dev") && aylis_build::find_project(&dir).is_some();
         if from_disk {
             if let Some(path) = aylis_build::find_project(&dir) {
-                return Self::open(path);
+                // A versão gravada no build (a da tag do git, se o projeto pede), não a da pasta.
+                let mut app = Self::open(path)?;
+                app.project.publish.version = project.publish.version.clone();
+                set_app_version(project.version());
+                return Ok(app);
             }
         }
         project.path = dir.join(&project.path);
@@ -548,6 +647,10 @@ impl Application {
     fn start_with(project: aylis_project::Project, files: aylis_project::Files, register: fn(&mut Ui)) -> Result<Self, Error> {
         let mut ui = Ui::new();
         register(&mut ui);
+        set_app_version(project.version());
+        // A ponte stdio do MCP (`--mcp-stdio`) só com a opção do projeto.
+        #[cfg(feature = "mcp")]
+        aylis_remote::mcp::stdio::set_enabled(project.publish.mcp_stdio);
         // O PDF do relatório sem provedor ligado e da impressão fora do Windows (o núcleo não
         // escreve PDF): o registro enxuto pode não ter chamado o `aylis_providers::register`.
         #[cfg(feature = "pdf")]
@@ -564,6 +667,7 @@ impl Application {
         // O texto medido pelo renderizador do projeto já na montagem dos forms (T01).
         aylis_platform_winit::install_text_service(&mut ui, project.render().current().map_or(aylis_platform_winit::Renderer::Auto, renderer_for));
         let main_form = aylis_project::install_with(&mut ui, &project, files)?;
+        let created = aylis_project::data_modules(&ui);
         // O principal é o do projeto, mesmo que outro form (uma abertura) apareça antes dele (o
         // relatório do Tabernáculo, J20).
         ui.set_main_form(main_form);
@@ -571,7 +675,7 @@ impl Application {
         aylis_data::open_active(&mut ui);
         #[cfg(feature = "media")]
         aylis_media::autoplay(&mut ui);
-        Ok(Self { ui, project, main_form, from_disk: false, placements_dir: None })
+        Ok(Self { ui, project, main_form, from_disk: false, placements_dir: None, created })
     }
 
     /// Recursos de desenvolvimento, só no app compilado pela IDE com a feature `dev` (a
@@ -643,10 +747,24 @@ impl Application {
 
     /// Abre o form principal e roda até ele fechar (como `Application.Run`).
     pub fn run(mut self) -> Result<(), Error> {
+        // A ponte stdio do MCP (`app --mcp-stdio [servidor]`, com a opção `mcp_stdio` do projeto):
+        // o Claude Desktop inicia o executável assim, e ele só repassa as mensagens ao servidor
+        // do app que já está aberto, sem janela, sem o `on_create` e sem a instância única. Sem a
+        // opção, o argumento é ignorado.
+        #[cfg(all(feature = "mcp", not(any(target_arch = "wasm32", target_os = "android", target_os = "ios"))))]
+        if self.project.publish.mcp_stdio {
+            let args: Vec<String> = std::env::args().collect();
+            if let Some(i) = args.iter().position(|a| a == "--mcp-stdio") {
+                let server = args.get(i + 1).filter(|a| !a.starts_with("--")).cloned();
+                return aylis_remote::mcp::stdio::run_bridge(server.as_deref()).map_err(Into::into);
+            }
+        }
         // Depurar na IDE: o depurador se anexa a este processo antes de tudo (veja
         // `aylis_platform_winit::wait_for_debugger`).
         #[cfg(all(feature = "dev", windows))]
         aylis_platform_winit::wait_for_debugger();
+        // O `on_create` dos DataModules do início, que esperou o app registrar os handlers.
+        aylis_project::fire_created(&mut self.ui, &std::mem::take(&mut self.created));
         // Roteiro de teste (só no app com `dev`, na linha que o teste escreve no stdin): sem
         // janela, como o aylis-host faz nas outras linguagens (veja `aylis_remote::script`).
         #[cfg(all(feature = "dev", not(any(target_arch = "wasm32", target_os = "android", target_os = "ios"))))]
@@ -659,6 +777,12 @@ impl Application {
         #[cfg(all(target_os = "linux", not(target_os = "android")))]
         if let Some(flag) = std::env::args().nth(1).filter(|a| a == "--install-shortcut" || a == "--remove-shortcut") {
             return linux_shortcut(&self.project, &self.ui, flag == "--install-shortcut").map_err(Into::into);
+        }
+        // Uma instância só (`single_instance` do projeto): a segunda abertura entrega os
+        // argumentos à primeira, que vem para a frente, e sai sem abrir janela.
+        #[cfg(not(any(target_arch = "wasm32", target_os = "android", target_os = "ios")))]
+        if !aylis_platform_winit::claim_single_instance(aylis_core::SingleInstance::parse(&self.project.single_instance), &self.project.linux_package_id()) {
+            return Ok(());
         }
         self.development();
         let options = self.options();
@@ -717,6 +841,8 @@ pub fn run_android(android: aylis_platform_winit::android::AndroidApp, make: imp
     // O logcat e a pasta temporária antes do código do app (que pode usar `temp_dir`).
     aylis_platform_winit::android::prepare(&android);
     let result = make().and_then(|mut app| {
+        // O `on_create` dos DataModules do início (veja o `run`).
+        aylis_project::fire_created(&mut app.ui, &std::mem::take(&mut app.created));
         app.development();
         let options = app.options();
         aylis_platform_winit::android::run_with(android, app.ui, app.main_form, options)

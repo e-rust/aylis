@@ -12,7 +12,7 @@ rust-version.workspace = true
 # feature (`default-features = false`) e nem compila esses crates. A IDE escolhe as
 # features pelos componentes que os forms usam.
 [features]
-default = ["data", "dbcontrols", "providers", "pdf", "media", "media-tags", "markdown", "vector", "webview", "3d", "docview", "tray", "remote", "mcp", "skia", "text-shaping"]
+default = ["data", "dbcontrols", "providers", "pdf", "media", "media-tags", "markdown", "vector", "webview", "3d", "docview", "tray", "remote", "mcp", "http", "websocket", "skia", "text-shaping"]
 # O texto das fontes do projeto medido e desenhado pelo núcleo, igual em todo renderizador
 # (o `harfrust`). A IDE liga no projeto que tem fontes em `assets/fonts`.
 text-shaping = ["aylis-core/text-shaping"]
@@ -27,6 +27,10 @@ pdf = ["dbcontrols", "providers", "aylis-providers/pdf"]
 media = ["dep:aylis-media"]
 # As tags de mídia pelo lofty (o `LoftyTagsProvider` do `MediaInfo`); sem ela, o Symphonia.
 media-tags = ["media", "providers", "aylis-providers/tags"]
+# Os clientes de rede (HttpClient, WebSocketClient): o ureq e o tungstenite com rustls fora do
+# navegador; o fetch e o WebSocket do navegador na web. A IDE liga quando um form usa a classe.
+http = ["providers", "aylis-providers/http"]
+websocket = ["providers", "aylis-providers/websocket"]
 markdown = ["dep:aylis-markdown"]
 # Ícone na bandeja (TrayIcon), no Windows e no macOS.
 tray = ["aylis-platform-winit/tray"]
@@ -60,6 +64,10 @@ d2d = ["aylis-platform-winit/d2d"]
 # O fuso do projeto pelo nome (`time_zone` no `.aylisproj`): a tabela de fusos (IANA) vai
 # junto. A IDE liga quando o projeto tem `time_zone`.
 time-zones = ["dep:chrono", "dep:chrono-tz"]
+# O `Date` com `serde` (texto ISO, `"2026-11-23"`) e com `From`/`Into` de `chrono::NaiveDate`
+# (o `chrono` 0.4). Desligadas por padrão: o app que precisa liga.
+serde = ["aylis-core/serde"]
+chrono = ["aylis-core/chrono"]
 
 [dependencies]
 # Os exemplos dos componentes (`samples`) e os forms em JSON.

@@ -257,6 +257,9 @@ pub enum DataEvent {
     StateChanged,
     /// Antes do `post`: controles com texto pendente devem gravá-lo no campo.
     UpdateData,
+    /// Mudou como um campo aparece (`display_width`, `display_label`, `visible`, formato):
+    /// os dados são os mesmos, e a grade refaz as colunas. Não dispara `on_data_change`.
+    FieldChanged(String),
 }
 
 /// Mensagem entregue (com `Ui::send_message`) aos controles cujo `data_source` aponta
@@ -398,6 +401,9 @@ pub struct ClientDataSet {
     /// O `on_server_query` está rodando: o que o backend fizer no dataset (recarregar,
     /// ordenar) não pergunta de novo.
     pub(crate) querying: bool,
+    /// Os `Field` foram criados pelo `load_json` a partir dos dados (não havia campo
+    /// declarado): uma carga com outras colunas troca por novos.
+    pub(crate) inferred_fields: Vec<ComponentId>,
     pub(crate) hooks: Hooks,
 }
 

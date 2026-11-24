@@ -160,6 +160,14 @@ thread_local! {
     /// O último texto copiado ou colado: o `get_text` é síncrono, e o navegador só entrega a
     /// área de transferência de forma assíncrona (ou no evento `paste`).
     static CLIPBOARD: std::cell::RefCell<String> = const { std::cell::RefCell::new(String::new()) };
+    /// O Caps Lock e o Num Lock da última tecla (o navegador só conta numa tecla: antes da
+    /// primeira, desligados).
+    static LOCKS: std::cell::Cell<(bool, bool)> = const { std::cell::Cell::new((false, false)) };
+}
+
+/// O Caps Lock e o Num Lock da última tecla.
+pub(crate) fn lock_keys() -> (bool, bool) {
+    LOCKS.get()
 }
 
 /// A área de transferência no navegador. Copiar vai para a do sistema pelo
@@ -224,6 +232,16 @@ pub(crate) fn watch_paste(poster: aylis_core::Poster) {
     let on_key = wasm_bindgen::closure::Closure::<dyn FnMut(web_sys::Event)>::new(move |e: web_sys::Event| {
         let flag = |key: &str| js_sys::Reflect::get(&e, &key.into()).ok().and_then(|v| v.as_bool()).unwrap_or(false);
         let key = js_sys::Reflect::get(&e, &"key".into()).ok().and_then(|v| v.as_string()).unwrap_or_default();
+        // O `getModifierState`, antes do winit (que monta a tecla logo depois).
+        let state = |name: &str| {
+            js_sys::Reflect::get(&e, &"getModifierState".into())
+                .ok()
+                .and_then(|f| f.dyn_into::<js_sys::Function>().ok())
+                .and_then(|f| f.call1(&e, &name.into()).ok())
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false)
+        };
+        LOCKS.set((state("CapsLock"), state("NumLock")));
         if key.eq_ignore_ascii_case("v") && (flag("ctrlKey") || flag("metaKey")) && !flag("altKey") {
             e.stop_immediate_propagation();
         }
@@ -247,7 +265,7 @@ pub(crate) fn watch_paste(poster: aylis_core::Poster) {
         poster.post(|ui| {
             let Some(top) = ui.open_forms().last().copied() else { return };
             let modifiers = aylis_core::Modifiers { ctrl: true, ..Default::default() };
-            ui.key_down(top, aylis_core::KeyEvent { key: aylis_core::Key::Char('v'), modifiers, repeat: false });
+            ui.key_down(top, aylis_core::KeyEvent { key: aylis_core::Key::Char('v'), modifiers, repeat: false, form: None });
         });
     });
     let _ = window.add_event_listener_with_callback_and_bool("paste", on_paste.as_ref().unchecked_ref(), true);

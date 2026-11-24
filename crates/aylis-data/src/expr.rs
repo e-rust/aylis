@@ -14,7 +14,7 @@
 //!   sem diferenciar maiúsculas), `in (...)`, `is null`, `is not null`;
 //! - texto compara sem diferenciar maiúsculas e minúsculas;
 //! - lógicos: `and`, `or`, `not`; contas: `+ - * / %` (`+` junta textos);
-//! - funções: `upper`, `lower`, `trim`, `len`, `substr(t, início, tamanho)`, `round(x, casas, modo)`,
+//! - funções: `upper`, `lower`, `fold` (sem acento e sem maiúscula), `trim`, `len`, `substr(t, início, tamanho)`, `round(x, casas, modo)`,
 //!   `abs`, `coalesce(a, b)`, `iif(condição, a, b)`, `year`, `month`, `day`, `today()` e
 //!   `now()` (no horário local da tela);
 //! - nomes de campo com espaço ou acento: `[Data de cadastro]`.
@@ -746,6 +746,12 @@ fn call(name: &str, args: &[Node], get: &dyn Fn(&str) -> Option<Value>) -> Resul
         "lower" => {
             need(1)?;
             if arg(0).is_null() { Value::Null } else { Value::String(text(&arg(0)).to_lowercase()) }
+        }
+        // Sem acento e sem maiúscula (o `aylis_core::text::fold`): `fold(nome) like '%sao%'`
+        // acha "São Paulo".
+        "fold" => {
+            need(1)?;
+            if arg(0).is_null() { Value::Null } else { Value::String(aylis_core::text::fold(&text(&arg(0)))) }
         }
         "trim" => {
             need(1)?;

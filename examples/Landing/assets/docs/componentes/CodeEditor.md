@@ -65,6 +65,13 @@ Editor de código com realce de sintaxe, números de linha, minimapa e dobra de 
 | `wrap` | Quebra de linha | lógico | Quebra automática de linha. |
 | `trimming` | Reticências | um de: `none`, `character`, `word` | Reticências nas linhas que não cabem (sem `wrap`, fora da edição). |
 | `syntax` | Linguagem do realce | texto | Linguagem do realce (vazio = texto comum). |
+| `keyword_color` | Cor das palavras-chave | cor | A cor de cada tipo de trecho do realce trocada só neste controle, sem criar tema (vazio: a do `color_theme` ou do tema do app). |
+| `type_color` | Cor dos tipos | cor | A cor dos tipos no realce, só neste controle (vazio: a do tema). |
+| `string_color` | Cor dos textos | cor | A cor dos textos entre aspas no realce, só neste controle (vazio: a do tema). |
+| `number_color` | Cor dos números | cor | A cor dos números no realce, só neste controle (vazio: a do tema). |
+| `comment_color` | Cor dos comentários | cor | A cor dos comentários no realce, só neste controle (vazio: a do tema). |
+| `function_color` | Cor das funções | cor | A cor das funções no realce, só neste controle (vazio: a do tema). |
+| `syntax_tokens` | Tokens do realce | lista de `SyntaxToken` | Tokens somados à linguagem do realce, sem gramática: o nome, as palavras (ou um prefixo, como `@`) e a cor de cada um (a lista de `syntax::SyntaxToken`, em JSON). |
 | `line_numbers` | Números das linhas | lógico | Mostra o número de cada linha à esquerda. |
 
 ## Eventos

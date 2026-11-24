@@ -214,3 +214,43 @@ fn a_call_to_the_same_form_inside_on_back_does_not_take_the_question() {
     assert_eq!(background.get(), 0, "o handler respondeu handled: o app não vai para segundo plano");
     assert_eq!(ui.form_instance::<FrmPlayer>(form).unwrap().screens, ["player", "lista"], "a troca de tela rodou depois do handler");
 }
+
+thread_local! {
+    /// O que o handler viu do próprio form (o teste abaixo).
+    static SEEN: std::cell::RefCell<Vec<String>> = Default::default();
+}
+
+/// Os componentes do form de teste, como o `FrmXComponents` gerado.
+#[derive(Clone, Copy)]
+struct PedidoComponents {
+    btn: ComponentId,
+}
+
+/// Dentro de um handler do próprio form, o `get` (a instância) dá `None`, nas duas formas e
+/// mais de uma vez (o aviso de debug sai uma vez só, sem pânico), e os componentes chegam pelo
+/// `form_components` (o `FrmX::components(ui)` gerado).
+#[test]
+fn inside_its_own_handler_the_instance_is_lent_and_the_components_are_the_way() {
+    let mut ui = setup();
+    ui.register_handler(
+        "frmPedido.olhar",
+        form_handler(|this: &mut FrmPedido, ui: &mut Ui, _sender: ComponentId, _args: &EventArgs| {
+            let form = ui.find_path("frmPedido").unwrap();
+            for _ in 0..2 {
+                let got = ui.form_instance::<FrmPedido>(form).is_some();
+                let got_mut = ui.form_instance_mut::<FrmPedido>(form).is_some();
+                SEEN.with(|s| s.borrow_mut().push(format!("get {got} get_mut {got_mut}")));
+            }
+            let components = ui.form_components::<PedidoComponents>(form).map(|c| c.btn == this.btn);
+            SEEN.with(|s| s.borrow_mut().push(format!("components {components:?}")));
+        }),
+    );
+    let form = open(&mut ui);
+    let btn = ui.form_instance::<FrmPedido>(form).unwrap().btn;
+    ui.set_form_components(form, Box::new(PedidoComponents { btn }));
+    ui.set_prop(btn, "on_click", "olhar").unwrap();
+    ui.fire(btn, "on_click", &EventArgs::None);
+    assert_eq!(SEEN.with(|s| s.borrow().clone()), ["get false get_mut false", "get false get_mut false", "components Some(true)"]);
+    // Fora do handler, a instância volta.
+    assert!(ui.form_instance::<FrmPedido>(form).is_some());
+}

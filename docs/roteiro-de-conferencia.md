@@ -546,6 +546,322 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     build` no terminal termina em segundos, sem recompilar as dependências. Em Ferramentas →
     Opções → Rust e Python, desmarque "Usar esta pasta em todo o Rust desta máquina" e dê OK: as
     duas chaves saem (o arquivo some, se só tinha elas); marque de novo e elas voltam.
+166. **O gerador e o projeto** (23/11). Num projeto Rust novo (a IDE recompilada):
+    - um form `fraMenu` com um botão, e o principal com um `Frame` de `form: "fraMenu"` numa
+      `TabStrip`; num handler, `ui.create_form_instance("frmPrincipal")` e `ui.show` dela, e
+      depois arraste uma aba para fora. *Esperado:* a segunda janela vem com o menu dela (o
+      botão responde nela), e a aba arrancada abre o form, não uma janela genérica (a aba
+      arrancada da segunda janela depende também da busca do form pela classe, no núcleo);
+    - um DataModule com "Criar no início" e um `on_create` que escreve no log. *Esperado:* a
+      linha sai ao executar, antes da janela;
+    - pelo acesso tipado, uma coluna `ColumnSpec { field, title, ..Default::default() }` posta
+      num `DataGrid` com `set_columns`, e `set_items` de um `ComboBox` com `["", "A", "B"]`.
+      *Esperado:* o texto da coluna aparece com a cor do tema; o `items()` volta os três, e
+      `item_index` 1 é o "A";
+    - `self.lblX.set_font_weight(ui, Some(FontWeight::SemiBold))` com `use aylis::prelude::*`
+      compila; `cargo clippy -- -D warnings` no crate do projeto não reclama do `generated/`;
+    - num botão, `set_icon(ui, "material:info")` com um ícone que nenhum form usa, e compile no
+      terminal com `cargo build` (sem a IDE). *Esperado:* o ícone aparece; um nome que não existe
+      (`"material:nao_existe"`) dá um aviso do cargo na compilação e, em debug, uma linha no
+      stderr ao pintar.
+167. **Dados, gráficos e desenho** (23/11). Num app de
+    exemplo com um `DataGrid` de muitas linhas e um `Chart` (a IDE recompilada):
+    - um dente da roda sobre a grade. *Esperado:* 3 linhas, com o passo padrão e com outro
+      `wheel_step` no app; no touchpad, a grade acompanha os dedos sem saltar;
+    - num botão, `display_width` de um campo para 320 e `display_label` para outro texto.
+      *Esperado:* a coluna muda na hora, e o registro atual continua o mesmo;
+    - no `Chart` de linhas, `border_color: transparent`. *Esperado:* some a moldura, e a grade
+      fica; com uma cor, só a moldura muda. Um `Chart` `stacked_bar`: os pedaços de cada coluna
+      encostam, sem o fundo entre as cores;
+    - um `Label` com `⚠ Atenção ℹ 😀` no Direct2D (o padrão no Windows), no Skia e no navegador.
+      *Esperado:* `⚠` e `ℹ` na cor do texto nos três, e o `😀` colorido; `⚠️` (com U+FE0F)
+      colorido. No navegador, a conferir no Chrome e no Firefox.
+168. **O núcleo e os controles** (23/11). Num app de exemplo (a IDE recompilada):
+    - um form com uma grade de 64 frames e um `Timer` de 1 s que põe, em cada um, o mesmo
+      `visible` num rótulo e lê `ui.bounds` do frame; o Profiler da IDE aberto. *Esperado:* o
+      handler do timer em menos de 1 ms, sem "layout de form" a cada volta; mudando de fato o
+      `visible` de um rótulo, só aquele frame é refeito;
+    - num frame desenhado em 640×360, um `Label` ancorado à direita e embaixo com `visible`
+      desligado; embuta o frame numa área grande e só então mostre o rótulo. *Esperado:* ele
+      aparece no canto da área, e não perto de (640, 360);
+    - uma `TreeView` com um `on_dbl_click` que escreve no log, e `leaf_layout: icon_in_arrow`
+      sem ícones; dê um duplo clique num nó e ponha um ícone numa folha pelo código.
+      *Esperado:* uma linha no log por duplo clique (com o caminho do nó); o ícone aparece no
+      lugar da seta e nenhum texto anda;
+    - um tema com o estilo `PopupMenu` escuro e um `TrayIcon` com `popup_menu`; clique direito
+      no ícone da bandeja. *Esperado:* o menu da bandeja com o fundo, o texto e o destaque do
+      estilo, como o menu dentro do app. Com `menu_theme: dark` e sem o estilo, o menu escuro do
+      tema escuro do Aylis (o tom muda um pouco em relação ao de antes: diga se incomoda);
+    - duas janelas do form principal (`create_form_instance`) com uma `TabStrip` de páginas com
+      um `Edit`; arranque uma aba da segunda janela. *Esperado:* abre outra instância do form
+      (com a faixa e os handlers), não a janela genérica, e dá para digitar no `Edit` sem
+      clicar; com as duas janelas, clique na que não foi aberta por último e abra um modal por
+      um atalho: ele fica preso a ela;
+    - uma `VirtualList` que chama `refresh` no `on_item_click`, rolada até o meio; dê um duplo
+      clique num item. *Esperado:* o `on_item_dbl_click` chega;
+    - um `Edit` de altura fixa (32) com `error` preenchido. *Esperado:* a caixa continua com 32
+      e o erro aparece embaixo dela; com `auto_size`, como antes;
+    - um `Label` com `wrap`, `line_height: 1.35` e `highlight` de uma palavra do texto.
+      *Esperado:* a palavra com o fundo marcado;
+    - um projeto com a fonte "Roboto" que troca entre claro e escuro por `ui.set_theme` de um
+      tema embutido. *Esperado:* a fonte continua a Roboto (depende da linha do `install_with`
+      que a sessão do gerador põe; até lá, `ui.set_project_font("Roboto")` no início do app);
+    - no app que relatou, o `Timer` de um frame posto por `create_in` num modal e o
+      `minimap: false` do `CodeEditor` no layout: os testes passam pelo `set_prop`, então diga
+      o que o app faz de diferente se ainda falharem.
+169. **As janelas e a entrada no Windows** (23/11). O exemplo `window_checks` tem um cenário por item (`cargo run -p
+    aylis-platform-winit --example window_checks -- <cenário>`, a lista no começo do arquivo), e o
+    `multi_monitor` serve para o arrasto. O que não deu para conferir aqui:
+    - com os dois monitores ligados, o `multi_monitor` (o do segundo monitor em tela cheia):
+      arraste um item da tela cheia para uma célula da janela comum do principal, e o contrário.
+      *Esperado:* o soltar chega nos dois sentidos, e o rótulo do arrasto (o texto junto do mouse)
+      acompanha de um monitor para o outro, por cima da tela cheia;
+    - um app publicado com o form principal `window_state: maximized`, aberto por um clique
+      duplo no Explorer. *Esperado:* a janela fica ativa, e o teclado (um atalho) vale sem clicar
+      nela;
+    - `window_checks topmost` e o Gerenciador de Tarefas com "Sempre visível" por cima dela.
+      *Esperado:* em até 2 s ela volta para cima do Gerenciador, sem tirar o foco de onde ele
+      está;
+    - `window_checks blur`, posto para abrir no logon (um atalho na pasta `shell:startup`), e a
+      máquina reiniciada (nos primeiros 8 s ele desliga e religa o vidro, de 2 em 2 s; confira
+      no começo e depois). *Esperado:* o vidro, e não o preto. Com ele aberto, desligue e ligue os
+      "Efeitos de transparência" (Configurações → Personalização → Cores). *Esperado:* o vidro
+      volta sozinho, sem desligar o `blur` nem reabrir;
+    - `window_checks text`, e no `Edit` o teclado virtual do Windows (Win+Ctrl+O), o painel de
+      emoji (Win+.) e o preenchimento do gerenciador de senha que você usa. *Esperado:* o texto
+      chega inteiro, os emojis também;
+    - `window_checks grab`. *Esperado:* a mão aberta sobre o form e a fechada com o botão
+      apertado; diga se o desenho precisa de ajuste.
+170. **Projeto, publicação e acesso tipado** (23/11). Num projeto Rust
+    novo, numa pasta com git (a IDE recompilada):
+    - em Projeto → Publicar, preencha "Descrição" e "Direitos autorais", marque "Versão da tag
+      do git" e publique para Windows sem nenhuma tag. *Esperado:* a publicação para com a
+      mensagem "o repositório não tem tag" e o que fazer. Crie a tag (`git tag v1.4.0`) e publique
+      de novo. *Esperado:* em Propriedades → Detalhes do `.exe`, a descrição, os direitos e a
+      versão 1.4.0; o instalador (NSIS ou Inno) com os mesmos direitos; num label, o
+      `aylis::app_version()` mostra 1.4.0 no app publicado e no executado pela IDE;
+    - desmarque a opção. *Esperado:* volta a versão do campo; com a descrição e os direitos
+      vazios, o nome do app e "© fabricante", como antes;
+    - publique para Android e Linux (`.deb`) com a opção marcada. *Esperado:* o `versionName` do
+      APK e a versão do `.deb` são os da tag;
+    - num handler de um botão do próprio form, chame `FrmX::get(ui)`. *Esperado:* `None` e, no
+      Console da IDE (debug), uma linha que manda usar o `self` ou o `FrmX::components(ui)`, uma
+      vez só;
+    - com `use aylis::prelude::*;` e `use crate::generated::*;` no mesmo arquivo, um
+      `ColumnSpec { field: "nome".into(), ..Default::default() }`. *Esperado:* compila (o tipado);
+      o mesmo com um `TreeNode`, um `MapMarker` e um `ListViewItem` do acesso tipado num form
+      com `TreeView`, `MapView` e `ListView`: compila sem o caminho. Num app que montava a
+      `TreeView` pela struct do controle com `use aylis::prelude::*`, o `TreeNode` pede o caminho
+      `aylis::controls::TreeNode` (diga se algum outro nome que o app usava sumiu do `prelude`);
+    - um form com um `TabControl` (com `TabItem`) e um `TabStrip`, e "Gerar código" em Rust e
+      em C#. *Esperado:* compila nas duas; as abas do `TabStrip` pelo acesso tipado são
+      `TabStripItem { title: "Início".into(), ..Default::default() }`;
+    - com `aylis = { ..., features = ["serde", "chrono"] }` no `Cargo.toml`, uma struct com
+      `#[derive(serde::Deserialize)]` e um campo `Date`, lida de `{"criada": "2026-11-23"}`, e
+      `let d: Date = chrono::NaiveDate::from_ymd_opt(2026, 11, 23).unwrap().into();`.
+      *Esperado:* compila e dá 23/11/2026 nos dois.
+171. **O `DataGrid`, os dados e os gráficos** (23/11). Num app de exemplo (a IDE recompilada):
+    - abra a IDE e um form com um `DataGrid` e um `Chart`, sem tema próprio. *Esperado:* a grade
+      e o gráfico iguais aos de antes (a zebra, a seleção, o cabeçalho, a moldura da célula, o
+      espaço de dentro do gráfico);
+    - num tema do projeto, `"DataGrid.row": { "focused": { "fill": "#DBEAFE", "text": "#1E3A8A" } }`,
+      `"DataGrid.stripe": { "fill": "transparent" }`, `"DataGrid.header": { "fill": "surface" }`
+      e `"DataGrid.cursor": { "border_width": 1 }`; e a grade com `frame: false` dentro de um
+      `Panel` com borda. *Esperado:* a linha atual azul com o texto escuro, sem zebra, o cabeçalho
+      na cor do fundo, a moldura da célula fina, e uma moldura só (a do `Panel`); diga se falta
+      alguma parte que as telas web tinham;
+    - `"ScrollBar": { "width": 6, "thumb": "primary" }` no tema. *Esperado:* as duas barras da
+      grade finas e na cor de destaque, e a grade usa o espaço que sobrou;
+    - uma grade `read_only`: Enter numa célula e selecione um pedaço do texto com o mouse,
+      Ctrl+C. *Esperado:* o pedaço copiado, e o dataset continua em Browse; digitar uma letra na
+      grade não abre nada;
+    - uma `Column` com `"title": null` e `hint`, a grade com `empty_text` e `sortable: false` e um
+      `on_title_click`, sem registros. *Esperado:* o cabeçalho da coluna vazio, a dica ao parar o
+      mouse no título, o texto pedido no lugar de "Sem registros", e o evento no clique do título
+      sem ordenar;
+    - no `on_pointer_move` da grade, `grade.row_at(ui, e.position.y)` e `value_at` posto na dica
+      da grade. *Esperado:* o valor da linha sob o mouse, sem o registro atual mudar (também pelo
+      Python, `invoke`);
+    - um `ClientDataSet` sem `Field`, ligado a uma grade, com `load_json` de uma lista de objetos
+      (números, datas `2026-11-23`, `true`/`false`, texto) e depois outra consulta com outras
+      colunas. *Esperado:* as colunas com o tipo certo (números à direita, a caixa de marcar
+      nos lógicos), e trocadas na segunda carga;
+    - dois `Chart` de linha com rótulos de horário (um com um horário a mais), `sync` apontando
+      para um `ChartSync`, um com `select_range` e o outro com `zoom`. Passe o mouse num.
+      *Esperado:* a linha tracejada e a dica no mesmo horário nos dois; arraste uma faixa no
+      primeiro (e a roda no segundo). *Esperado:* os dois mostram a mesma janela; duplo clique
+      volta ao todo; o `on_sync` chega com o tipo, os valores e o nome do gráfico. Um terceiro
+      com `time_axis` no mesmo `ChartSync`: ignora o que veio dos outros (no Console, uma linha
+      em debug);
+    - a linha de filtro (`filter_row`) de uma grade com cidades acentuadas: digite `sao`.
+      *Esperado:* aparece "São Paulo";
+    - `highlight_index: 2` num `Chart` pelo código, e `border_width: 0` com `padding: 0`.
+      *Esperado:* a coluna 2 destacada com a dica; sem moldura, e o gráfico até a borda.
+172. **Os campos, o texto e o desenho** (23/11). Na
+    IDE recompilada e num app de exemplo (o `giant_screen` em release já passou com a máquina
+    parada; os números nos pendentes):
+    - abra forms com `Edit`, `ComboBox`, `Memo`, `ListBox`, `VirtualList` e `ScrollBox`, sem
+      tema próprio.
+      *Esperado:* tudo igual ao de antes (a moldura, o rótulo, o ícone e as barras);
+    - um `ComboBox` com `label: "Tabela"`, `style: outlined` e `clear_button`, ao lado de um
+      `Edit` com o mesmo `label` e `style`. *Esperado:* sem opção, o rótulo dentro do campo; ao
+      escolher (ou com foco), ele sobe para a borda como no `Edit`, e o "×" antes da seta limpa a
+      escolha sem abrir a lista (o `on_change` chega vazio);
+    - no tema do projeto, `"Edit": { "icon_size": 20, "icon_color": "primary", "icon_gap": 10,
+      "focused": { "icon_color": "danger" } }` e um `Edit` com `icon: search`. *Esperado:* o ícone
+      maior, na cor de destaque e mais longe do texto; com o foco, na cor de perigo;
+    - um `CodeEditor` com `syntax: sql` e um `SELECT ... FROM ... WHERE` com comentário `--`.
+      *Esperado:* palavras-chave, textos, números e comentários coloridos, em maiúsculas ou não.
+      Depois `keyword_color: #C00000` e `syntax_tokens: [{"name": "variavel", "prefix": "@",
+      "color": "warning"}]` com um `@total` no texto. *Esperado:* as palavras-chave em vermelho
+      escuro e o `@total` na cor de aviso, menos dentro de um texto `'...'`;
+    - um `Rectangle` com `stroke_width: 2` e `stroke_dash: "6;4"`. *Esperado:* a borda
+      tracejada, igual no Direct2D e no Skia (Opções → renderizador) e no navegador;
+    - um `Label` com `markup`, `wrap` e `<tag=warning/20,warning>um termo</tag>` no meio de um
+      texto longo, estreitando o rótulo. *Esperado:* o termo numa caixinha com fundo claro e
+      borda, que desce inteira para a linha de baixo quando não cabe (nunca partida);
+    - no tema, `"ScrollBar": { "width": 4, "thumb": "primary", "hover": { "thumb": "danger" } }`.
+      *Esperado:* as barras do `ScrollBox`, do `Memo`, do `ListBox`, do `TreeView`, do
+      `VirtualList` (com `scroll_bar: always`), da lista aberta do `ComboBox` (e da grade) finas
+      e na cor de destaque, vermelhas com o mouse em cima; a calha do `ScrollBox` mais estreita,
+      e as linhas do `VirtualList` mais largas (ocupam o que a barra deixou). Depois `"ScrollBox.fina": { "scroll_bar":
+      { "width": 2 } }` e um `ScrollBox` com `style: fina`. *Esperado:* só ele com a barra de 2;
+    - um `PaintCanvas` com `tool: arrow` (o exemplo Paint ainda não tem os botões dessas duas):
+      arraste. *Esperado:* a prévia e a
+      seta com a ponta cheia, na espessura do pincel; Ctrl+Z desfaz. Ferramenta `text`: clique,
+      escreva "Câmera 3" (Shift+Enter quebra a linha) e Enter. *Esperado:* o texto na fonte do
+      controle e na cor 1, que vira pixel (gravar o PNG leva o texto; não se edita depois); Esc
+      desiste. No navegador (a IDE lite), o mesmo (conferido no item 176).
+
+173. **Os diálogos, as abas, a paleta e os avisos** (23/11). Num
+    app de exemplo (o `Abas` serve para as abas) e na galeria da IDE:
+    - `prompt(ui, "Novo perfil", "Nome do perfil:", "Padrão", |ui, nome| ...)` num botão.
+      *Esperado:* a caixa do `message_dlg` com o campo embaixo do rótulo, o texto "Padrão"
+      selecionável e o cursor nele; Enter confirma (chega `Some("...")`), Esc e Cancelar dão
+      `None`. Com `set_prompt_required(ui, caixa, true)` e o campo vazio (ou só espaços), o OK
+      fica desligado e o Enter não fecha;
+    - `let c = confirm(...); set_dialog_icon(ui, c, "delete", Some(ColorRef::Token("danger".into())))`
+      e `set_dialog_icon(ui, show_message(ui, "Pronto."), "", Some(Color::rgb(0x6A, 0x1B, 0x9A).into()))`.
+      *Esperado:* o círculo vermelho com a lixeira na cor sobre o perigo; no segundo, o "i" de
+      sempre num círculo roxo, legível. Sem a chamada, tudo como antes. O mesmo pelo Object
+      Inspector, num `MessageDialog` com `icon`, `icon_color`, `input` e `required`;
+    - num form com duas abas (`TabStrip` com páginas), `ui.show_modal_in(frm_pergunta,
+      página_da_aba_1, |ui, r| ...)`. *Esperado:* o form centrado sobre a página, com o fundo
+      escurecido só nela; clicar na página atrás não faz nada, o Tab fica no form e o Esc fecha
+      como `cancel`. Enquanto isso, a aba 2, a barra do form e as outras janelas respondem.
+      Arranque a aba 1 para outra janela com a pergunta aberta: *Esperado:* ela vai junto; feche
+      essa janela: *Esperado:* a função recebe `cancel`;
+    - uma `CommandPalette` com `items` com `id`, `category` e `description` e `Ctrl+K` chamando
+      `CommandPalette::open`. *Esperado:* abre por cima com a busca limpa e o foco; os comandos
+      agrupados pela categoria, a descrição embaixo do nome; "configuracoes" acha "Configurações";
+      Enter escolhe (o `on_select` com o `id` e o nome), a paleta some, e ao abrir de novo o
+      escolhido está em "Recentes", em cima. Com um `on_query_change` que escreve no console,
+      digitar rápido "clientes" dá um aviso só, ~200 ms depois de parar;
+    - num form com `TitleBar` (`window_settings`/barra própria), `notify(ui, "Salvo", "...",
+      ToastKind::Success, 4000)`. *Esperado:* o aviso abaixo da barra, sem cobrir os botões
+      dela. Depois um `ToastStack` posto pelo designer no canto de baixo: *Esperado:* os avisos
+      nele. Na galeria, o `ToastStack` aparece com dois avisos;
+    - no tema do projeto, `"TabStrip.tab": { "fill": "surface_2", "text": "text_muted",
+      "hover": { "fill": "surface" }, "checked": { "fill": "primary/20", "text": "primary" } }`
+      e uma `TabStrip` com `fill` próprio. *Esperado:* a aba ativa com o fundo e o texto do
+      `checked` (não some mais no `fill` da faixa), as outras com os seus; sem o estilo, como
+      antes. Igual no Direct2D e no Skia (Opções → renderizador) e no navegador;
+    - `hover_preview: true` numa `TabStrip` com páginas: passe por todas as abas e pare o mouse
+      sobre uma que não é a ativa. *Esperado:* depois de meio segundo, o título e a miniatura da
+      página embaixo da aba (a de quando ela foi vista por último); some ao sair da aba ou
+      clicar. Uma aba ainda não mostrada não tem prévia;
+    - `hit_tabs_only: true` numa `TabStrip` por cima de uma `TitleBar` (o `Abas`). *Esperado:*
+      arrastar pela parte vazia da faixa move a janela; as abas continuam clicáveis e
+      arrastáveis. Com `drop_types: "aylis-tab"` na barra e o `on_drop` dela chamando
+      `TabStrip::receive_drag(ui, faixa, &dados, None)`, a aba de outra janela solta na parte vazia
+      entra no fim;
+    - um `EmptyState` novo pelo designer. *Esperado:* sem o botão "Limpar filtros".
+
+174. **Janelas e sistema** (23/11). O exemplo novo `desktop_checks` tem um cenário por item (`cargo run
+    -p aylis-platform-winit --example desktop_checks -- <cenário>`, a lista no começo do
+    arquivo). O que não deu para conferir aqui (a máquina estava em uso):
+    - `desktop_checks keys`: aperte uma letra na janela de cima, Caps Lock, outra letra, e clique
+      na de baixo e aperte outra. *Esperado:* `caps true` depois do Caps Lock, `num` conforme o
+      Num Lock, e o `form` e o `ativo` da janela em que a tecla chegou;
+    - `desktop_checks tray` (com `--features tray`): clique direito no ícone duas vezes, e espere
+      os 3 s. *Esperado:* o primeiro clique escreve `on_context` e não abre o menu; o segundo
+      abre; aos 3 s o menu abre sozinho junto do mouse;
+    - `desktop_checks transparency`, e desligue e ligue os "Efeitos de transparência"
+      (Configurações → Personalização → Cores). *Esperado:* `on_transparency_change` com
+      `false` e depois `true` (em até 1 s);
+    - `desktop_checks single`, e com ele aberto, `desktop_checks single a b` noutro terminal.
+      *Esperado:* a segunda escreve que sai, e a primeira vem para a frente e escreve
+      `on_second_instance` com `a` e `b`;
+    - com os dois monitores ligados, `desktop_checks monitors`, troque o cabo de um monitor de
+      porta e rode de novo. *Esperado:* o `device` (`\\.\DISPLAYn`) pode mudar; o `device_path`
+      de cada aparelho não muda;
+    - `desktop_checks border` e `desktop_checks border none full custom` (no monitor com a cor
+      de destaque nas bordas ligada, em Configurações → Personalização → Cores). *Esperado:*
+      nenhuma linha colorida em volta da tela cheia;
+    - `desktop_checks topmost`, e o Gerenciador de Tarefas com "Sempre visível" por cima dela.
+      *Esperado:* `on_topmost_lost`, e 1 s depois ela volta para cima, sem tirar o foco do
+      Gerenciador.
+175. **A rede e o `McpServer`** (23/11; os guias
+    [rede.md](rede.md) e [mcp.md](mcp.md)). Os testes com servidores locais passam; falta o que
+    só dá para ver com um cliente de verdade:
+    - `cargo run -p aylis-providers --features http,websocket --example network`. *Esperado:* o
+      `GET` de `https://example.com/` com 200 e o eco do WebSocket (`wss://ws.postman-echo.com/raw`)
+      devolvendo "olá" (conferido aqui em 23/11). Com outro endereço:
+      `-- https://httpbin.org/status/404 wss://...`: o 404 chega como resposta, não como erro;
+    - o mesmo `HttpClient` num app publicado para a web (`aylis-tool publish ... --target web`):
+      o pedido sai pelo `fetch` do navegador (a aba Rede do navegador mostra), e um `http://` de
+      outro site é recusado antes de sair;
+    - `cargo run -p aylis-remote --example mcp_app`, e no Claude Desktop a entrada que ele
+      escreve (`claude_desktop_config.json`, o `mcp_app.exe --mcp-stdio estoque-exemplo`),
+      reiniciando o Claude Desktop. *Esperado:* o servidor aparece com a versão 1.2.0; no chat,
+      "qual o saldo do produto A3?" chama a ferramenta "Saldo de um produto" (sem pedir
+      confirmação: só leitura), o terminal do exemplo escreve a chamada e o tempo; o recurso
+      "Leia-me" e o prompt "Relatório de um produto" aparecem no menu de anexos e de prompts. Com
+      o exemplo fechado, o Claude Desktop diz que o app não está aberto. Também confere que o
+      Claude Desktop (um pacote MSIX) enxerga o arquivo da porta e do token em
+      `%LOCALAPPDATA%\aylis\mcp-apps` gravado pelo app aberto fora dele;
+    - a mesma linha do `claude mcp add` no Claude Code: `/mcp` mostra as ferramentas, os
+      recursos e os prompts; desligar uma ferramenta em execução (`enabled`) atualiza a lista
+      sem reconectar.
+176. **O desenho: SVG, texto e camadas** (23/11). Num app de exemplo, no Direct2D (o padrão no Windows), no Skia (Opções →
+    renderizador) e no navegador (publicado para a web), no Chrome e no Firefox:
+    - um `Svg` com um SVG que tenha `<clipPath>` (um círculo recortando uma foto em vetor),
+      `<mask>` (um degradê do branco ao preto apagando uma forma aos poucos) e `<pattern>` (um
+      fundo de listras ou de pontos). *Esperado:* os três efeitos iguais nos três
+      renderizadores e no Firefox/Chrome abertos lado a lado com o arquivo; redimensionar a
+      janela redesenha nítido;
+    - numa tela com uns 300 ícones SVG com máscara (um `Svg` repetido), role e passe o mouse.
+      *Esperado:* sem travar; parado, sem gastar (a pintura vem da imagem guardada);
+    - no projeto, Projeto → Fontes → Noto Emoji. Num `on_paint` próprio,
+      `TextStyle { color_glyphs: false, .. }` com `⚠ ✅ 😀 ❤️ 👍🏽`. *Esperado:* todos na cor do
+      texto, do mesmo tamanho e no mesmo lugar nos três; com `color_glyphs: true`, coloridos (o
+      `⚠` sem U+FE0F continua na cor do texto). Sem a Noto Emoji no projeto: o Direct2D tira a
+      cor, o navegador continua colorido (o esperado, documentado);
+    - no mesmo `on_paint`, um título com `letter_spacing: 3` alinhado à esquerda, no meio e à
+      direita, e um texto longo medido com `canvas.measure_text_wrapped(texto, &estilo, 200.0)`
+      e desenhado com `wrap` num retângulo desse tamanho. *Esperado:* as letras afastadas, sem
+      espaço sobrando depois da última (o centrado fica no meio de verdade); o texto quebrado
+      cabe exato no retângulo, sem "…" e sem linha cortada, igual nos três;
+    - a marca d'água: num `on_paint`, a imagem de uma câmera, `save_layer(0.9)`, dentro
+      `save_layer_blend(1.0, BlendMode::Difference, ...)` com um texto branco, e os dois
+      `restore`. *Esperado:* igual no Direct2D, no Skia e no navegador (a marca isolada na
+      camada); com `save_layer_blend(0.9, Difference, ...)` sem a camada de fora, o texto
+      inverte o vídeo por baixo nos três. Com uma grade de câmeras e a marca d'água em cada
+      célula, o quadro no Direct2D mais leve que antes;
+    - na IDE lite (no navegador), um `PaintCanvas` com `tool: text`: clique, escreva e Enter.
+      *Esperado:* o texto vira pixel na imagem, como no desktop (Ctrl+Z desfaz); o `draw_text`
+      pelo código devolve `true`.
+177. **A instância única, a captura de monitor e a tecla nas outras linguagens** (23/11). Na IDE recompilada:
+    - Projeto → Opções do projeto: "Instância única" com Quantas abrirem, Uma por usuário e Uma
+      na máquina, e a caixa "Permitir capturar a imagem de um monitor (capture_monitor)".
+      Escolha "Uma por usuário", marque a caixa e dê OK. *Esperado:* o `.aylisproj` com
+      `"single_instance": "user"` e `"allow_screen_capture": true`; reabrindo a tela, as duas
+      como ficaram; voltando a "Quantas abrirem" e desmarcando, as duas chaves somem do arquivo.
+      Com a IDE em inglês, os rótulos em inglês;
+    - num projeto em Python (ou outra linguagem que não Rust), "Gerar código" e um
+      `on_key_down` que escreve `form`, `form_id`, `caps_lock` e `num_lock` do evento.
+      *Esperado:* o `KeyEvent` gerado tem os campos, e a tecla mostra o nome do form em que
+      chegou e o estado do Caps Lock.
 
 ## Os ajustes de 08/11 que faltam conferir
 

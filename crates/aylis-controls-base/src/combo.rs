@@ -49,6 +49,9 @@ pub const ARROW_ROOM: f32 = 18.0;
 /// - `values`: o código de cada opção (separados por `;`, como `items`); `value` lê e escolhe
 ///   pelo código (sem `values`, pelo texto). Ligado a um dataset, `items` e `values` vêm da
 ///   lista e `value` grava o código.
+/// - `label`, `clear_button` e o estilo `outlined` como no `Edit` (a mesma moldura,
+///   [`crate::field`]): o rótulo no lugar do texto sem opção e, com foco ou opção, pequeno
+///   sobre a borda; o "×" volta a nenhuma opção (`item_index` -1, com `on_change`).
 pub struct ComboBox {
     pub base: ControlBase,
     /// As opções da lista, separadas por `;`.
@@ -74,14 +77,22 @@ pub struct ComboBox {
     /// Quantas linhas a lista aberta mostra de uma vez (mínimo 1).
     /// Com mais opções, ela rola; sem lugar no form, mostra menos.
     pub drop_down_count: i64,
+    /// O rótulo do campo (como o do `Edit`); vazio: sem rótulo.
+    pub label: String,
+    /// O "×" que limpa a escolha, com uma opção escolhida.
+    pub clear_button: bool,
     popup: Option<ComponentId>,
+    /// Onde ficou o "×" na última pintura (local).
+    clear_rect: std::cell::Cell<Option<RectF>>,
+    /// O último aperto foi no "×": o clique que vem dele não abre a lista.
+    clear_press: bool,
 }
 
 impl Default for ComboBox {
     fn default() -> Self {
         let mut base = ControlBase::new(160.0, 32.0);
         base.set_can_focus(true).set_cursor(CursorShape::Pointer);
-        Self { base, items: String::new(), values: String::new(), item_index: -1, h_align: TextAlign::Leading, trimming: Trimming::Character, arrow: ComboArrow::Chevron, sensitive: false, groups: String::new(), disabled_items: String::new(), drop_down_count: DEFAULT_ROWS, popup: None }
+        Self { base, items: String::new(), values: String::new(), item_index: -1, h_align: TextAlign::Leading, trimming: Trimming::Character, arrow: ComboArrow::Chevron, sensitive: false, groups: String::new(), disabled_items: String::new(), drop_down_count: DEFAULT_ROWS, label: String::new(), clear_button: false, popup: None, clear_rect: std::cell::Cell::new(None), clear_press: false }
     }
 }
 
@@ -209,6 +220,13 @@ impl ComboBox {
         let (top, visible) = drop_place(rect.offset(0.0, -area.y), area.height, wanted);
         let top = top + area.y;
         let height = popup_height(visible);
+        // A barra da lista: a do tema (`ScrollBar`) com o `scroll_bar` do estilo do ComboBox: o
+        // estilo do campo muda a barra da lista dele.
+        let theme = ctx.ui.theme_of(ctx.id);
+        let mut classes = Vec::new();
+        self.class_chain(&mut classes);
+        let own_bar = theme.resolve(&classes, self.base.style(), self.base.state()).scroll_bar;
+        let bar = theme.scroll_bar(own_bar.as_deref(), false).width.unwrap_or(BAR);
         let popup = ComboPopup {
             base: ControlBase::new(rect.width, height),
             owner: ctx.id,
@@ -220,6 +238,9 @@ impl ComboBox {
             touch_rest: 0.0,
             dragging: None,
             bar_press: false,
+            bar,
+            own_bar,
+            bar_hover: false,
         };
         let id = ctx.ui.add(popup, root);
         if let Some(cb) = ctx.ui.control_mut(id) {
@@ -268,14 +289,34 @@ impl Component for ComboBox {
         sensitive: bool => "Behavior",
         groups: String as List => "Data",
         disabled_items: String as List => "Data",
-        drop_down_count: i64 => "Behavior";
+        drop_down_count: i64 => "Behavior",
+        label: String => "Appearance",
+        clear_button: bool => "Behavior";
         events: on_change: String;
         computed: value: String => value / set_value
     }
 
     fn click(&mut self, ctx: &mut EventCtx<'_>) {
+        if std::mem::take(&mut self.clear_press) {
+            return;
+        }
         if self.popup.is_some() { self.close(ctx) } else { self.open(ctx) }
         ctx.fire("on_click", EventArgs::None);
+    }
+
+    // O "×" limpa a escolha (como o do `Edit`), sem abrir a lista.
+    fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
+        self.clear_press = false;
+        if self.clear_rect.get().is_some_and(|r| r.inflate(4.0).contains(event.position)) {
+            self.clear_press = true;
+            self.close(ctx);
+            if self.item_index >= 0 {
+                self.item_index = -1;
+                ctx.fire("on_change", EventArgs::Text(String::new()));
+            }
+            ctx.repaint();
+            ctx.set_handled();
+        }
     }
 
     // As opções para leitores de tela e automação: escolher uma não precisa abrir a lista.
@@ -323,15 +364,37 @@ impl Component for ComboBox {
 
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
         let s = ctx.style;
-        canvas.fill_rect(ctx.rect, s.radius, &Brush::Solid(s.fill));
-        if s.border_width > 0.0 {
-            canvas.stroke_rect(ctx.rect, s.radius, &Stroke::new(s.border_color, s.border_width));
+        // A moldura e o rótulo do `Edit`: a mesma peça, sem a linha de baixo dos looks (o
+        // ComboBox não a tinha).
+        let chosen = self.item_index >= 0 && !self.text().is_empty();
+        let frame = crate::field::FieldFrame {
+            label: &self.label,
+            error: false,
+            has_value: chosen,
+            border: true,
+            underline: false,
+            empty_style: None,
+        };
+        frame.paint_box(canvas, ctx, s, ctx.rect);
+        let floating = frame.paint_label(canvas, ctx, s, ctx.rect);
+        let mut inner = frame.inner(ctx, s, ctx.rect, floating);
+        inner.width = (inner.width - ARROW_ROOM).max(0.0);
+        if self.clear_button && self.item_index >= 0 && !ctx.state.disabled {
+            let icon = crate::field::FieldIcon::of(ctx, "ComboBox", false);
+            self.clear_rect.set(Some(icon.paint_clear(canvas, ctx, &mut inner)));
+        } else {
+            self.clear_rect.set(None);
         }
-        let inner = ctx.rect.deflate(s.padding);
         let mut text = ctx.text_style();
         text.h_align = self.h_align;
         text.trimming = self.trimming;
-        canvas.draw_text(self.text(), RectF::new(inner.x, inner.y, inner.width - ARROW_ROOM, inner.height), &text);
+        if !chosen && !floating && !self.label.is_empty() {
+            // Sem opção e sem foco: o rótulo no lugar do texto, como o placeholder do `Edit`.
+            text.color = crate::edit::placeholder_color(ctx.theme);
+            canvas.draw_text(&ctx.ui.tr(&self.label), inner, &text);
+        } else {
+            canvas.draw_text(self.text(), inner, &text);
+        }
         // seta
         if self.arrow == ComboArrow::Triangle {
             // 10 × 5, a 8 px da direita.
@@ -371,8 +434,9 @@ impl aylis_core::LayoutHooks for ComboBox {
     /// Tabernáculo; antes, a conta à mão no app).
     fn auto_width(&self, ui: &aylis_core::Ui, id: ComponentId) -> Option<f32> {
         let style = aylis_core::TextStyle { font: ui.font_of(id), ..Default::default() };
-        let widest = self.item_list().iter().map(|t| ui.measure_text(t, &style).width).fold(0.0f32, f32::max);
-        Some((widest + ui.style_padding(id).horizontal() + ARROW_ROOM + 2.0).ceil())
+        let widest = self.item_list().iter().chain(std::iter::once(&self.label.as_str())).map(|t| ui.measure_text(t, &style).width).fold(0.0f32, f32::max);
+        let clear = if self.clear_button { crate::field::FieldIcon::of_ui(ui, id, "ComboBox", false).clear_side() + 4.0 } else { 0.0 };
+        Some((widest + clear + ui.style_padding(id).horizontal() + ARROW_ROOM + 2.0).ceil())
     }
 
     fn auto_height(&self, ui: &aylis_core::Ui, id: ComponentId, _width: f32) -> Option<f32> {
@@ -430,6 +494,11 @@ struct ComboPopup {
     dragging: Option<f32>,
     /// O último aperto foi na barra: o clique que vem dele não escolhe a linha.
     bar_press: bool,
+    /// A largura da barra (a do tema, ou [`BAR`]) e o `scroll_bar` do estilo do ComboBox.
+    bar: f32,
+    own_bar: Option<Box<aylis_core::theme::Style>>,
+    /// O mouse sobre o polegar.
+    bar_hover: bool,
 }
 
 impl ComboPopup {
@@ -454,7 +523,7 @@ impl ComboPopup {
         let track = b.height - 4.0;
         let len = (track * self.visible as f32 / total as f32).max(20.0).min(track);
         let at = 2.0 + (track - len) * self.first as f32 / self.max_first().max(1) as f32;
-        Some(RectF::new(b.width - BAR - 3.0, at, BAR, len))
+        Some(RectF::new(b.width - self.bar - 3.0, at, self.bar, len))
     }
 
     /// Põe o centro do polegar em `y` (no controle): a primeira linha proporcional. Devolve se
@@ -517,6 +586,11 @@ impl Component for ComboPopup {
             }
             return;
         }
+        let over = self.thumb().is_some_and(|t| t.inflate(2.0).contains(event.position));
+        if over != self.bar_hover {
+            self.bar_hover = over;
+            ctx.repaint();
+        }
         if self.thumb().is_some_and(|t| event.position.x >= t.x - 3.0) {
             if self.hovered.take().is_some() {
                 ctx.repaint();
@@ -573,7 +647,7 @@ impl Component for ComboPopup {
         text.color = theme.color("text");
         // Com a barra, as linhas param antes dela.
         let thumb = self.thumb();
-        let room = if thumb.is_some() { BAR + 4.0 } else { 0.0 };
+        let room = if thumb.is_some() { self.bar + 4.0 } else { 0.0 };
         for (row, i) in (self.first..self.items.len()).take(self.visible).enumerate() {
             let line = RectF::new(r.x + 2.0, r.y + 2.0 + row as f32 * ROW, r.width - 4.0 - room, ROW);
             let item = &self.items[i];
@@ -598,8 +672,17 @@ impl Component for ComboPopup {
             canvas.draw_text(&item.text, RectF::new(line.x + indent, line.y, line.width - indent - 10.0, line.height), &t);
         }
         if let Some(thumb) = thumb {
-            let alpha = if self.dragging.is_some() { 0.6 } else { 0.35 };
-            canvas.fill_rect(thumb.offset(r.x, r.y), BAR / 2.0, &Brush::Solid(theme.color("text_muted").with_opacity(alpha)));
+            let dragging = self.dragging.is_some();
+            let alpha = if dragging { 0.6 } else { 0.35 };
+            let look = theme.scroll_bar(self.own_bar.as_deref(), dragging || self.bar_hover);
+            let bar = crate::scroll_bar::Bar {
+                width: self.bar,
+                track: look.track,
+                thumb: look.thumb.unwrap_or(theme.color("text_muted").with_opacity(alpha)),
+                radius: look.radius,
+            };
+            let track = RectF::new(r.right() - self.bar - 3.0, r.y + 2.0, self.bar, r.height - 4.0);
+            bar.paint(canvas, Some(track), thumb.offset(r.x, r.y), self.bar / 2.0);
         }
     }
 }

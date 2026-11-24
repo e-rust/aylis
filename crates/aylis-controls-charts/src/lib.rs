@@ -7,11 +7,13 @@ mod chart;
 mod graph;
 mod map;
 mod records;
+mod sync;
 pub mod bi;
 pub mod trader;
 
 pub use chart::{CHART_SERIES, Chart, ChartKind, LegendPosition, PointStyle, TitleAlign, ValueFormat, Series, SeriesFill, SeriesKind, parse_time};
 pub use graph::{GraphCable, GraphNode, GraphSelection, NodeGraph};
+pub use sync::{ChartSync, SYNC_EVENT, SYNC_RANGE, SyncEvent, SyncKind};
 pub use map::{MAP_MARKER, MAP_POINT, MapMarker, MapPoint, MapView, project, unproject};
 
 pub(crate) use aylis_core::leaf_control;

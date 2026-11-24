@@ -71,8 +71,11 @@ impl App {
             attributes = attributes.with_window_icon(self.icon.clone());
         }
         let owner = self.ui.form_owner(form).and_then(|o| self.window_of(o)).map(|w| w.window.clone());
-        // Onde a janela estava (o app guardou): vale se ainda cair numa tela ligada.
-        let placement = self.ui.window_placement(form);
+        // Onde a janela estava (o app guardou): vale se ainda cair numa tela ligada. O lugar que
+        // a própria plataforma anotou na abertura anterior só vale com `remember_placement`:
+        // sem ele, o `position` do form (o `center`) vencia a partir da segunda abertura.
+        let remember = matches!(self.ui.get_prop(form, "remember_placement"), Ok(PropValue::Bool(true)));
+        let placement = self.ui.window_placement(form).filter(|p| remember || !self.recorded_placements.get(&form).is_some_and(|r| r == p));
         let saved = placement.filter(|p| {
             event_loop.available_monitors().any(|m| {
                 let (at, size) = (m.position(), monitors::size(&m));
@@ -248,6 +251,9 @@ impl App {
         // tarefas.
         #[cfg(windows)]
         win32::attach(&window, form, &self.win_proxy);
+        // Sempre por cima: o aviso de quando outra janela sempre por cima passa à frente.
+        #[cfg(windows)]
+        win32::watch_topmost(form, self.window_level(form) == winit::window::WindowLevel::AlwaysOnTop);
         // O fundo que a janela mostra antes do primeiro quadro: a cor do form.
         #[cfg(windows)]
         win32::set_background(form, self.erase_color(form));
@@ -348,6 +354,10 @@ impl App {
             self.span_checks.push(form);
         }
         self.sync_form_size(index);
+        // O monitor da janela já vale no `on_window_created` (antes, só na varredura periódica
+        // ou ao mover: quem decidia pelo monitor ali via `None`).
+        let monitor = self.windows[index].window.current_monitor().and_then(|m| monitors::index_of(self.ui.monitors(), &m));
+        self.ui.set_form_monitor(form, monitor);
         // A janela existe (com o alvo de desenho e, no Windows, o HWND em
         // `aylis::platform::win::hwnd`): o `on_show` vem antes dela, então quem precisa da
         // janela (a barra de título, a posição) usa este (o relatório do Tabernáculo, R03).
@@ -363,6 +373,13 @@ impl App {
                 win32::set_cloaked(&w.window, false);
                 #[cfg(not(windows))]
                 w.window.set_visible(true);
+                // Mostrada encoberta, a janela não ganhava a ativação ao ser descoberta: o form
+                // principal podia abrir atrás de outra janela e sem o teclado.
+                // A ativação pedida vem agora, salvo `activate_on_show` desligado ou `no_activate`.
+                #[cfg(windows)]
+                if self.takes_focus(form) && w.window.is_minimized() != Some(true) {
+                    bring_to_front(&self.ui, form, &w.window);
+                }
             }
         }
         Ok(())
@@ -412,6 +429,8 @@ impl App {
             self.update_keep_awake();
             for form in closing {
                 self.ui.set_form_gpu(form, None);
+                #[cfg(windows)]
+                win32::watch_topmost(form, false);
                 let name = self.ui.name(form).unwrap_or_default().to_string();
                 self.ui.report(&aylis_core::activity::Activity::Custom { name: "janela_fechada", value: &name });
             }
@@ -520,6 +539,17 @@ impl App {
         };
         let fill = own.unwrap_or_else(|| self.ui.background_color(form));
         Some(if fill.a == 255 { fill } else { self.ui.theme().color("background") })
+    }
+
+    /// O form aceita ganhar o foco quando a janela aparece ou se move: não, com o
+    /// `activate_on_show` desligado ou o `no_activate` do `WindowSettings` (o painel de avisos
+    /// que não tira o teclado de quem está usando).
+    #[cfg_attr(any(web, mobile), allow(dead_code))]
+    pub(crate) fn takes_focus(&self, form: ComponentId) -> bool {
+        if matches!(self.ui.get_prop(form, "activate_on_show"), Ok(PropValue::Bool(false))) {
+            return false;
+        }
+        !(self.ui.window_settings_of(form).is_some() && self.ui.window_options(form).no_activate)
     }
 
     /// A animação do sistema na janela do form (o `animation` do `WindowSettings`).

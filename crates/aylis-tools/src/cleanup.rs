@@ -563,8 +563,11 @@ mod tests {
         assert!(!target.join(".aylis-cleanup").exists(), "ocupado: a hora não é marcada");
         assert!(automatic_unless(&target, false).is_some());
         assert!(target.join(".aylis-cleanup").exists());
-        // Este próprio teste roda sob o cargo: a máquina está ocupada.
-        assert!(rust_running());
+        // Este próprio teste, rodado pelo `cargo test` (que define `CARGO`), está sob o cargo:
+        // a máquina está ocupada. Pelo `aylis-tool test-all`, o pai é o `aylis-tool`.
+        if std::env::var_os("CARGO").is_some() {
+            assert!(rust_running());
+        }
         let _ = std::fs::remove_dir_all(&target);
     }
 

@@ -1,0 +1,560 @@
+{
+  "_": "O que cada alvo de teste lê em execução, fora do executável (aylis-tool test-all): \"pure\" (nada), \"ignored\" (todos os testes com #[ignore]), uma lista de pastas e arquivos do repositório, ou {\"always\": motivo} para o que as marcas de arquivo não pegam (ferramentas das linguagens, hardware, compilar projetos, medir tempo). Alvo novo sem declaração roda sempre.",
+  "abas/arrastar": [
+    "examples/Abas"
+  ],
+  "abas/bin:abas": "pure",
+  "abas/lib": "pure",
+  "aylis-3d/clip": "pure",
+  "aylis-3d/fbx": "pure",
+  "aylis-3d/gpu": {
+    "always": "GPU (wgpu)"
+  },
+  "aylis-3d/lib": "pure",
+  "aylis-3d/model": "pure",
+  "aylis-3d/pbr": {
+    "always": "GPU (wgpu)"
+  },
+  "aylis-3d/rays": {
+    "always": "GPU com traçado de raios (wgpu, DXC)"
+  },
+  "aylis-3d/touch": "pure",
+  "aylis-accesskit-android/lib": "pure",
+  "aylis-build/build": "pure",
+  "aylis-build/lib": "pure",
+  "aylis-capi/capi": "pure",
+  "aylis-capi/lib": "pure",
+  "aylis-capi/post": {
+    "always": "janela de verdade e laço de eventos (harness = false)"
+  },
+  "aylis-controls-base/lib": {
+    "always": "textmate.rs: uma tecla < 50 ms"
+  },
+  "aylis-controls-charts/lib": "pure",
+  "aylis-controls-device/lib": "pure",
+  "aylis-controls-editors/lib": "pure",
+  "aylis-controls-industrial/lib": "pure",
+  "aylis-controls/analytics_performance": "pure",
+  "aylis-controls/anchors": "pure",
+  "aylis-controls/animated_text": "pure",
+  "aylis-controls/auto_size": "pure",
+  "aylis-controls/automation": "pure",
+  "aylis-controls/bi_trader": "pure",
+  "aylis-controls/borders": "pure",
+  "aylis-controls/catalogs": "pure",
+  "aylis-controls/change_by_code": "pure",
+  "aylis-controls/charts": "pure",
+  "aylis-controls/clipboard": "pure",
+  "aylis-controls/code_editor": "pure",
+  "aylis-controls/code_editor_extras": "pure",
+  "aylis-controls/combo_drop_down": "pure",
+  "aylis-controls/controls": "pure",
+  "aylis-controls/crop_box": "pure",
+  "aylis-controls/device": "pure",
+  "aylis-controls/drag_drop": "pure",
+  "aylis-controls/editors": "pure",
+  "aylis-controls/emoji": "pure",
+  "aylis-controls/font_names": "pure",
+  "aylis-controls/form_files_drop": "pure",
+  "aylis-controls/giant_screen": [
+    "medicoes/giant_screen.json"
+  ],
+  "aylis-controls/image_sources": "pure",
+  "aylis-controls/industrial": "pure",
+  "aylis-controls/interceptor": "pure",
+  "aylis-controls/keyboard": "pure",
+  "aylis-controls/label_lines": "pure",
+  "aylis-controls/languages": "pure",
+  "aylis-controls/large_ui": "pure",
+  "aylis-controls/lib": "pure",
+  "aylis-controls/list_animations": "pure",
+  "aylis-controls/media_card_rename": "pure",
+  "aylis-controls/memo_scroll": "pure",
+  "aylis-controls/menu_items": "pure",
+  "aylis-controls/modern": "pure",
+  "aylis-controls/more_controls": "pure",
+  "aylis-controls/orientation": "pure",
+  "aylis-controls/outside_the_form": "pure",
+  "aylis-controls/overscroll_axes": "pure",
+  "aylis-controls/paint": "pure",
+  "aylis-controls/palette": "pure",
+  "aylis-controls/panel_click": "pure",
+  "aylis-controls/panel_hover": "pure",
+  "aylis-controls/partial_paint": [
+    "resources/fonts/inter/Inter[opsz,wght].ttf"
+  ],
+  "aylis-controls/pending": "pure",
+  "aylis-controls/plain_text": [
+    "crates/aylis-controls/tests/visual"
+  ],
+  "aylis-controls/push": "pure",
+  "aylis-controls/questions": "pure",
+  "aylis-controls/radio": "pure",
+  "aylis-controls/recording": "pure",
+  "aylis-controls/recording_widgets": "pure",
+  "aylis-controls/render_rgba": "pure",
+  "aylis-controls/render_settings": "pure",
+  "aylis-controls/reveal": "pure",
+  "aylis-controls/reveal_highlight": "pure",
+  "aylis-controls/rich_editor": "pure",
+  "aylis-controls/rtl": "pure",
+  "aylis-controls/scale": "pure",
+  "aylis-controls/scroll_box": "pure",
+  "aylis-controls/scroll_wheel": "pure",
+  "aylis-controls/seekbar_labels": "pure",
+  "aylis-controls/shapes": "pure",
+  "aylis-controls/span_monitors": "pure",
+  "aylis-controls/swipe": "pure",
+  "aylis-controls/system_bars": "pure",
+  "aylis-controls/tab_pages": "pure",
+  "aylis-controls/tab_strip": "pure",
+  "aylis-controls/tab_strip_drag": "pure",
+  "aylis-controls/tabernaculo": "pure",
+  "aylis-controls/tabernaculo_controles": "pure",
+  "aylis-controls/tabernaculo_followup": "pure",
+  "aylis-controls/tabernaculo_janelas": "pure",
+  "aylis-controls/tabernaculo_layout": "pure",
+  "aylis-controls/tabernaculo_rendering": [
+    "crates/aylis-ide/resources/aylis-ide.ico"
+  ],
+  "aylis-controls/text": "pure",
+  "aylis-controls/text_menu": "pure",
+  "aylis-controls/text_metrics": [
+    "resources/fonts/inter/Inter[opsz,wght].ttf"
+  ],
+  "aylis-controls/text_modes": [
+    "resources/fonts/inter/Inter[opsz,wght].ttf"
+  ],
+  "aylis-controls/titlebar": "pure",
+  "aylis-controls/transitions": "pure",
+  "aylis-controls/tray": "pure",
+  "aylis-controls/tree_icons": "pure",
+  "aylis-controls/typed_access": "pure",
+  "aylis-controls/url_scheme": "pure",
+  "aylis-controls/view_change": "pure",
+  "aylis-controls/virtual_list": "pure",
+  "aylis-controls/virtual_list_selection": "pure",
+  "aylis-controls/vuetify": "pure",
+  "aylis-controls/window_settings": "pure",
+  "aylis-controls/window_shape": "pure",
+  "aylis-controls/zoom": "pure",
+  "aylis-core/anim": "pure",
+  "aylis-core/busy": "pure",
+  "aylis-core/color_names": "pure",
+  "aylis-core/contrast": "pure",
+  "aylis-core/damage": "pure",
+  "aylis-core/date_features": "pure",
+  "aylis-core/exceptions": "pure",
+  "aylis-core/forms": "pure",
+  "aylis-core/fps": "pure",
+  "aylis-core/global_tr": "pure",
+  "aylis-core/gpu": "pure",
+  "aylis-core/ico_frames": "pure",
+  "aylis-core/image_cache": "pure",
+  "aylis-core/indexes": "pure",
+  "aylis-core/input": "pure",
+  "aylis-core/instances": "pure",
+  "aylis-core/keyboard": "pure",
+  "aylis-core/layout": "pure",
+  "aylis-core/lib": {
+    "always": "timing.rs mede atraso de park_until (< 1 ms)"
+  },
+  "aylis-core/paint": "pure",
+  "aylis-core/pinch": "pure",
+  "aylis-core/props": "pure",
+  "aylis-core/second_window": "pure",
+  "aylis-core/span": "pure",
+  "aylis-core/tasks": "pure",
+  "aylis-core/theme_tokens": "pure",
+  "aylis-core/timeout": "pure",
+  "aylis-core/tree": "pure",
+  "aylis-core/typed_handlers": "pure",
+  "aylis-core/values": "pure",
+  "aylis-d2d/images": "pure",
+  "aylis-d2d/lib": "pure",
+  "aylis-d2d/present": "pure",
+  "aylis-data/advanced": "pure",
+  "aylis-data/batch": "pure",
+  "aylis-data/data": "pure",
+  "aylis-data/dates": "pure",
+  "aylis-data/decimal": "pure",
+  "aylis-data/languages": "pure",
+  "aylis-data/lib": "pure",
+  "aylis-data/master_detail_delta": "pure",
+  "aylis-data/pending": "pure",
+  "aylis-data/questions": "pure",
+  "aylis-dbcontrols/bindings": "pure",
+  "aylis-dbcontrols/chart": "pure",
+  "aylis-dbcontrols/dbcontrols": "pure",
+  "aylis-dbcontrols/grid": {
+    "always": "pintura com 100 mil registros < 200 ms"
+  },
+  "aylis-dbcontrols/grid_extras": "pure",
+  "aylis-dbcontrols/grid_pictures": "pure",
+  "aylis-dbcontrols/grid_wheel": "pure",
+  "aylis-dbcontrols/huge_grid": "ignored",
+  "aylis-dbcontrols/lib": "pure",
+  "aylis-dbcontrols/more": "pure",
+  "aylis-dbcontrols/report": "pure",
+  "aylis-dbcontrols/server_query": "pure",
+  "aylis-dbcontrols/virtual_list": "pure",
+  "aylis-demos/demos": "pure",
+  "aylis-demos/lib": "pure",
+  "aylis-demos/visible": "pure",
+  "aylis-devlink/lib": "pure",
+  "aylis-docview/docs": [
+    "crates/aylis-docview/tests/data"
+  ],
+  "aylis-docview/lib": "pure",
+  "aylis-host/bin:aylis-host": "pure",
+  "aylis-host/bridge": {
+    "always": "bun e o cliente TypeScript (clients/typescript)"
+  },
+  "aylis-host/debug_languages": "ignored",
+  "aylis-host/language_projects": {
+    "always": "cria e roda projetos em TypeScript, C#, Java, Go, C++ e Pascal (ferramentas das linguagens)"
+  },
+  "aylis-host/languages": {
+    "always": "compila e roda os clientes nas linguagens (node, javac, go, dotnet, g++, fpc, python...)"
+  },
+  "aylis-host/python_backend": {
+    "always": "python"
+  },
+  "aylis-host/websocket": "pure",
+  "aylis-host/wss": "pure",
+  "aylis-ide-web/lib": "pure",
+  "aylis-ide/assets": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie",
+    "resources/fonts"
+  ],
+  "aylis-ide/bin:aylis-ide": "pure",
+  "aylis-ide/bindings": "pure",
+  "aylis-ide/code_menu": "pure",
+  "aylis-ide/code_navigation": "pure",
+  "aylis-ide/conditions": "pure",
+  "aylis-ide/datamodule": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
+  "aylis-ide/debug": "ignored",
+  "aylis-ide/designer_keys": "pure",
+  "aylis-ide/devlink": "pure",
+  "aylis-ide/docs_fresh": [
+    "docs",
+    "crates",
+    "examples/Landing/assets/docs",
+    "examples/pacotes/BotaoContador"
+  ],
+  "aylis-ide/document": "pure",
+  "aylis-ide/editors": "pure",
+  "aylis-ide/form_roundtrip": [
+    "examples"
+  ],
+  "aylis-ide/frames": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
+  "aylis-ide/grammars": [
+    "clients/cpp/aylis.hpp",
+    "clients/cpp/demo.cpp",
+    "clients/python/aylis_client.py",
+    "clients/typescript/aylis.ts"
+  ],
+  "aylis-ide/headless": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
+  "aylis-ide/hidden": "pure",
+  "aylis-ide/ide": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie",
+    "crates/aylis-ide/resources/locales",
+    "examples/Landing"
+  ],
+  "aylis-ide/languages": "pure",
+  "aylis-ide/lib": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
+  "aylis-ide/mcp": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
+  "aylis-ide/mcp_choices": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
+  "aylis-ide/mcp_insight": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
+  "aylis-ide/mcp_project_tools": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
+  "aylis-ide/mcp_tokens": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
+  "aylis-ide/options": "pure",
+  "aylis-ide/options_sources": "pure",
+  "aylis-ide/perf": "ignored",
+  "aylis-ide/project_colors": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
+  "aylis-ide/records_editor": "pure",
+  "aylis-ide/rename": [
+    "examples/Relatorios"
+  ],
+  "aylis-ide/report": "pure",
+  "aylis-ide/save_before_build": "pure",
+  "aylis-ide/scroll_gpu": {
+    "always": "GPU e janela (harness = false), mede tempos; lê examples/ProcessamentoAssincrono"
+  },
+  "aylis-ide/scroll_profile": "ignored",
+  "aylis-ide/tabernaculo": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
+  "aylis-ide/toolpacks": "pure",
+  "aylis-ide/usages": [
+    "examples/Relatorios"
+  ],
+  "aylis-ide/variants": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
+  "aylis-ide/views": "pure",
+  "aylis-ide/visual": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie",
+    "crates/aylis-ide/tests/visual",
+    "examples/Calculadora",
+    "examples/Paint",
+    "examples/IBGE",
+    "examples/Player"
+  ],
+  "aylis-json/json": [
+    "crates/aylis-platform-winit/examples/forms/registration.json"
+  ],
+  "aylis-json/lib": "pure",
+  "aylis-json/reload": "pure",
+  "aylis-json/tab_order": "pure",
+  "aylis-json/views": "pure",
+  "aylis-markdown/lib": "pure",
+  "aylis-markdown/markdown": "pure",
+  "aylis-media/audio_outputs": {
+    "always": "saídas de áudio reais, loopback e mixer; mede tempo"
+  },
+  "aylis-media/camera": {
+    "always": "câmera real"
+  },
+  "aylis-media/http": "pure",
+  "aylis-media/lib": "pure",
+  "aylis-media/media": {
+    "always": "Media Foundation e reprodução de áudio no VideoPlayer"
+  },
+  "aylis-media/microphone": {
+    "always": "microfone real"
+  },
+  "aylis-media/repaint": "pure",
+  "aylis-media/session": "pure",
+  "aylis-media/system": {
+    "always": "decodificador de vídeo do sistema (Media Foundation/GStreamer); lê crates/aylis-media/tests/data/sample.mp4"
+  },
+  "aylis-media/texture": {
+    "always": "GPU (Media Foundation + Direct3D) e limite de 5 s; lê crates/aylis-media/tests/data/sample.mp4"
+  },
+  "aylis-migrate/bin:aylis-migrate": [
+    "examples/ProcessamentoAssincrono"
+  ],
+  "aylis-project/agents_coverage": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
+  "aylis-project/assets": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie",
+    "resources/fonts"
+  ],
+  "aylis-project/check": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie",
+    "examples"
+  ],
+  "aylis-project/desktop_shell": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
+  "aylis-project/examples_typed_access": [
+    "examples"
+  ],
+  "aylis-project/frame_instances": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
+  "aylis-project/i18n": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
+  "aylis-project/lib": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
+  "aylis-project/multi_language": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
+  "aylis-project/packages": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie"
+  ],
+  "aylis-project/paths": [
+    "examples"
+  ],
+  "aylis-project/project": [
+    "resources/components.json",
+    "resources/icons",
+    "resources/lottie",
+    "examples/Landing"
+  ],
+  "aylis-project/published_version": "pure",
+  "aylis-project/sync_hand_edits": {
+    "always": "rustfmt"
+  },
+  "aylis-project/version": "pure",
+  "aylis-providers/lib": "pure",
+  "aylis-providers/ole": "pure",
+  "aylis-providers/pdf": "pure",
+  "aylis-providers/providers": "pure",
+  "aylis-providers/wmi": "pure",
+  "aylis-remote/catalog": [
+    "resources/components.json",
+    "crates/aylis/tests/catalog_enums.rs"
+  ],
+  "aylis-remote/change_events": "pure",
+  "aylis-remote/lib": "pure",
+  "aylis-remote/mcp": "pure",
+  "aylis-remote/protocol": "pure",
+  "aylis-remote/protocol_cost": "ignored",
+  "aylis-remote/script_profile": "pure",
+  "aylis-remote/webview_info": "pure",
+  "aylis-skia/images": "pure",
+  "aylis-skia/lib": "pure",
+  "aylis-tools/apps": {
+    "always": "cargo build -p aylis-host; lê examples/ e examples/scripts"
+  },
+  "aylis-tools/bin:aylis-tool": "pure",
+  "aylis-tools/build_index": {
+    "always": "compila um projeto com o cargo de verdade"
+  },
+  "aylis-tools/dap": {
+    "always": "rustc, CodeLLDB, python e debugpy"
+  },
+  "aylis-tools/environment": {
+    "always": "verificação de ambiente real (cargo, rustup, SDKs)"
+  },
+  "aylis-tools/lib": {
+    "always": "PowerShell, node, rpm, registro do Windows, PATH, tempo de CPU; lint/translations/installer leem o repositório inteiro"
+  },
+  "aylis-tools/lsp_servers": "ignored",
+  "aylis-tools/prelude_names": {
+    "always": "compila um projeto com todas as classes (cargo check)"
+  },
+  "aylis-tools/tools": {
+    "always": "PowerShell/sleep e verificação dos depuradores do sistema"
+  },
+  "aylis-tools/wsl": "ignored",
+  "aylis-vector/lib": "pure",
+  "aylis-vector/noto": [
+    "resources/lottie/noto"
+  ],
+  "aylis-vector/svg": "pure",
+  "aylis-web/lib": "pure",
+  "aylis-webview/environment": "pure",
+  "aylis-webview/lib": "pure",
+  "aylis-webview/native_slot": "pure",
+  "aylis/blend": "pure",
+  "aylis/catalog_enums": "pure",
+  "aylis/classes": "pure",
+  "aylis/colors_and_fonts": "pure",
+  "aylis/headless": "pure",
+  "aylis/lib": "pure",
+  "aylis/manual": "pure",
+  "aylis/no_delphi": {
+    "always": "percorre o repositório inteiro (rápido de rodar)"
+  },
+  "aylis/readmes": {
+    "always": "lê o Cargo.toml e o README de cada crate (rápido de rodar)"
+  },
+  "aylis/samples": "pure",
+  "calculadora/bin:calculadora": "pure",
+  "calculadora/lib": "pure",
+  "calculadora/motor": "pure",
+  "counter-button-aylis/lib": "pure",
+  "estresse3_d/bin:estresse3_d": "pure",
+  "estresse3_d/lib": "pure",
+  "galeria/bin:galeria": "pure",
+  "galeria/galeria": [
+    "examples/Galeria"
+  ],
+  "galeria/lib": "pure",
+  "grade_gigante/bin:grade_gigante": "pure",
+  "grade_gigante/lib": "pure",
+  "ibge/bin:ibge": "pure",
+  "ibge/lib": "pure",
+  "landing/bin:landing": "pure",
+  "landing/documentacao": [
+    "examples/Landing"
+  ],
+  "landing/lib": "pure",
+  "landing/pagina": [
+    "examples/Landing"
+  ],
+  "medidor-aylis/lib": "pure",
+  "ola_nome/bin:ola_nome": "pure",
+  "ola_nome/lib": "pure",
+  "ola_nome/saudar": [
+    "examples/OlaNome"
+  ],
+  "paint/bin:paint": "pure",
+  "paint/lib": "pure",
+  "player/bin:player": "pure",
+  "player/lib": "pure",
+  "player/seek_bar": {
+    "always": "toca um WAV no VideoPlayer (saída de áudio)"
+  },
+  "relatorios/bin:relatorios": "pure",
+  "relatorios/lib": "pure",
+  "relatorios/relatorios": [
+    "examples/Relatorios"
+  ],
+  "teste_aparelho/bin:teste_aparelho": "pure",
+  "teste_aparelho/lib": "pure"
+}

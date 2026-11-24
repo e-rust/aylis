@@ -36,15 +36,23 @@ impl App {
         {
             let w = &self.windows[index];
             let origin = w.window.inner_position().ok()?;
-            let top = crate::win32::top_level_at((origin.x as f64 + position.x) as i32, (origin.y as f64 + position.y) as i32)?;
-            let i = self.windows.iter().position(|o| crate::win32::hwnd_of(&o.window).is_some_and(|h| h.0 as isize == top))?;
-            (self.windows[i].form != w.form && self.windows[i].window.is_minimized() != Some(true)).then_some(i)
+            let i = self.app_window_at((origin.x as f64 + position.x) as i32, (origin.y as f64 + position.y) as i32)?;
+            (self.windows[i].form != w.form).then_some(i)
         }
         #[cfg(not(windows))]
         {
             let _ = (index, position);
             None
         }
+    }
+
+    /// A janela do app (o índice) que está à vista no ponto da tela (pixels físicos), pela ordem
+    /// real das janelas; `None` se a de cima é de outro programa, ou está minimizada.
+    #[cfg(windows)]
+    pub(crate) fn app_window_at(&self, x: i32, y: i32) -> Option<usize> {
+        let top = crate::win32::top_level_at(x, y)?;
+        let i = self.windows.iter().position(|o| crate::win32::hwnd_of(&o.window).is_some_and(|h| h.0 as isize == top))?;
+        (self.windows[i].window.is_minimized() != Some(true)).then_some(i)
     }
 
     /// Durante um arrasto que começou em `form`, o mouse fora da janela dele (ou dentro, mas
@@ -72,6 +80,18 @@ impl App {
             let local = (screen.0 - at.x as f64, screen.1 - at.y as f64);
             Some((self.windows[i].form, self.window_to_form(i, local.0, local.1, self.input_scale(i))))
         });
+        // Fora da janela de origem: primeiro a janela do app que está à vista no ponto, pela
+        // ordem real das janelas (a de cima, quando duas se cobrem). A busca retângulo a
+        // retângulo abaixo fica para quando a de cima não é do app ou não dá para saber (o
+        // soltar a partir da tela cheia se perdia num app com uma janela por monitor).
+        #[cfg(windows)]
+        if !inside && over.is_none() {
+            over = self.app_window_at(screen.0 as i32, screen.1 as i32).filter(|&i| i != index && self.windows[i].form != form).and_then(|i| {
+                let at = self.windows[i].window.inner_position().ok()?;
+                let local = (screen.0 - at.x as f64, screen.1 - at.y as f64);
+                Some((self.windows[i].form, self.window_to_form(i, local.0, local.1, self.input_scale(i))))
+            });
+        }
         if !inside && over.is_none() {
             for (i, other) in self.windows.iter().enumerate() {
                 if i == index || other.form == form || other.window.is_minimized() == Some(true) {
@@ -93,6 +113,18 @@ impl App {
         }
     }
 
+    /// O gesto do mouse em `form` não vai terminar (o soltar não chega: a janela perdeu o foco
+    /// ou a captura com o botão apertado): o arrasto em andamento é cancelado, como no Esc, e o
+    /// controle apertado é solto. Antes, só o `pointer_cancel` rodava, e o arrasto ficava ativo.
+    pub(crate) fn gesture_lost(&mut self, form: ComponentId) {
+        self.pointer_down = false;
+        let dragging = self.ui.cancel_drag(form);
+        self.ui.pointer_cancel(form);
+        if dragging {
+            self.after_input();
+        }
+    }
+
     /// O resto da entrada, para o form `form`.
     pub(crate) fn handle_input_for(&mut self, index: usize, event: &WindowEvent, form: ComponentId, scale: f64) -> bool {
         let modifiers = self.modifiers;
@@ -110,10 +142,10 @@ impl App {
                 if edge != self.windows[index].edge {
                     self.windows[index].edge = edge;
                     let w = &self.windows[index];
-                    w.window.set_cursor(match edge {
-                        Some(d) => winit::window::CursorIcon::from(d),
-                        None => input::cursor(w.cursor),
-                    });
+                    match edge {
+                        Some(d) => w.window.set_cursor(winit::window::CursorIcon::from(d)),
+                        None => w.window.set_cursor(self.cursor_of(&w.window, w.cursor)),
+                    }
                 }
                 // Arrastando com a janela de outro form por cima deste ponto: o destino é ela, e
                 // o form de baixo não recebe o movimento (senão o soltar caía nele).
@@ -182,6 +214,7 @@ impl App {
             WindowEvent::MouseInput { state, button, .. } => {
                 let Some(button) = input::button(*button) else { return true };
                 let e = pointer_event(self.windows[index].pointer, button, PointerKind::Mouse);
+                self.pointer_down = *state == ElementState::Pressed;
                 match state {
                     ElementState::Pressed => self.ui.pointer_down(form, e),
                     ElementState::Released => self.ui.pointer_up(form, e),
@@ -228,6 +261,11 @@ impl App {
                     TouchPhase::Cancelled => self.ui.pointer_cancel(form),
                 }
             }
+            // A janela que ganha o foco com uma tecla ainda apertada recebe do winit o aperto
+            // dela como "sintético": não é tecla nova (o Enter que abria uma pergunta chegava a
+            // ela e a confirmava sozinho). A soltura sintética, ao perder o foco, passa: quem
+            // guarda as teclas apertadas fica sabendo que soltaram.
+            WindowEvent::KeyboardInput { event, is_synthetic: true, .. } if input::is_pressed(event) => {}
             // Celular: o "voltar" fecha o form de cima (um modal, uma tela aberta com show);
             // no principal, encerra (o Android volta para a tela anterior).
             WindowEvent::KeyboardInput { event, .. }
@@ -282,6 +320,11 @@ impl App {
                     if let Some(text) = event.text.as_ref().filter(|t| !shortcut && t.chars().all(|c| !c.is_control())) {
                         self.ui.text_input(form, text);
                     }
+                    // O emoji que chegou em dois `VK_PACKET` (o winit perde as duas metades).
+                    #[cfg(windows)]
+                    if let Some(text) = win32::take_packet_text(form) {
+                        self.ui.text_input(form, &text);
+                    }
                 } else {
                     self.ui.key_up(form, key);
                 }
@@ -320,7 +363,7 @@ impl App {
                 #[cfg(not(any(web, mobile)))]
                 self.apply_cursor_confine(index);
                 if !focused {
-                    self.ui.pointer_cancel(form);
+                    self.gesture_lost(form);
                 }
                 // `on_activate`/`on_deactivate` do form (um menu fecha ao perder o foco).
                 self.ui.fire(form, if *focused { "on_activate" } else { "on_deactivate" }, &aylis_core::EventArgs::None);
@@ -399,6 +442,17 @@ impl App {
         }
     }
 
+    /// O cursor do sistema para `shape` na `window` (no Windows, as mãos desenhadas).
+    pub(crate) fn cursor_of(&self, window: &Window, shape: CursorShape) -> winit::window::Cursor {
+        #[cfg(windows)]
+        return hand_cursors::cursor(&self.hand_cursors, window.scale_factor(), shape);
+        #[cfg(not(windows))]
+        {
+            let _ = window;
+            input::cursor(shape).into()
+        }
+    }
+
     /// Atualiza cursores (e, no celular, o teclado virtual) e pede pintura se algo mudou.
     pub(crate) fn after_input(&mut self) {
         // A imagem do arrasto em andamento acompanha o cursor (ou some, se acabou).
@@ -406,8 +460,32 @@ impl App {
         {
             let visual = self.windows.iter().find_map(|w| self.ui.drag_visual(w.form).map(|(v, _)| (v, w.window.scale_factor() as f32)));
             self.drag_window.sync(visual.as_ref().map(|(v, scale)| (v, *scale)));
+            // O rótulo também numa janela própria: segue o cursor fora da janela de origem.
+            // Embaixo da imagem, ou a 14 pontos do cursor sem ela (como era pintado no form).
+            let label = self.windows.iter().find_map(|w| {
+                let (text, ..) = self.ui.drag_view(w.form).filter(|(t, ..)| !t.is_empty())?;
+                Some((w.form, text, w.window.scale_factor() as f32))
+            });
+            match label {
+                Some((form, text, scale)) => {
+                    let below = self.ui.drag_visual(form).map_or(PointF::new(14.0, 14.0), |(v, _)| PointF::new(-v.hotspot.x, v.size.height - v.hotspot.y + 4.0));
+                    let m = aylis_core::paint::DRAG_LABEL_MARGIN;
+                    let offset = (((below.x - m) * scale).round() as i32, ((below.y - m) * scale).round() as i32);
+                    let key = {
+                        use std::hash::{Hash, Hasher};
+                        let mut h = std::collections::hash_map::DefaultHasher::new();
+                        text.hash(&mut h);
+                        (h.finish(), (scale * 1000.0) as u32, 0, 0)
+                    };
+                    let ui = &self.ui;
+                    self.label_window.show(key, offset, || ui.render_drag_label(&text, scale).map(|(w, h, rgba)| (w, h, drag_window::premultiplied_bgra(rgba))));
+                }
+                None => self.label_window.hide(),
+            }
         }
         let floating_mode = self.floating_mode();
+        #[cfg(windows)]
+        let hands = &self.hand_cursors;
         for w in &mut self.windows {
             // Com janelas no navegador, o cursor é o do form sob o ponteiro.
             #[cfg(web)]
@@ -419,6 +497,9 @@ impl App {
             };
             if cursor != w.cursor {
                 w.cursor = cursor;
+                #[cfg(windows)]
+                w.window.set_cursor(hand_cursors::cursor(hands, w.window.scale_factor(), cursor));
+                #[cfg(not(windows))]
                 w.window.set_cursor(input::cursor(cursor));
                 w.window.set_cursor_visible(cursor != CursorShape::None);
             }

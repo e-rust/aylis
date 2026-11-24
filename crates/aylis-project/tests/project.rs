@@ -315,10 +315,18 @@ fn data_modules_come_first_and_forms_reach_their_components() {
     let mut ui = ui();
     let created = std::rc::Rc::new(std::cell::Cell::new(0));
     let seen = created.clone();
-    ui.register_handler("dm_criado", move |_, _, _| seen.set(seen.get() + 1));
     install(&mut ui, &project).unwrap();
+    // Como no app: os handlers registrados depois do `install` (o `generated::register`).
+    ui.register_handler("dm_criado", move |_, _, _| seen.set(seen.get() + 1));
     let dm = ui.find_path("dmDados").expect("criado no início");
     assert_eq!(ui.class_name(dm), Some("DataModule"));
+    // O `on_create` dos criados no início espera: o app registra os handlers depois do
+    // `install` (o `generated::register`), e o `Application::run` dispara antes da janela.
+    let modules = data_modules(&ui);
+    assert_eq!(modules, [dm]);
+    ui.process_events();
+    assert_eq!(created.get(), 0, "ainda não");
+    fire_created(&mut ui, &modules);
     assert_eq!(created.get(), 1, "on_create do DataModule");
     // Criar o form não cria o DataModule de novo, e a referência aponta para ele.
     let form = ui.create_form("frmClientes").unwrap();
@@ -855,4 +863,20 @@ fn several_row_models_and_the_data_repeater_get_typed_rows() {
     assert!(code.contains("pub fn lstMusicas_pnlMusica(&self, ui: &Ui, index: usize)") && code.contains("pub fn lstMusicas_pnlSecao_of("), "{code}");
     assert!(code.contains("pub fn repFaixas_row(&self, ui: &Ui, index: usize) -> Option<FrmPrincipalRepFaixasRow>"), "{code}");
     std::fs::remove_dir_all(&base).unwrap();
+}
+
+/// A fonte do projeto (`font` do `.aylisproj`) continua valendo depois de um `ui.set_theme` de
+/// um tema embutido em execução.
+#[test]
+fn the_project_font_survives_a_theme_change() {
+    let base = temp("project_font");
+    let mut project = create(&base, "Fonte", Language::Rust).unwrap();
+    project.font = "Fonte Do Projeto".into();
+    project.save().unwrap();
+    let mut ui = ui();
+    install(&mut ui, &project).unwrap();
+    assert_eq!(ui.project_font(), "Fonte Do Projeto");
+    ui.set_theme(aylis_core::Theme::dark());
+    let families: Vec<String> = ui.theme().fonts.values().map(|f| f.family.clone()).filter(|f| !f.to_lowercase().contains("mono")).collect();
+    assert!(!families.is_empty() && families.iter().all(|f| f == "Fonte Do Projeto"), "{families:?}");
 }

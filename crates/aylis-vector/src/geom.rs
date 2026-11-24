@@ -75,6 +75,24 @@ impl Affine {
         path.map_points(|p| self.apply(p))
     }
 
+    /// A transformação de volta (`None` se ela achata tudo numa linha ou num ponto).
+    pub fn invert(&self) -> Option<Affine> {
+        let det = self.a * self.d - self.b * self.c;
+        if det.abs() < 1e-12 {
+            return None;
+        }
+        let (a, b, c, d) = (self.d / det, -self.b / det, -self.c / det, self.a / det);
+        Some(Affine::new(a, b, c, d, -(a * self.e + c * self.f), -(b * self.e + d * self.f)))
+    }
+
+    /// A caixa (sem giro) em volta do retângulo `r` transformado.
+    pub fn bounds(&self, r: RectF) -> RectF {
+        let pts = [PointF::new(r.x, r.y), PointF::new(r.right(), r.y), PointF::new(r.right(), r.bottom()), PointF::new(r.x, r.bottom())].map(|p| self.apply(p));
+        let (x0, y0) = pts.iter().fold((f32::MAX, f32::MAX), |(x, y), p| (x.min(p.x), y.min(p.y)));
+        let (x1, y1) = pts.iter().fold((f32::MIN, f32::MIN), |(x, y), p| (x.max(p.x), y.max(p.y)));
+        RectF::new(x0, y0, x1 - x0, y1 - y0)
+    }
+
     /// Leva o retângulo `from` (conteúdo) para `to` (tela).
     pub fn rect_to_rect(from: RectF, to: RectF) -> Affine {
         let sx = if from.width > 0.0 { to.width / from.width } else { 1.0 };

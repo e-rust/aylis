@@ -16,6 +16,11 @@ pub struct Modifiers {
     pub alt: bool,
     /// Tecla Windows / Command.
     pub meta: bool,
+    /// O Caps Lock ligado (o aviso do campo de senha). Na web, só depois da primeira tecla (o
+    /// navegador não conta antes); no celular, sempre `false` (o sistema não informa).
+    pub caps_lock: bool,
+    /// O Num Lock ligado (como o `caps_lock`; no macOS, sempre `false`).
+    pub num_lock: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -202,6 +207,10 @@ pub struct KeyEvent {
     pub modifiers: Modifiers,
     /// Repetição automática por tecla mantida pressionada.
     pub repeat: bool,
+    /// O form (a janela) em que a tecla chegou: o form raiz, nunca um popup dele. O núcleo
+    /// preenche ao receber a tecla ([`Ui::key_down`](crate::Ui::key_down)); quem cria o evento
+    /// deixa `None`. Os atalhos do `ApplicationEvents` sabem a janela por aqui.
+    pub form: Option<ComponentId>,
 }
 
 /// Argumentos entregues aos handlers de evento.

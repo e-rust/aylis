@@ -178,6 +178,7 @@ fn monitor(device: &str, x: i32, width: u32, primary: bool) -> aylis_core::monit
     aylis_core::monitors::Monitor {
         name: format!("Monitor {device}"),
         device: device.into(),
+        device_path: format!("path-of-{device}"),
         primary,
         x,
         y: 0,

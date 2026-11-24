@@ -300,7 +300,7 @@ fn a_menu_shortcut_does_not_wipe_the_ide() {
     let mut ide = app::build(shared(Document::new()));
     ide.ui.show(ide.form).unwrap();
     let before = ide.ui.children(ide.form).to_vec();
-    let key = KeyEvent { key: Key::Char('n'), modifiers: Modifiers { ctrl: true, shift: true, ..Default::default() }, repeat: false };
+    let key = KeyEvent { key: Key::Char('n'), modifiers: Modifiers { ctrl: true, shift: true, ..Default::default() }, repeat: false, form: None };
     ide.ui.key_down(ide.form, key);
     let dialog = ide.ui.roots().iter().copied().find(|&r| ide.ui.is_modal(r)).expect("abriu o Novo projeto");
     assert_eq!(ide.ui.children(ide.form), before.as_slice(), "os painéis continuam com o diálogo aberto");
@@ -323,7 +323,7 @@ fn closing_the_shadow_editor_by_the_x_keeps_the_ide() {
     let dialog = ide.ui.roots().iter().copied().find(|&r| ide.ui.is_modal(r)).expect("abriu a Sombra");
     assert!(ide.ui.close(dialog), "o X fecha");
     assert_eq!(ide.ui.children(ide.form), before.as_slice(), "depois do X");
-    ide.ui.key_down(ide.form, KeyEvent { key: Key::Unknown, modifiers: Modifiers::default(), repeat: false });
+    ide.ui.key_down(ide.form, KeyEvent { key: Key::Unknown, modifiers: Modifiers::default(), repeat: false, form: None });
     let press = PointerEvent { position: PointF::new(650.0, 407.0), ..Default::default() };
     ide.ui.pointer_down(ide.form, press);
     ide.ui.pointer_up(ide.form, press);
@@ -1183,7 +1183,7 @@ fn code_opens_inside_the_ide_and_tabs_move_to_another_window() {
     assert_eq!(aylis_ide::codewindow::code_form(&ide.ui), Some(ide.form), "embutido na janela da IDE");
     // F12 no código volta ao Design; de novo no designer, volta ao código.
     let (modifiers, key) = aylis_core::parse_shortcut("F12").unwrap();
-    ide.ui.key_down(ide.form, KeyEvent { key, modifiers, repeat: false });
+    ide.ui.key_down(ide.form, KeyEvent { key, modifiers, repeat: false, form: None });
     app::refresh(&mut ide.ui, &state, &ide.ids);
     assert!(visible(&ide.ui, ide.ids.surface) && !visible(&ide.ui, ide.ids.code_host), "F12: Design");
     actions::open_code(&mut ide.ui, &state, None);

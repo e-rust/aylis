@@ -2,7 +2,7 @@
 //! 16/11): pôr no form e configurar nele, valer para o app inteiro, ou trocar pelo código, como
 //! qualquer propriedade. Onde o sistema não tem o recurso, a propriedade existe e não faz nada.
 
-use aylis_core::{Color, Component, EventCtx, WindowBackdrop, WindowCommand, properties};
+use aylis_core::{BorderColor, Color, Component, EventCtx, WindowBackdrop, WindowCommand, properties};
 
 /// A quem o [`WindowSettings`] vale.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
@@ -52,8 +52,9 @@ pub struct WindowSettings {
     pub title_color: Option<Color>,
     /// A cor do texto da barra de título do sistema (Windows 11; vazio: a do sistema).
     pub title_text_color: Option<Color>,
-    /// A cor da borda da janela (Windows 11; vazio: a do sistema).
-    pub border_color: Option<Color>,
+    /// A cor da borda da janela (Windows 11): vazio, a do sistema; `none`, sem borda (nem a
+    /// linha de 1 px em volta da tela cheia); ou a cor.
+    pub border_color: BorderColor,
     /// A sombra do Windows na janela sem borda (`border_style` = `none`).
     pub shadow: bool,
     /// O que está atrás da janela sai desfocado (Windows, macOS e Linux com KDE). Com o form
@@ -107,7 +108,7 @@ impl Component for WindowSettings {
         backdrop: WindowBackdrop => "Appearance",
         title_color: Option<Color> => "Appearance",
         title_text_color: Option<Color> => "Appearance",
-        border_color: Option<Color> => "Appearance",
+        border_color: BorderColor => "Appearance",
         shadow: bool => "Appearance",
         blur: bool => "Appearance",
         no_activate: bool => "Behavior",

@@ -32,7 +32,7 @@
 //! | `batch` | `commands: [..]` | lista de resultados |
 //! | `create_form` | `name`, `new`? | cria um form do projeto; se já existe, devolve o mesmo (com `new: true`, mais uma instância, outra janela): `{id, name}` |
 //! | `show` | `target` (form) | abre numa janela (como `Show`) |
-//! | `show_modal` | `target` (form), `handler`?, `wait`? | abre como modal; ao fechar, o `handler` recebe o evento `on_modal_result` com o resultado (`"ok"`, `"cancel"`...); com `wait: true`, a resposta (o resultado) só sai quando o form fecha, e o cliente trata os eventos enquanto espera |
+//! | `show_modal` | `target` (form), `container`?, `handler`?, `wait`? | abre como modal; ao fechar, o `handler` recebe o evento `on_modal_result` com o resultado (`"ok"`, `"cancel"`...); com `wait: true`, a resposta (o resultado) só sai quando o form fecha, e o cliente trata os eventos enquanto espera. Com `container` (um componente de outro form, como a página de uma aba), o modal fica só nele (`Ui::show_modal_in`): o resto da tela continua respondendo |
 //! | `close` | `target`? | fecha o form (passa pelo `on_close_query`; devolve se fechou); sem `target`, encerra o aplicativo |
 //! | `modal_result` | `target` (form), `result` | define o resultado (num modal, fecha) |
 //! | `tree` | `target` (opcional) | árvore de componentes (id, nome, classe, caminho, filhos) |
@@ -41,7 +41,8 @@
 //! | `tr` | `text` | o texto traduzido para o idioma atual |
 //! | `set_language` | `language` (`en-US`) | troca o idioma: formatos, traduções e textos abertos |
 //! | `toast` | `text` | aviso rápido que some sozinho |
-//! | `message_dlg` | `text`, `kind` (`information`, `warning`, `error`, `confirmation`), `buttons` (`["yes", "no"]`), `handler`, `wait`? | caixa de mensagem; o handler recebe `on_modal_result`; com `wait: true`, a resposta é o botão (`"yes"`), quando a caixa fecha |
+//! | `message_dlg` | `text`, `kind` (`information`, `warning`, `error`, `confirmation`), `buttons` (`["yes", "no"]`), `icon`?, `icon_color`?, `handler`, `wait`? | caixa de mensagem; o handler recebe `on_modal_result`; com `wait: true`, a resposta é o botão (`"yes"`), quando a caixa fecha. `icon` (nome de ícone) e `icon_color` (token do tema ou `#cor`) trocam o ícone do tipo |
+//! | `prompt` | `title`, `label`, `value`?, `required`?, `icon`?, `icon_color`?, `handler`, `wait`? | a pergunta com um campo de texto (OK e Cancelar); o handler recebe `on_prompt_result` com o texto (ou `null` no Cancelar); com `wait: true`, a resposta é o texto ou `null`. `required` não deixa confirmar vazio |
 //! | `execute` | `target` (OpenDialog ou SaveDialog) | abre o diálogo de arquivo; o resultado chega em `on_select`/`on_cancel` |
 //! | `media` | `target` (MediaPlayer ou VideoPlayer), `op`: `play`, `pause`, `stop`, `seek` (`seconds`), `position`, `duration`, `playing`, `ready` | depende da operação |
 //! | `hello` | `protocol`, `client`?, `update_url`? | a **primeira** mensagem do backend: a versão do protocolo ([`PROTOCOL_VERSION`]); a tela devolve `{protocol, capabilities}` ou recusa, dizendo qual lado atualizar (e, na tela antiga, "há uma versão nova do aplicativo" com o `update_url`). Antes dela, todo comando é recusado |
@@ -217,6 +218,15 @@ impl Handshake {
 /// O `hello` do backend: a versão confere, ou a tela recusa e mostra ao usuário o que fazer
 /// (a tela antiga: "há uma versão nova do aplicativo", com o link da loja que o backend
 /// mandou em `update_url`).
+/// O `icon` e o `icon_color` do `message_dlg` e do `prompt` (sem nenhum dos dois, o do tipo).
+fn dialog_icon(ui: &mut Ui, dialog: ComponentId, obj: &serde_json::Map<String, Value>) {
+    let icon = obj.get("icon").and_then(Value::as_str).unwrap_or_default();
+    let color = obj.get("icon_color").and_then(Value::as_str).filter(|c| !c.trim().is_empty()).map(aylis_core::ColorRef::from);
+    if !icon.is_empty() || color.is_some() {
+        aylis_controls::set_dialog_icon(ui, dialog, icon, color);
+    }
+}
+
 fn hello(ui: &mut Ui, obj: &Map<String, Value>) -> Result<Value, String> {
     let theirs = obj.get("protocol").and_then(Value::as_u64).ok_or("hello: falta \"protocol\" (a versão do protocolo do cliente)")?;
     // O cliente que responde `done` ao fim de cada handler (os de antes não): só com ele a
@@ -516,7 +526,7 @@ pub fn execute(ui: &mut Ui, command: &Value) -> Result<Value, String> {
             modifiers.ctrl |= extra.ctrl;
             modifiers.alt |= extra.alt;
             modifiers.meta |= extra.meta;
-            let event = aylis_core::KeyEvent { key, modifiers, repeat: false };
+            let event = aylis_core::KeyEvent { key, modifiers, repeat: false, form: None };
             ui.key_down(root, event);
             ui.key_up(root, event);
             Ok(Value::Null)
@@ -594,7 +604,8 @@ pub fn execute(ui: &mut Ui, command: &Value) -> Result<Value, String> {
             if waiting {
                 ui.backend_waiting_user(true);
             }
-            ui.show_modal(id, move |ui, result| {
+            let container = obj.get("container").map(|c| resolve(ui, c)).transpose()?;
+            let on_close = move |ui: &mut Ui, result: ModalResult| {
                 if waiting {
                     ui.backend_waiting_user(false);
                 }
@@ -605,7 +616,12 @@ pub fn execute(ui: &mut Ui, command: &Value) -> Result<Value, String> {
                     let args = EventArgs::Value(PropValue::Enum(result.name().to_string()));
                     ui.call_handler(id, "on_modal_result", &handler, &args);
                 }
-            })
+            };
+            // `container`: o modal só numa parte da tela (a página de uma aba).
+            match container {
+                Some(container) => ui.show_modal_in(id, container, on_close),
+                None => ui.show_modal(id, on_close),
+            }
             .map_err(|e| e.to_string())?;
             Ok(Value::Null)
         }
@@ -716,6 +732,36 @@ pub fn execute(ui: &mut Ui, command: &Value) -> Result<Value, String> {
                     ui.call_handler(main, "on_modal_result", &handler, &args);
                 }
             });
+            dialog_icon(ui, form, obj);
+            Ok(json!(ui.path_of(form)))
+        }
+        // A pergunta com um campo (o `prompt`): o texto no OK, `null` no Cancelar.
+        "prompt" => {
+            let title = obj.get("title").and_then(Value::as_str).unwrap_or_default().to_string();
+            let label = obj.get("label").and_then(Value::as_str).unwrap_or_default().to_string();
+            let value = obj.get("value").and_then(Value::as_str).unwrap_or_default().to_string();
+            let handler = obj.get("handler").and_then(Value::as_str).map(str::to_string);
+            let reply = if obj.get("wait").and_then(Value::as_bool) == Some(true) { defer_reply(ui) } else { None };
+            let waiting = ui.backend_busy();
+            if waiting {
+                ui.backend_waiting_user(true);
+            }
+            let form = aylis_controls::prompt(ui, &title, &label, &value, move |ui, text| {
+                if waiting {
+                    ui.backend_waiting_user(false);
+                }
+                if let Some(reply) = reply {
+                    send_reply(ui, reply, Ok(text.clone().map_or(Value::Null, Value::String)));
+                }
+                if let (Some(handler), Some(main)) = (handler, ui.main_form()) {
+                    let args = EventArgs::Value(text.map_or(PropValue::Null, PropValue::String));
+                    ui.call_handler(main, "on_prompt_result", &handler, &args);
+                }
+            });
+            if obj.get("required").and_then(Value::as_bool) == Some(true) {
+                aylis_controls::set_prompt_required(ui, form, true);
+            }
+            dialog_icon(ui, form, obj);
             Ok(json!(ui.path_of(form)))
         }
         "execute" => {
@@ -1245,6 +1291,12 @@ fn args_to_json(ui: &Ui, args: &EventArgs) -> Value {
             "ctrl": k.modifiers.ctrl,
             "shift": k.modifiers.shift,
             "alt": k.modifiers.alt,
+            "meta": k.modifiers.meta,
+            "caps_lock": k.modifiers.caps_lock,
+            "num_lock": k.modifiers.num_lock,
+            // A janela em que a tecla chegou: o nome e o id do form.
+            "form": k.form.and_then(|f| ui.name(f)).unwrap_or_default(),
+            "form_id": k.form.map_or(Value::Null, |f| Value::from(f.to_u64())),
         }),
         // Textos que são JSON (o delta, por exemplo) vão como objeto.
         EventArgs::Text(text) => match serde_json::from_str::<Value>(text) {

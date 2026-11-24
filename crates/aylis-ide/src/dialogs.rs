@@ -316,11 +316,14 @@ pub fn gpu_value(text: &str) -> String {
 }
 
 /// As escolhas do combo "Orientação da tela", na ordem de [`aylis_core::ScreenOrientation`].
+/// As escolhas do `single_instance`, na ordem de `aylis_core::SingleInstance`.
+pub const SINGLE_INSTANCE_CHOICES: [&str; 3] = ["Quantas abrirem", "Uma por usuário", "Uma na máquina"];
+
 pub const ORIENTATION_CHOICES: [&str; 5] =
     ["Gira com o aparelho", "Em pé", "Deitado", "Em pé (os dois sentidos)", "Deitado (os dois sentidos)"];
 
 pub fn project_options(ui: &mut Ui, project: &Project, ide_locale: &str, on_ok: impl FnOnce(&mut Ui, Project) + 'static) {
-    let d = new_dialog(ui, "Opções do projeto · Geral", 640.0, 1346.0);
+    let d = new_dialog(ui, "Opções do projeto · Geral", 640.0, 1430.0);
     let line = field(ui, d.body, "Nome");
     let name = edit(ui, line, &project.name);
     let line = field(ui, d.body, "Linguagem");
@@ -378,6 +381,21 @@ pub fn project_options(ui: &mut Ui, project: &Project, ide_locale: &str, on_ok: 
     let line = field(ui, d.body, "Orientação da tela");
     let orientation = combo(ui, line, &ORIENTATION_CHOICES, ORIENTATION_CHOICES[project.orientation().index()]);
     let _ = ui.set_prop(orientation, "hint", "Android e iOS. Cada form pode ter a sua (a propriedade orientation); no desktop e no navegador, sem efeito.");
+    // Uma instância só do app (o `single_instance`) e a captura da tela (o
+    // `allow_screen_capture`), as duas do projeto e do `set_project_setting` do MCP.
+    let line = field(ui, d.body, "Instância única");
+    let single_now = <aylis_core::SingleInstance as aylis_core::PropEnum>::index(aylis_core::SingleInstance::parse(&project.single_instance));
+    let single_instance = combo(ui, line, &SINGLE_INSTANCE_CHOICES, SINGLE_INSTANCE_CHOICES[single_now]);
+    let _ = ui.set_prop(
+        single_instance,
+        "hint",
+        "Só no desktop. A segunda abertura traz a primeira para a frente, entrega os argumentos a ela (on_second_instance do ApplicationEvents) e sai.",
+    );
+    let line = field(ui, d.body, "");
+    let screen_capture = ui.add(CheckBox::new("Permitir capturar a imagem de um monitor (capture_monitor)"), line);
+    ui.control_mut(screen_capture).unwrap().set_align(Align::Client);
+    let _ = ui.set_prop(screen_capture, "checked", project.allow_screen_capture);
+    let _ = ui.set_prop(screen_capture, "hint", "Desligado por privacidade: a imagem leva o que os outros programas mostram na tela.");
     let render = render_section(ui, d.body, project.render());
     let text_modes = text_section(ui, d.body, project.text());
     // A placa de vídeo: as quatro escolhas fixas e as desta máquina pelo nome.
@@ -501,6 +519,12 @@ pub fn project_options(ui: &mut Ui, project: &Project, ide_locale: &str, on_ok: 
                 aylis_core::ScreenOrientation::Any => String::new(),
                 o => o.name().to_string(),
             };
+            let chosen = ui.get::<ComboBox>(single_instance).map_or(0, |c| c.item_index.max(0) as usize);
+            p.single_instance = match <aylis_core::SingleInstance as aylis_core::PropEnum>::from_index(chosen).unwrap_or_default() {
+                aylis_core::SingleInstance::Off => String::new(),
+                other => <aylis_core::SingleInstance as aylis_core::PropEnum>::name(other).to_string(),
+            };
+            p.allow_screen_capture = ui.get::<CheckBox>(screen_capture).is_some_and(|c| c.checked);
             p.render = Some(render_value(ui, &render));
             // Sem `text` no arquivo e nada mudado, continua sem (antes, aplicar gravava o padrão).
             let text = text_value(ui, &text_modes);

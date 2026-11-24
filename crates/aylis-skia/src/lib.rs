@@ -401,7 +401,7 @@ impl SkiaCanvas<'_> {
 impl SkiaCanvas<'_> {
     /// Desenha um parágrafo de uma linha no retângulo, com os alinhamentos do estilo.
     fn paint_line(&mut self, paragraph: &Paragraph, rect: RectF, style: &TextStyle) {
-        let width = paragraph.max_intrinsic_width();
+        let width = line_width(paragraph, style);
         let x = match style.h_align {
             TextAlign::Leading | TextAlign::Justify => rect.x,
             TextAlign::Center => rect.x + (rect.width - width) / 2.0,
@@ -413,7 +413,7 @@ impl SkiaCanvas<'_> {
             TextAlign::Center => rect.y + free / 2.0,
             TextAlign::Trailing => rect.y + free,
         };
-        paragraph.paint(self.canvas, (x, y));
+        paragraph.paint(self.canvas, (x + spacing_shift(style), y));
     }
 }
 
@@ -613,6 +613,16 @@ impl<'a> Canvas for SkiaCanvas<'a> {
         self.canvas.save_layer(&sk::canvas::SaveLayerRec::default().paint(&paint));
     }
 
+    // O brilho da máscara vira o alfa (o `LumaColorFilter`, nas cores pré-multiplicadas: o
+    // brilho vezes o alfa), e o resultado recorta o conteúdo.
+    fn begin_luminance_mask(&mut self) {
+        let inverse = self.masks.last().copied().unwrap_or(false);
+        let mut paint = sk::Paint::default();
+        paint.set_blend_mode(if inverse { sk::BlendMode::DstOut } else { sk::BlendMode::DstIn });
+        paint.set_color_filter(sk::luma_color_filter::new());
+        self.canvas.save_layer(&sk::canvas::SaveLayerRec::default().paint(&paint));
+    }
+
     fn end_mask(&mut self) {
         if self.masks.pop().is_some() {
             self.canvas.restore();
@@ -702,7 +712,7 @@ impl<'a> Canvas for SkiaCanvas<'a> {
         // Caso comum (uma linha que cabe, ou sem corte): um parágrafo só.
         if !style.wrap && !text.contains('\n') {
             let mut paragraph = line_paragraph(fonts, text, &plain);
-            let width = paragraph.max_intrinsic_width();
+            let width = line_width(&paragraph, &plain);
             if width > rect.width && style.trimming != aylis_core::Trimming::None {
                 let mut measure = |s: &str| measure_line(fonts, s, &plain).width;
                 let cut = aylis_core::text::trim_line(text, rect.width, style.trimming, &mut measure);
@@ -730,23 +740,36 @@ impl<'a> Canvas for SkiaCanvas<'a> {
             let words = (style.h_align == TextAlign::Justify && !end).then(|| aylis_core::text::justify_line(line, rect.width, &mut measure)).flatten();
             if let Some(words) = words {
                 for (x, word) in words {
-                    line_paragraph(fonts, &word, &plain).paint(self.canvas, (rect.x + x, top + line_height * i as f32));
+                    line_paragraph(fonts, &word, &plain).paint(self.canvas, (rect.x + x + spacing_shift(style), top + line_height * i as f32));
                 }
                 continue;
             }
             let paragraph = line_paragraph(fonts, line, &plain);
-            let width = paragraph.max_intrinsic_width();
+            let width = line_width(&paragraph, &plain);
             let x = match style.h_align {
                 TextAlign::Leading | TextAlign::Justify => rect.x,
                 TextAlign::Center => rect.x + (rect.width - width) / 2.0,
                 TextAlign::Trailing => rect.right() - width,
             };
-            paragraph.paint(self.canvas, (x, top + line_height * i as f32));
+            paragraph.paint(self.canvas, (x + spacing_shift(style), top + line_height * i as f32));
         }
     }
 
     fn measure_text(&mut self, text: &str, style: &TextStyle) -> SizeF {
         measure_line(self.fonts, text, style)
+    }
+
+    fn measure_text_wrapped(&mut self, text: &str, style: &TextStyle, max_width: f32) -> SizeF {
+        let fonts = self.fonts;
+        let mut plain = style.clone();
+        plain.h_align = TextAlign::Leading;
+        plain.wrap = true;
+        WRAPPED.with(|w| {
+            w.borrow_mut().get_or(text, style, max_width, || {
+                let line_height = measure_line(fonts, "Ag", &plain).height.max(1.0);
+                aylis_core::canvas::wrapped_size(text, max_width, line_height, &mut |s| measure_line(fonts, s, &plain).width)
+            })
+        })
     }
 
     fn draw_image(&mut self, image: &Image, src: RectF, dest: RectF, opacity: f32) {
@@ -783,7 +806,20 @@ fn measure_line(fonts: &FontCollection, text: &str, style: &TextStyle) -> SizeF 
         return SizeF::new(0.0, style.font.size * 1.3);
     }
     let paragraph = line_paragraph(fonts, text, style);
-    SizeF::new(paragraph.max_intrinsic_width(), paragraph.height())
+    SizeF::new(line_width(&paragraph, style), paragraph.height())
+}
+
+/// O Skia põe metade do `letter_spacing` antes de cada letra e metade depois; o Direct2D e o
+/// navegador, tudo depois. O parágrafo anda meio espaço para a esquerda para as letras caírem no
+/// mesmo lugar nos três.
+fn spacing_shift(style: &TextStyle) -> f32 {
+    -style.letter_spacing / 2.0
+}
+
+/// A largura de um parágrafo de uma linha: o Skia põe o `letter_spacing` depois de cada letra,
+/// e a regra do `TextStyle` não conta o da última (igual no Direct2D e no navegador).
+fn line_width(paragraph: &Paragraph, style: &TextStyle) -> f32 {
+    paragraph.max_intrinsic_width() - style.letter_spacing
 }
 
 /// A chave de um parágrafo de uma linha já montado: o texto e tudo do estilo que muda a forma
@@ -797,6 +833,9 @@ struct LineKey {
     flags: u8,
     color: u32,
     align: u8,
+    /// O `letter_spacing` (bits do `f32`) e o `color_glyphs`.
+    spacing: u32,
+    color_glyphs: bool,
     /// A coleção de fontes (a do renderizador e a do serviço de medição são outras) e a
     /// geração das fontes do projeto.
     fonts: usize,
@@ -808,6 +847,8 @@ thread_local! {
     /// custam caro): a tela repintada a cada quadro (a rolagem, uma animação) desenha e mede
     /// os mesmos textos de novo. Cheio, esvazia.
     static LINES: RefCell<HashMap<LineKey, Rc<Paragraph>>> = RefCell::new(HashMap::new());
+    /// Os tamanhos de `measure_text_wrapped` já calculados.
+    static WRAPPED: RefCell<aylis_core::canvas::WrapCache> = RefCell::new(aylis_core::canvas::WrapCache::default());
 }
 
 /// Quantos parágrafos o cache guarda antes de esvaziar.
@@ -824,6 +865,8 @@ fn line_paragraph(fonts: &FontCollection, text: &str, style: &TextStyle) -> Rc<P
         flags: u8::from(font.italic) | u8::from(font.underline) << 1 | u8::from(font.strikeout) << 2 | u8::from(style.wrap) << 3,
         color: u32::from_be_bytes([style.color.r, style.color.g, style.color.b, style.color.a]),
         align: style.h_align as u8,
+        spacing: style.letter_spacing.to_bits(),
+        color_glyphs: style.color_glyphs,
         fonts: fonts as *const FontCollection as usize,
         generation: aylis_core::fonts::generation(),
     };
@@ -1234,11 +1277,79 @@ fn build_paragraph(fonts: &FontCollection, text: &str, style: &TextStyle) -> Par
         text_style.set_decoration_type(decoration);
         text_style.set_decoration_color(to_sk(style.color));
     }
+    if style.letter_spacing != 0.0 {
+        text_style.set_letter_spacing(style.letter_spacing);
+    }
 
     let mut builder = ParagraphBuilder::new(&paragraph_style, fonts);
     builder.push_style(&text_style);
-    builder.add_text(text);
+    // `color_glyphs: false`: os emoji na Noto Emoji sem cor (registrada pelo app), depois nas
+    // fontes de símbolos sem cor do sistema; a fonte pedida fica por último.
+    if !style.color_glyphs {
+        let mut at = 0;
+        for (start, end) in aylis_core::canvas::mono_emoji_ranges(text) {
+            builder.add_text(&text[at..start]);
+            let mut mono = text_style.clone();
+            let mut families = vec![aylis_core::canvas::MONO_EMOJI_FAMILY];
+            families.extend_from_slice(SYMBOL_FONTS);
+            families.extend(font_families(&style.font));
+            mono.set_font_families(&families);
+            builder.push_style(&mono);
+            builder.add_text(&text[start..end]);
+            builder.pop();
+            at = end;
+        }
+        builder.add_text(&text[at..]);
+        return builder.build();
+    }
+    // Os símbolos de apresentação de texto (`⚠`, `ℹ`, ou qualquer um com U+FE0E) procuram
+    // primeiro numa fonte de símbolos monocromática, depois da fonte pedida: sem isso, a
+    // fonte de emoji do sistema os pintava coloridos.
+    let mut at = 0;
+    for (start, end) in text_presentation_ranges(text) {
+        builder.add_text(&text[at..start]);
+        let mut mono = text_style.clone();
+        let mut families = font_families(&style.font);
+        families.extend_from_slice(SYMBOL_FONTS);
+        mono.set_font_families(&families);
+        builder.push_style(&mono);
+        builder.add_text(&text[start..end]);
+        builder.pop();
+        at = end;
+    }
+    builder.add_text(&text[at..]);
     builder.build()
+}
+
+/// As fontes de símbolos sem cor de cada sistema (Windows, macOS, Linux e Android).
+const SYMBOL_FONTS: &[&str] = &["Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols 2", "Noto Sans Symbols", "DejaVu Sans", "Symbola"];
+
+/// Os trechos (em bytes) que o Unicode manda mostrar como texto, e não como emoji: os
+/// caracteres emoji cuja apresentação padrão é de texto (`Emoji_Presentation=No`: `⚠`, `ℹ`,
+/// `☎`), a não ser seguidos de U+FE0F, e qualquer emoji seguido de U+FE0E (que entra no
+/// trecho). As sequências (ZWJ, tom de pele, tecla) ficam como estão. O navegador já faz
+/// assim, e o Direct2D tem a mesma regra (`aylis-d2d`).
+fn text_presentation_ranges(text: &str) -> Vec<(usize, usize)> {
+    use unicode_properties::{EmojiStatus, UnicodeEmoji};
+    let mut out = Vec::new();
+    let mut prev = '\0';
+    let mut chars = text.char_indices().peekable();
+    while let Some((i, c)) = chars.next() {
+        let next = chars.peek().map(|&(_, n)| n);
+        let joined = prev == '\u{200D}' || matches!(next, Some('\u{200D}' | '\u{20E3}' | '\u{1F3FB}'..='\u{1F3FF}'));
+        prev = c;
+        if c.is_ascii() || joined || next == Some('\u{FE0F}') {
+            continue;
+        }
+        if next == Some('\u{FE0E}') && c.is_emoji_char() {
+            let (j, v) = chars.next().unwrap_or((i, c));
+            prev = v;
+            out.push((i, j + v.len_utf8()));
+        } else if matches!(c.emoji_status(), EmojiStatus::EmojiOther | EmojiStatus::EmojiModifierBase) {
+            out.push((i, i + c.len_utf8()));
+        }
+    }
+    out
 }
 
 /// Família pedida, ou uma lista de fontes comuns em cada sistema para os nomes genéricos.

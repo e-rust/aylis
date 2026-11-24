@@ -27,3 +27,11 @@ web-sys = { version = "0.3", features = [
     "TextMetrics",
     "Window",
 ] }
+
+# Os testes no navegador (tests/web_canvas.rs), pelo wasm-bindgen-test-runner: a versão casa com
+# a do wasm-bindgen do Cargo.lock.
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+wasm-bindgen-test = "=0.3.79"
+wasm-bindgen-futures = "0.4.79"
+aylis-vector = { path = "../aylis-vector" }
+aylis-controls = { path = "../aylis-controls" }

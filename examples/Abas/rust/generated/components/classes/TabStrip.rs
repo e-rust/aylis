@@ -73,6 +73,24 @@ impl TabStrip {
     pub fn set_close_empty(self, ui: &mut Ui, value: bool) {
         handles::write(ui, self.id, "close_empty", value)
     }
+    pub fn accept_forms(self, ui: &Ui) -> bool {
+        handles::read(ui, self.id, "accept_forms").and_then(|v| v.to_bool().ok()).unwrap_or_default()
+    }
+    pub fn set_accept_forms(self, ui: &mut Ui, value: bool) {
+        handles::write(ui, self.id, "accept_forms", value)
+    }
+    pub fn hover_preview(self, ui: &Ui) -> bool {
+        handles::read(ui, self.id, "hover_preview").and_then(|v| v.to_bool().ok()).unwrap_or_default()
+    }
+    pub fn set_hover_preview(self, ui: &mut Ui, value: bool) {
+        handles::write(ui, self.id, "hover_preview", value)
+    }
+    pub fn hit_tabs_only(self, ui: &Ui) -> bool {
+        handles::read(ui, self.id, "hit_tabs_only").and_then(|v| v.to_bool().ok()).unwrap_or_default()
+    }
+    pub fn set_hit_tabs_only(self, ui: &mut Ui, value: bool) {
+        handles::write(ui, self.id, "hit_tabs_only", value)
+    }
     pub fn on_change(self, ui: &Ui) -> String {
         handles::text(ui, handles::read(ui, self.id, "on_change"))
     }
@@ -115,11 +133,11 @@ impl TabStrip {
     pub fn set_on_new_window(self, ui: &mut Ui, value: impl Into<String>) {
         handles::write(ui, self.id, "on_new_window", Into::<String>::into(value))
     }
-    pub fn tabs(self, ui: &Ui) -> Vec<TabItem> {
-        TabItem::list_from_text(&handles::text(ui, handles::read(ui, self.id, "tabs")))
+    pub fn tabs(self, ui: &Ui) -> Vec<TabStripItem> {
+        TabStripItem::list_from_text(&handles::text(ui, handles::read(ui, self.id, "tabs")))
     }
-    pub fn set_tabs(self, ui: &mut Ui, value: &[TabItem]) {
-        handles::write(ui, self.id, "tabs", PropValue::String(TabItem::list_text(value)))
+    pub fn set_tabs(self, ui: &mut Ui, value: &[TabStripItem]) {
+        handles::write(ui, self.id, "tabs", PropValue::String(TabStripItem::list_text(value)))
     }
     pub fn left(self, ui: &Ui) -> f64 {
         handles::read(ui, self.id, "left").and_then(|v| v.to_f64().ok()).unwrap_or_default()
@@ -457,10 +475,10 @@ impl TabStrip {
     pub fn set_font_size(self, ui: &mut Ui, value: f64) {
         handles::write(ui, self.id, "font_size", value)
     }
-    pub fn font_weight(self, ui: &Ui) -> FontWeight {
-        handles::read_enum::<FontWeight>(ui, self.id, "font_weight")
+    pub fn font_weight(self, ui: &Ui) -> Option<aylis::prelude::FontWeight> {
+        handles::read_enum::<Option<aylis::prelude::FontWeight>>(ui, self.id, "font_weight")
     }
-    pub fn set_font_weight(self, ui: &mut Ui, value: FontWeight) {
+    pub fn set_font_weight(self, ui: &mut Ui, value: Option<aylis::prelude::FontWeight>) {
         handles::write(ui, self.id, "font_weight", PropValue::enum_value(value))
     }
     pub fn font_italic(self, ui: &Ui) -> bool {
@@ -624,5 +642,9 @@ impl TabStrip {
     }
     pub fn set_on_drag_end(self, ui: &mut Ui, value: impl Into<String>) {
         handles::write(ui, self.id, "on_drag_end", Into::<String>::into(value))
+    }
+    pub fn receive_drag(self, ui: &mut Ui, data: &str, slot: i64) -> Result<bool, String> {
+        let v = handles::try_call(ui, self.id, "receive_drag", &[PropValue::String(data.to_string()), slot.into()])?;
+        Ok(v.to_bool().unwrap_or_default())
     }
 }

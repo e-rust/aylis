@@ -712,19 +712,75 @@ func (i *Aylis) FieldDecimal(dataSet, field string) (*big.Rat, error) {
 // MessageDlg é a caixa de mensagem que espera: devolve o botão
 // ("yes", "no", "ok"...). Enquanto espera, os eventos continuam rodando.
 func (i *Aylis) MessageDlg(text, kind string, buttons ...string) string {
+	return i.MessageDlgIcon(text, kind, "", "", buttons...)
+}
+
+// MessageDlgIcon é a MessageDlg com outro ícone: icon (nome de ícone) e iconColor (token do
+// tema, como "danger", ou "#rrggbb"); vazios, fica o do tipo.
+func (i *Aylis) MessageDlgIcon(text, kind, icon, iconColor string, buttons ...string) string {
 	if len(buttons) == 0 {
 		buttons = []string{"ok"}
 	}
-	return i.waitFor("message_dlg", M{"text": text, "kind": kind, "buttons": buttons})
+	return i.waitFor("message_dlg", dialogIcon(M{"text": text, "kind": kind, "buttons": buttons}, icon, iconColor))
+}
+
+// Prompt é a pergunta com um campo de texto (OK e Cancelar), que espera: devolve o texto
+// digitado e true, ou "" e false no Cancelar. required não deixa confirmar vazio. Enquanto
+// espera, os eventos continuam rodando.
+func (i *Aylis) Prompt(title, label, value string, required bool) (string, bool) {
+	return i.PromptIcon(title, label, value, required, "", "")
+}
+
+// PromptIcon é o Prompt com outro ícone (icon e iconColor, como na MessageDlgIcon).
+func (i *Aylis) PromptIcon(title, label, value string, required bool, icon, iconColor string) (string, bool) {
+	fields := dialogIcon(M{"title": title, "label": label, "value": value}, icon, iconColor)
+	if required {
+		fields["required"] = true
+	}
+	result, ok := i.waitForValue("prompt", fields)
+	if !ok || result == nil {
+		return "", false
+	}
+	return fmt.Sprint(result), true
 }
 
 // ShowModal abre o form como modal e espera ele fechar: devolve o
 // resultado ("ok", "cancel"...).
 func (i *Aylis) ShowModal(form *Form) string {
-	return i.waitFor("show_modal", M{"target": form.ID})
+	return i.ShowModalIn(form, nil)
+}
+
+// ShowModalIn é o ShowModal só no container (um componente de outro form, como a página de
+// uma aba): o resto da tela continua respondendo. Com nil, a tela toda.
+func (i *Aylis) ShowModalIn(form *Form, container Ref) string {
+	fields := M{"target": form.ID}
+	if container != nil {
+		fields["container"] = container.ComponentID()
+	}
+	return i.waitFor("show_modal", fields)
+}
+
+// dialogIcon põe os campos opcionais icon e icon_color do message_dlg e do prompt.
+func dialogIcon(fields M, icon, iconColor string) M {
+	if icon != "" {
+		fields["icon"] = icon
+	}
+	if iconColor != "" {
+		fields["icon_color"] = iconColor
+	}
+	return fields
 }
 
 func (i *Aylis) waitFor(cmd string, fields M) string {
+	result, ok := i.waitForValue(cmd, fields)
+	if !ok {
+		return ""
+	}
+	return fmt.Sprint(result)
+}
+
+// waitForValue espera a resposta adiada (false se o pedido falhou; a falha vai para o log).
+func (i *Aylis) waitForValue(cmd string, fields M) (any, bool) {
 	fields["wait"] = true
 	i.waiting++
 	defer func() { i.waiting-- }()
@@ -750,9 +806,9 @@ func (i *Aylis) waitFor(cmd string, fields M) string {
 	result, err := i.Call(cmd, fields)
 	if err != nil {
 		Log(cmd+":", err)
-		return ""
+		return nil, false
 	}
-	return fmt.Sprint(result)
+	return result, true
 }
 
 // On registra o handler pelo nome usado no layout ("frmClientes.nome": só daquele form).

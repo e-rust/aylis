@@ -2445,6 +2445,12 @@ impl ColorOverride {
             }
         }
         if let Some(c) = self.border {
+            // As linhas de dentro (a grade de um gráfico, as divisões de uma tabela) não são a
+            // borda: ficam com a cor do tema em `grid_line` (quem a lê cai na `border` quando o
+            // tema não a tem). Antes, `border_color: transparent` num `Chart` apagava também a
+            // grade.
+            let lines = theme.colors.get("grid_line").copied().unwrap_or_else(|| theme.color("border"));
+            set("grid_line", lines);
             set("border", c);
             set("track", c);
         }

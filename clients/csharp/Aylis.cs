@@ -450,17 +450,51 @@ public class Aylis
     /// <summary>Caixa de mensagem que espera: devolve o botão
     /// (<c>"yes"</c>, <c>"no"</c>, <c>"ok"</c>...). Enquanto espera, os eventos continuam rodando.</summary>
     public string MessageDlg(string text, string kind = "information", params string[] buttons)
+        => MessageDlg(text, kind, buttons, "", "");
+
+    /// <summary>A caixa de mensagem com outro ícone: <paramref name="icon"/> (nome de ícone) e
+    /// <paramref name="iconColor"/> (token do tema, como <c>"danger"</c>, ou <c>"#rrggbb"</c>).</summary>
+    public string MessageDlg(string text, string kind, string[] buttons, string icon, string iconColor = "")
     {
         var list = new JsonArray();
         foreach (var b in buttons.Length == 0 ? new[] { "ok" } : buttons) list.Add(b);
-        return WaitFor("message_dlg", new() { ["text"] = text, ["kind"] = kind, ["buttons"] = list });
+        var fields = new JsonObject { ["text"] = text, ["kind"] = kind, ["buttons"] = list };
+        DialogIcon(fields, icon, iconColor);
+        return WaitFor("message_dlg", fields);
+    }
+
+    /// <summary>A pergunta com um campo de texto (OK e Cancelar), que espera: devolve o texto
+    /// digitado, ou <c>null</c> no Cancelar. <paramref name="required"/> não deixa confirmar vazio.
+    /// Enquanto espera, os eventos continuam rodando.</summary>
+    public string? Prompt(string title, string label, string value = "", bool required = false, string icon = "", string iconColor = "")
+    {
+        var fields = new JsonObject { ["title"] = title, ["label"] = label, ["value"] = value };
+        if (required) fields["required"] = true;
+        DialogIcon(fields, icon, iconColor);
+        return WaitForNode("prompt", fields)?.ToString();
     }
 
     /// <summary>Abre o form como modal e espera ele fechar: devolve o
-    /// resultado (<c>"ok"</c>, <c>"cancel"</c>...).</summary>
-    public string ShowModal(AylisForm form) => WaitFor("show_modal", new() { ["target"] = form.Id });
+    /// resultado (<c>"ok"</c>, <c>"cancel"</c>...). Com <paramref name="container"/> (um componente
+    /// de outro form, como a página de uma aba), o modal fica só nele e o resto da tela continua
+    /// respondendo.</summary>
+    public string ShowModal(AylisForm form, AylisComponent? container = null)
+    {
+        var fields = new JsonObject { ["target"] = form.Id };
+        if (container is not null) fields["container"] = container.Id;
+        return WaitFor("show_modal", fields);
+    }
 
-    private string WaitFor(string cmd, JsonObject fields)
+    /// <summary>Os campos opcionais <c>icon</c> e <c>icon_color</c> do <c>message_dlg</c> e do <c>prompt</c>.</summary>
+    private static void DialogIcon(JsonObject fields, string icon, string iconColor)
+    {
+        if (!string.IsNullOrEmpty(icon)) fields["icon"] = icon;
+        if (!string.IsNullOrEmpty(iconColor)) fields["icon_color"] = iconColor;
+    }
+
+    private string WaitFor(string cmd, JsonObject fields) => WaitForNode(cmd, fields)?.ToString() ?? "";
+
+    private JsonNode? WaitForNode(string cmd, JsonObject fields)
     {
         fields["wait"] = true;
         waiting++;
@@ -474,7 +508,7 @@ public class Aylis
             else if (k != null && k != "closed" && k != "error") HandleEvent(m);
             else queued.Enqueue(m);
         }
-        try { return Call(cmd, fields)?.ToString() ?? ""; }
+        try { return Call(cmd, fields); }
         finally { waiting--; }
     }
 

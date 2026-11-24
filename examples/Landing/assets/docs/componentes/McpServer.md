@@ -14,6 +14,7 @@ Liga o app a agentes de IA pelo MCP. `active` liga (fora do designer); `port` 0 
 | `port` | Porta | inteiro | A porta em `127.0.0.1`; 0: uma porta livre (o endereço fica em `url`). |
 | `token` | Token de acesso | texto | O segredo que o agente precisa mandar; vazio: um aleatório gerado ao ligar. |
 | `server_name` | Nome do servidor | texto | O nome que o agente vê (vazio: o nome do componente). |
+| `server_version` | Versão do servidor | texto | A versão que o agente vê (`serverInfo.version`); vazia: a do app (a da publicação). |
 | `instructions` | Instruções | texto | O que o agente lê ao conectar: para que serve o app e como usar as ferramentas. |
 | `expose_ui` | Expor a tela | lógico | Dá ao agente as ferramentas genéricas de tela (ler a árvore, mexer em propriedades, clicar, os dados). |
 | `read_only` | Somente leitura | lógico | Das ferramentas de tela, só as que leem (nenhuma muda a tela nem os registros). |
@@ -25,6 +26,7 @@ Liga o app a agentes de IA pelo MCP. `active` liga (fora do designer); `port` 0 
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
 | `on_call` | — | — | sim (recusar com a exceção) |
+| `on_result` | — | — |  |
 | `on_error` | — | — |  |
 
 ## Em código

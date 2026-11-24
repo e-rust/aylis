@@ -587,15 +587,61 @@ public class Aylis {
     /** Caixa de mensagem que espera: devolve o botão ({@code "yes"},
      *  {@code "no"}, {@code "ok"}...). Enquanto espera, os eventos continuam rodando. */
     public String messageDlg(String text, String kind, String... buttons) {
-        return waitFor("message_dlg", obj("text", text, "kind", kind, "buttons", java.util.List.of(buttons.length == 0 ? new String[] {"ok"} : buttons)));
+        return messageDlg(text, kind, buttons, null, null);
+    }
+
+    /** A caixa de mensagem com outro ícone: {@code icon} (nome de ícone) e {@code iconColor}
+     *  (token do tema, como {@code "danger"}, ou {@code "#rrggbb"}); {@code null} fica o do tipo. */
+    public String messageDlg(String text, String kind, String[] buttons, String icon, String iconColor) {
+        Map<String, Object> fields = obj("text", text, "kind", kind, "buttons", java.util.List.of(buttons.length == 0 ? new String[] {"ok"} : buttons));
+        dialogIcon(fields, icon, iconColor);
+        return waitFor("message_dlg", fields);
+    }
+
+    /** A pergunta com um campo de texto (OK e Cancelar), que espera: devolve o texto digitado,
+     *  ou {@code null} no Cancelar. Enquanto espera, os eventos continuam rodando. */
+    public String prompt(String title, String label) {
+        return prompt(title, label, "", false, null, null);
+    }
+
+    /** O {@code prompt} com o valor inicial; {@code required} não deixa confirmar vazio. */
+    public String prompt(String title, String label, String value, boolean required) {
+        return prompt(title, label, value, required, null, null);
+    }
+
+    /** O {@code prompt} com outro ícone ({@code icon} e {@code iconColor}, como no {@code messageDlg}). */
+    public String prompt(String title, String label, String value, boolean required, String icon, String iconColor) {
+        Map<String, Object> fields = obj("title", title, "label", label, "value", value == null ? "" : value);
+        if (required) fields.put("required", true);
+        dialogIcon(fields, icon, iconColor);
+        Object result = waitForValue("prompt", fields);
+        return result == null ? null : result.toString();
     }
 
     /** Abre o form como modal e espera ele fechar: devolve o resultado. */
     public String showModal(AylisForm form) {
-        return waitFor("show_modal", obj("target", form.id));
+        return showModal(form, null);
+    }
+
+    /** O modal só no {@code container} (um componente de outro form, como a página de uma aba):
+     *  o resto da tela continua respondendo. Com {@code null}, a tela toda. */
+    public String showModal(AylisForm form, AylisComponent container) {
+        Map<String, Object> fields = obj("target", form.id);
+        if (container != null) fields.put("container", container.id);
+        return waitFor("show_modal", fields);
+    }
+
+    /** Os campos opcionais {@code icon} e {@code icon_color} do {@code message_dlg} e do {@code prompt}. */
+    private static void dialogIcon(Map<String, Object> fields, String icon, String iconColor) {
+        if (icon != null && !icon.isEmpty()) fields.put("icon", icon);
+        if (iconColor != null && !iconColor.isEmpty()) fields.put("icon_color", iconColor);
     }
 
     private String waitFor(String cmd, Map<String, Object> fields) {
+        return String.valueOf(waitForValue(cmd, fields));
+    }
+
+    private Object waitForValue(String cmd, Map<String, Object> fields) {
         fields.put("wait", true);
         waiting++;
         // O que chegou antes (enquanto outro call esperava) roda já.
@@ -608,7 +654,7 @@ public class Aylis {
             else queued.add(m);
         }
         try {
-            return String.valueOf(call(cmd, fields));
+            return call(cmd, fields);
         } finally {
             waiting--;
         }

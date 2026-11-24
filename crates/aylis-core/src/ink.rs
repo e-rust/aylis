@@ -252,6 +252,9 @@ impl Canvas for InkCanvas<'_> {
     fn measure_text(&mut self, text: &str, style: &TextStyle) -> SizeF {
         self.inner.measure_text(text, style)
     }
+    fn measure_text_wrapped(&mut self, text: &str, style: &TextStyle, max_width: f32) -> SizeF {
+        self.inner.measure_text_wrapped(text, style, max_width)
+    }
     fn draw_image(&mut self, image: &crate::Image, src: RectF, dest: RectF, opacity: f32) {
         self.mark(dest);
         self.inner.draw_image(image, src, dest, opacity);
@@ -282,6 +285,9 @@ impl Canvas for InkCanvas<'_> {
     }
     fn begin_mask(&mut self) {
         self.inner.begin_mask();
+    }
+    fn begin_luminance_mask(&mut self) {
+        self.inner.begin_luminance_mask();
     }
     fn end_mask(&mut self) {
         self.inner.end_mask();

@@ -167,6 +167,12 @@ pub struct Published {
 
 /// Publica o projeto. Demora (compila em modo otimizado): rode numa thread de trabalho.
 pub fn publish(project: &Project, options: &Options, control: &Control, sink: Sink) -> Result<Published, String> {
+    // A versão gravada (a do projeto ou a da última tag do git) resolvida uma vez, para todas as
+    // plataformas saírem com a mesma; sem git ou sem tag, a publicação para aqui. O código é
+    // gerado do projeto como está (a versão da tag não vai para o `Cargo.toml`).
+    let source = project;
+    let resolved = project.with_published_version()?;
+    let project = &resolved;
     let out = options.out_dir.clone().unwrap_or_else(|| project.dir().join("dist").join(options.target.id()));
     // O `.ico` do Windows com todos os tamanhos (o build põe no .exe) sai antes de compilar.
     if !project.publish.icon.is_empty() {
@@ -187,9 +193,9 @@ pub fn publish(project: &Project, options: &Options, control: &Control, sink: Si
                 project.path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()
             ));
         }
-        aylis_project::codegen::generate(project)?;
+        aylis_project::codegen::generate(source)?;
         shell_options = options.clone();
-        shell_options.crate_dir = Some(aylis_project::codegen::remote_shell(project, &project.publish.backend_url)?);
+        shell_options.crate_dir = Some(aylis_project::codegen::remote_shell(source, &project.publish.backend_url)?);
         &shell_options
     } else if !matches!(options.target, Target::Desktop | Target::Linux) && project.language.uses_host() {
         return Err(format!("projetos em {} não publicam para {} (troque a linguagem para Rust)", project.language.name(), options.target.name()));
@@ -197,7 +203,7 @@ pub fn publish(project: &Project, options: &Options, control: &Control, sink: Si
         options
     };
     if project.language == Language::Rust {
-        aylis_project::codegen::generate(project)?;
+        aylis_project::codegen::generate(source)?;
         if !project.code_dir().join("src/lib.rs").is_file() {
             return Err("o projeto não tem src/lib.rs (foi criado por uma versão antiga da IDE e o main.rs foi editado): \
                         mova o código para src/lib.rs com uma função app(), como num projeto novo"
@@ -2143,6 +2149,10 @@ fn ios_info_plist(project: &Project, package: &str, device: bool, icon: bool, pu
     extra += &ios_usage_plist(&device_needs(&forms), aylis_build::used_classes(&forms).iter().any(|c| c == "SaveDialog"));
     if push {
         extra += "  <key>UIBackgroundModes</key><array><string>remote-notification</string></array>\n";
+    }
+    // Os direitos do projeto (`publish.copyright`), como no `.exe`.
+    if !project.publish.copyright.trim().is_empty() {
+        extra += &format!("  <key>NSHumanReadableCopyright</key><string>{}</string>\n", xml_escape(project.publish.copyright.trim()));
     }
     if icon {
         extra += "  <key>CFBundleIconName</key><string>AppIcon</string>\n  <key>CFBundleIcons</key><dict><key>CFBundlePrimaryIcon</key><dict><key>CFBundleIconName</key><string>AppIcon</string></dict></dict>\n  <key>CFBundleIcons~ipad</key><dict><key>CFBundlePrimaryIcon</key><dict><key>CFBundleIconName</key><string>AppIcon</string></dict></dict>\n";

@@ -20,6 +20,7 @@ use crate::{CellEditor, EditorCommand};
 
 const HEADER: f32 = 32.0;
 const INDICATOR: f32 = 22.0;
+/// A largura da barra de rolagem sem o estilo `ScrollBar` do tema.
 const SCROLLBAR: f32 = 10.0;
 const RESIZE_GRIP: f32 = 4.0;
 const MIN_COLUMN: f32 = 36.0;
@@ -49,6 +50,8 @@ pub struct GridColumn {
     pub source: Option<ComponentId>,
     /// O que a coluna mostra: o texto, um ícone do `ImageList` ou a imagem do campo.
     pub kind: ColumnKind,
+    /// A dica do título (vazia: nenhuma).
+    pub hint: String,
 }
 
 /// O registro de uma coluna da lista `columns` (e do `on_column_moved`) no acesso tipado:
@@ -58,6 +61,7 @@ pub const GRID_COLUMN_RECORD: aylis_core::RecordInfo = aylis_core::RecordInfo {
     fields: &[
         ("field", aylis_core::PropKind::String),
         ("title", aylis_core::PropKind::String),
+        ("hint", aylis_core::PropKind::String),
         ("width", aylis_core::PropKind::Float),
         ("read_only", aylis_core::PropKind::Bool),
         ("color", aylis_core::PropKind::Color),
@@ -73,11 +77,14 @@ pub const GRID_TOTAL_RECORD: aylis_core::RecordInfo = aylis_core::RecordInfo {
 };
 
 /// Uma coluna da lista `columns` (o [`GRID_COLUMN_RECORD`]): o que não vier sai do `Field`.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ColumnSpec {
     pub field: String,
-    /// Vazio: o `display_label` do campo.
-    pub title: String,
+    /// Vazio: o `display_label` do campo; `None` (`"title": null`): o cabeçalho vazio (uma
+    /// coluna de ícone sem título).
+    pub title: Option<String>,
+    /// A dica do título (o mouse parado sobre ele).
+    pub hint: String,
     /// 0: a largura do campo.
     pub width: f32,
     pub read_only: bool,
@@ -86,6 +93,21 @@ pub struct ColumnSpec {
     /// `text` (o padrão), `icon` (do `ImageList` da grade, pelo valor do campo) ou `image` (a
     /// imagem guardada no campo).
     pub kind: ColumnKind,
+}
+
+impl Default for ColumnSpec {
+    fn default() -> Self {
+        ColumnSpec {
+            field: String::new(),
+            title: Some(String::new()),
+            hint: String::new(),
+            width: 0.0,
+            read_only: false,
+            color: None,
+            text_color: None,
+            kind: ColumnKind::Text,
+        }
+    }
 }
 
 impl ColumnSpec {
@@ -106,7 +128,11 @@ impl ColumnSpec {
                 let color = |k: &str| j[k].as_str().and_then(Color::from_hex);
                 Some(ColumnSpec {
                     field: field.to_string(),
-                    title: j["title"].as_str().unwrap_or_default().to_string(),
+                    title: match j.get("title") {
+                        Some(serde_json::Value::Null) => None,
+                        t => Some(t.and_then(|t| t.as_str()).unwrap_or_default().to_string()),
+                    },
+                    hint: j["hint"].as_str().unwrap_or_default().to_string(),
                     width: j["width"].as_f64().unwrap_or(0.0) as f32,
                     read_only: j["read_only"].as_bool().unwrap_or(false),
                     color: color("color"),
@@ -121,8 +147,17 @@ impl ColumnSpec {
     pub fn to_json(&self) -> serde_json::Value {
         let mut o = serde_json::Map::new();
         o.insert("field".into(), self.field.clone().into());
-        if !self.title.is_empty() {
-            o.insert("title".into(), self.title.clone().into());
+        match &self.title {
+            None => {
+                o.insert("title".into(), serde_json::Value::Null);
+            }
+            Some(t) if !t.is_empty() => {
+                o.insert("title".into(), t.clone().into());
+            }
+            Some(_) => {}
+        }
+        if !self.hint.is_empty() {
+            o.insert("hint".into(), self.hint.clone().into());
         }
         if self.width > 0.0 {
             // Inteira sem o `.0` (o form fica limpo).
@@ -416,8 +451,7 @@ pub struct DataGrid {
     pub incremental_search: bool,
     /// A borda da célula atual; `None` usa a cor de destaque (`primary`) do tema.
     pub cursor_color: Option<Color>,
-    /// A coluna da esquerda com a seta do registro atual; sem ela, a
-    /// grade começa nos dados (relatório do InsightDB, 11/11).
+    /// A coluna da esquerda com a seta do registro atual; sem ela, a grade começa nos dados.
     pub indicator: bool,
     /// O fundo destacado na linha do registro atual; sem ele, só a seleção e o passar do mouse.
     pub highlight_current: bool,
@@ -425,6 +459,16 @@ pub struct DataGrid {
     /// `always` (a roda comum rola as colunas) ou `none` (só o código, pelo `scroll_left`). O
     /// movimento de lado do touchpad sempre rola as colunas, menos em `none`.
     pub horizontal_wheel: HorizontalWheel,
+    /// O texto da grade sem registros (vazio: "Sem registros", traduzido).
+    pub empty_text: String,
+    /// O fundo e a moldura próprios da grade (o card); desligado, ela pinta só o conteúdo e
+    /// fica sem a segunda caixa dentro de um `Panel` com borda.
+    pub frame: bool,
+    /// A dica da grade (a propriedade `hint`) enquanto o mouse está num título com dica.
+    own_hint: Option<String>,
+    /// A largura da barra de rolagem: a do estilo `ScrollBar` do tema (ou do `scroll_bar` do
+    /// estilo da grade), lida ao preparar as linhas; sem ela, [`SCROLLBAR`].
+    bar_width: std::cell::Cell<f32>,
     /// A largura da coluna no começo do arraste do separador no designer.
     design_width: f32,
     /// A coluna que avisou a mudança (ocupada no `Ui` enquanto avisa).
@@ -497,6 +541,10 @@ impl Default for DataGrid {
             indicator: true,
             highlight_current: true,
             horizontal_wheel: HorizontalWheel::Shift,
+            empty_text: String::new(),
+            frame: true,
+            own_hint: None,
+            bar_width: std::cell::Cell::new(SCROLLBAR),
             design_width: 0.0,
             changing_column: None,
             selected: BTreeSet::new(),
@@ -531,6 +579,11 @@ impl Default for DataGrid {
 impl DataGrid {
     pub fn new(data_source: ComponentId) -> Self {
         Self { data_source: Some(data_source), ..Default::default() }
+    }
+
+    /// A largura da barra de rolagem (a do tema, lida ao preparar as linhas).
+    fn bar(&self) -> f32 {
+        self.bar_width.get()
     }
 
     /// A largura da coluna indicadora (0 sem ela).
@@ -665,16 +718,16 @@ impl DataGrid {
     fn has_hbar(&self) -> bool {
         let rows = ((self.height() - self.top() - self.footer_height()) / self.row_height).floor().max(1.0) as usize;
         let vbar = self.cache.count > rows || self.cache.has_more;
-        self.content_width() > (self.width() - self.indicator_w() - if vbar { SCROLLBAR + 2.0 } else { 0.0 }).max(0.0) + 0.5
+        self.content_width() > (self.width() - self.indicator_w() - if vbar { self.bar() + 2.0 } else { 0.0 }).max(0.0) + 0.5
     }
 
     fn hbar_height(&self) -> f32 {
-        if self.has_hbar() { SCROLLBAR + 2.0 } else { 0.0 }
+        if self.has_hbar() { self.bar() + 2.0 } else { 0.0 }
     }
 
     /// O trilho da barra horizontal (embaixo, da largura das colunas).
     fn htrack(&self) -> RectF {
-        RectF::new(self.indicator_w(), self.height() - SCROLLBAR - 2.0, self.data_width(), SCROLLBAR)
+        RectF::new(self.indicator_w(), self.height() - self.bar() - 2.0, self.data_width(), self.bar())
     }
 
     fn hthumb(&self) -> RectF {
@@ -732,7 +785,7 @@ impl DataGrid {
     }
 
     fn data_width(&self) -> f32 {
-        (self.width() - self.indicator_w() - if self.has_vbar() { SCROLLBAR + 2.0 } else { 0.0 }).max(0.0)
+        (self.width() - self.indicator_w() - if self.has_vbar() { self.bar() + 2.0 } else { 0.0 }).max(0.0)
     }
 
     fn column_x(&self, index: usize) -> f32 {
@@ -822,7 +875,7 @@ impl DataGrid {
     }
 
     fn track(&self) -> RectF {
-        RectF::new(self.width() - SCROLLBAR - 2.0, self.top() + 2.0, SCROLLBAR, (self.height() - self.top() - self.footer_height() - self.hbar_height() - 4.0).max(0.0))
+        RectF::new(self.width() - self.bar() - 2.0, self.top() + 2.0, self.bar(), (self.height() - self.top() - self.footer_height() - self.hbar_height() - 4.0).max(0.0))
     }
 
     /// Total para a barra de rolagem: com mais registros no backend, o total que ele disse
@@ -897,12 +950,13 @@ impl DataGrid {
                 };
                 let check = field.field_type == FieldType::Boolean;
                 let align = column.and_then(|c| c.alignment).unwrap_or(if check { TextAlign::Center } else { field.alignment() });
-                let title = column
-                    .map(|c| c.title.as_str())
-                    .or(spec.map(|s| s.title.as_str()))
-                    .filter(|t| !t.is_empty())
-                    .map(str::to_string)
-                    .unwrap_or_else(|| field.caption().to_string());
+                // `null`: o cabeçalho vazio; vazio: o rótulo do campo.
+                let title = match column.map(|c| c.title.as_deref()).or(spec.map(|s| s.title.as_deref())) {
+                    Some(None) => String::new(),
+                    Some(Some(t)) if !t.is_empty() => t.to_string(),
+                    _ => field.caption().to_string(),
+                };
+                let hint = column.map(|c| c.hint.clone()).filter(|h| !h.is_empty()).or(spec.map(|s| s.hint.clone())).unwrap_or_default();
                 Some(GridColumn {
                     field: name,
                     title,
@@ -914,6 +968,7 @@ impl DataGrid {
                     text_color: column.and_then(|c| c.text_color).or(spec.and_then(|s| s.text_color)),
                     source,
                     kind: column.map(|c| c.kind).filter(|k| *k != ColumnKind::Text).or(spec.map(|s| s.kind)).unwrap_or_default(),
+                    hint,
                 })
             })
             .collect();
@@ -967,6 +1022,9 @@ impl DataGrid {
 
     /// Prepara os textos das linhas visíveis.
     fn fill(&mut self, ui: &Ui, id: ComponentId) {
+        // A barra do tema muda quantas linhas e colunas cabem: lida antes de contar.
+        let bar = aylis_controls::scroll_bar::look_of(ui, id, &*self, false).width.unwrap_or(SCROLLBAR);
+        self.bar_width.set(bar);
         let Some(ds) = self.data_set(ui) else {
             self.cache = Cache::default();
             return;
@@ -1316,7 +1374,9 @@ impl DataGrid {
                 .iter()
                 .zip(&self.filters)
                 .filter(|(_, t)| !t.is_empty())
-                .map(|(c, t)| format!("[{}] like '%{}%'", c.field, t.replace('\'', "''")))
+                // Sem acento e sem maiúscula dos dois lados (o `aylis_core::text::fold`): "sao"
+                // acha "São Paulo".
+                .map(|(c, t)| format!("fold([{}]) like '%{}%'", c.field, aylis_core::text::fold(t).replace('\'', "''")))
                 .collect();
             let filter = parts.join(" and ");
             self.with_data(ctx, |d| d.set_filter(&filter));
@@ -1367,14 +1427,19 @@ impl DataGrid {
 
     // ----- editor de célula -----
 
+    /// Abre o editor na célula atual. Numa célula que não edita (a grade, a coluna ou o campo
+    /// só de leitura), Enter, F2 e o duplo clique abrem o editor só de leitura: o texto fica
+    /// selecionável e copiável; digitar não abre.
     fn start_editor(&mut self, ctx: &mut EventCtx<'_>, typed: Option<&str>) {
-        if self.read_only || self.cols.is_empty() || self.editor.is_some() {
+        if self.cols.is_empty() || self.editor.is_some() {
             return;
         }
         let Some(source) = self.data_source else { return };
-        let field = self.cols[self.col].field.clone();
+        let column = &self.cols[self.col];
+        let field = column.field.clone();
         let link = FieldLink { data_source: Some(source), data_field: field.clone() };
-        if !link.can_modify(ctx.ui) || self.cache.current.is_none() || self.cols[self.col].read_only {
+        let locked = self.read_only || column.read_only || !link.can_modify(ctx.ui);
+        if self.cache.current.is_none() || (locked && (typed.is_some() || column.check || column.kind != ColumnKind::Text)) {
             return;
         }
         self.ensure_current_visible();
@@ -1383,7 +1448,7 @@ impl DataGrid {
         let Some(current) = self.cache.current else { return };
         let x = self.column_x(self.col);
         let y = self.top() + (current - self.top_row) as f32 * self.row_height;
-        let editor = ctx.ui.add(CellEditor::new(source, &field), ctx.id);
+        let editor = ctx.ui.add(CellEditor { locked, ..CellEditor::new(source, &field) }, ctx.id);
         if let Some(cb) = ctx.ui.control_mut(editor) {
             cb.set_rect(x, y, self.cols[self.col].width, self.row_height);
         }
@@ -1506,6 +1571,52 @@ impl DataGrid {
         let max = self.cache.count.saturating_sub(self.visible_rows());
         self.top_row = row.clamp(0, max as i64) as usize;
     }
+
+    /// A linha sob a altura `y` (nas coordenadas da grade, como o `position.y` do
+    /// `on_pointer_move` dela): a posição entre os registros visíveis (0 = o primeiro do
+    /// dataset com o filtro e a ordem), ou `None` no cabeçalho, no rodapé, na barra e abaixo da
+    /// última linha. O mesmo número do `CellInfo::row` e do `value_at`.
+    pub fn row_at(&self, y: f32) -> Option<usize> {
+        let top = self.top();
+        let bottom = self.height() - self.footer_height() - self.hbar_height();
+        if !self.cache.active || y < top || y >= bottom {
+            return None;
+        }
+        let row = self.top_row + ((y - top) / self.row_height) as usize;
+        (row < self.cache.count).then_some(row)
+    }
+
+    /// O valor do campo `field` na linha `row` (a do [`row_at`](Self::row_at)), sem mexer no
+    /// registro atual; `None` se a linha ou o campo não existem.
+    pub fn value_at(&self, ui: &Ui, row: usize, field: &str) -> Option<aylis_data::Value> {
+        let ds = self.data_set(ui)?;
+        let v = view(ui, ds);
+        if row >= v.visible_count() {
+            return None;
+        }
+        v.visible_value(row, field).ok()
+    }
+
+    /// Com o mouse num título que tem `hint`, a dica da grade passa a ser a dele (a do
+    /// controle volta fora dos títulos): o núcleo mostra a dica do controle sob o mouse.
+    fn update_title_hint(&mut self, p: PointF) {
+        let column_hint = (p.y >= 0.0 && p.y < HEADER).then(|| self.column_at(p.x)).flatten().map(|c| self.cols[c].hint.clone()).filter(|h| !h.is_empty());
+        match column_hint {
+            Some(hint) => {
+                if self.own_hint.is_none() {
+                    self.own_hint = Some(self.base.hint().to_string());
+                }
+                if self.base.hint() != hint {
+                    self.base.set_hint(hint);
+                }
+            }
+            None => {
+                if let Some(own) = self.own_hint.take() {
+                    self.base.set_hint(own);
+                }
+            }
+        }
+    }
 }
 
 impl Component for DataGrid {
@@ -1559,11 +1670,49 @@ impl Component for DataGrid {
         cursor_color: Option<Color> => "Appearance",
         indicator: bool => "Appearance",
         highlight_current: bool => "Appearance",
-        horizontal_wheel: HorizontalWheel => "Behavior";
+        horizontal_wheel: HorizontalWheel => "Behavior",
+        empty_text: String => "Appearance",
+        frame: bool => "Appearance";
         events: on_error: String, on_title_click: String, on_selection_change: String, on_column_moved: ColumnLayout;
         computed: scroll_left: f32 => scroll_left / set_scroll_left,
             top_row: i64 => top_row_index / set_top_row_index;
         on_set: on_set
+    }
+
+    fn methods(&self) -> &'static [aylis_core::MethodInfo] {
+        use aylis_core::{MethodInfo, PropKind};
+        const METHODS: &[MethodInfo] = &[
+            MethodInfo::new("row_at", &[PropKind::Float], Some(PropKind::Int)).params(&["y"]),
+            MethodInfo::new("value_at", &[PropKind::Int, PropKind::String], Some(PropKind::String)).params(&["row", "field"]),
+        ];
+        METHODS
+    }
+
+    /// Para as outras linguagens: `row_at(y)` devolve a linha (`Null` fora das linhas) e
+    /// `value_at(row, field)` o valor como texto (o do JSON: número, `true`, data ISO; `Null`
+    /// quando nulo ou fora).
+    fn invoke(&mut self, ctx: &mut EventCtx<'_>, method: &str, args: &[aylis_core::PropValue]) -> Result<aylis_core::PropValue, String> {
+        use aylis_core::PropValue;
+        match method {
+            "row_at" => {
+                let y = args.first().and_then(|v| v.to_f32().ok()).ok_or("row_at(y): falta a altura")?;
+                Ok(self.row_at(y).map_or(PropValue::Null, |r| PropValue::Int(r as i64)))
+            }
+            "value_at" => {
+                let row = args.first().and_then(|v| v.to_i64().ok()).ok_or("value_at(row, field): falta a linha")?;
+                let field = args.get(1).and_then(|v| v.to_str().ok()).ok_or("value_at(row, field): falta o campo")?;
+                let value = usize::try_from(row).ok().and_then(|r| self.value_at(ctx.ui, r, field));
+                Ok(match value {
+                    None | Some(aylis_data::Value::Null) => PropValue::Null,
+                    Some(aylis_data::Value::String(s)) => PropValue::String(s),
+                    Some(v) => PropValue::String(match aylis_data::json::value_to_json(&v) {
+                        serde_json::Value::String(s) => s,
+                        other => other.to_string(),
+                    }),
+                })
+            }
+            _ => Err(format!("DataGrid não tem o método {method}")),
+        }
     }
 
     /// Colunas, rodapé e linha de filtro mudam o que é preparado (e quantas linhas cabem).
@@ -1625,6 +1774,16 @@ impl Component for DataGrid {
             self.selected.clear();
             self.anchor = None;
         }
+        // Mudou como um campo aparece (`display_width` em execução): as colunas são refeitas dos
+        // campos; os dados e o cursor ficam.
+        if let DataEvent::FieldChanged(_) = m.event {
+            self.cols.clear();
+            self.totals_dirty = true;
+            self.fill(ctx.ui, ctx.id);
+            self.clamp_scroll_x();
+            ctx.repaint();
+            return;
+        }
         // Os totais mudam com os dados (carga, post, exclusão, filtro), não com o cursor.
         if !matches!(m.event, DataEvent::Scrolled | DataEvent::StateChanged) {
             self.totals_dirty = true;
@@ -1671,8 +1830,22 @@ impl Component for DataGrid {
         } else if self.horizontal_wheel == HorizontalWheel::None && sideways {
             // O de lado é só do código (`scroll_left`): segue para fora.
             return;
-        } else if event.touch {
-            // Dedo: as linhas acompanham o dedo (uma a cada row_height arrastado).
+        } else if event.lines {
+            // Roda com dentes: o delta já vem multiplicado pelo passo do app
+            // (`ScrollOptions::wheel_step`), então um passo = um dente = 3 linhas, qualquer que
+            // seja o passo (antes, `delta/40*3`: com o passo 100, ~8 linhas por dente).
+            let step = ctx.ui.scroll_options().wheel_step.max(1.0);
+            let notches = -event.delta.y / step;
+            let rows = (notches * 3.0).round();
+            let rows = if rows == 0.0 && notches != 0.0 { notches.signum() } else { rows };
+            let before = self.top_row;
+            self.scroll_rows(ctx, rows as isize);
+            if self.top_row == before {
+                return;
+            }
+        } else {
+            // Dedo e touchpad (deslocamento em pontos): as linhas acompanham o deslocamento,
+            // uma a cada row_height, como as outras listas rolam os mesmos pontos.
             self.touch_rest -= event.delta.y;
             let rows = (self.touch_rest / self.row_height).trunc();
             self.touch_rest -= rows * self.row_height;
@@ -1681,14 +1854,6 @@ impl Component for DataGrid {
             if rows != 0.0 && self.top_row == before {
                 // Chegou ao fim: não trata (a inércia para).
                 self.touch_rest = 0.0;
-                return;
-            }
-        } else {
-            // 40 unidades = uma "linha" da roda = 3 linhas do grid.
-            let rows = (-event.delta.y / 40.0 * 3.0).round() as isize;
-            let before = self.top_row;
-            self.scroll_rows(ctx, rows);
-            if self.top_row == before {
                 return;
             }
         }
@@ -1830,6 +1995,7 @@ impl Component for DataGrid {
                 if cursor != self.base.cursor() {
                     self.base.set_cursor(cursor);
                 }
+                self.update_title_hint(p);
                 let top = self.top();
                 let hovered = (p.y >= top).then(|| self.top_row + ((p.y - top) / self.row_height) as usize);
                 if hovered != self.hovered_row {
@@ -1848,11 +2014,17 @@ impl Component for DataGrid {
                 self.move_column(ctx, column, gap);
             } else if self.sortable {
                 self.sort_by(ctx, column, add);
+            } else if let Some(c) = self.cols.get(column) {
+                // Sem `sortable`, o clique só avisa (o app que ordena por conta própria).
+                ctx.fire("on_title_click", EventArgs::Text(c.field.clone()));
             }
         }
     }
 
     fn pointer_leave(&mut self, ctx: &mut EventCtx<'_>) {
+        if let Some(own) = self.own_hint.take() {
+            self.base.set_hint(own);
+        }
         self.hovered_row = None;
         ctx.repaint();
     }
@@ -2025,7 +2197,10 @@ impl Component for DataGrid {
         let border = theme.color("border");
         let text_color = theme.color("text");
         let muted = theme.color("text_muted");
-        canvas.fill_rect(r, 6.0, &Brush::Solid(theme.color("surface")));
+        let look = GridLook::of(ctx);
+        if self.frame {
+            canvas.fill_rect(r, 6.0, &Brush::Solid(theme.color("surface")));
+        }
         {
             let mut header = ctx.text_style();
             header.font.weight = aylis_core::FontWeight::SemiBold;
@@ -2033,14 +2208,15 @@ impl Component for DataGrid {
         }
 
         canvas.save();
-        canvas.clip_rect(r.inflate(-1.0));
+        canvas.clip_rect(if self.frame { r.inflate(-1.0) } else { r });
         let data_right = self.indicator_w() + self.data_width();
 
         // ----- cabeçalho -----
         let top = self.top();
-        canvas.fill_rect(RectF::new(0.0, 0.0, r.width, top), 0.0, &Brush::Solid(theme.color("background")));
+        canvas.fill_rect(RectF::new(0.0, 0.0, r.width, top), 0.0, &Brush::Solid(look.header_fill.unwrap_or(theme.color("background"))));
+        let header_line = look.header_line.unwrap_or(border);
         let mut header_style = ctx.text_style();
-        header_style.color = muted;
+        header_style.color = look.header_text.unwrap_or(muted);
         header_style.font.weight = aylis_core::FontWeight::SemiBold;
         let fixed_right = self.indicator_w() + self.fixed_width();
         let fixed = self.fixed_columns as usize;
@@ -2083,7 +2259,7 @@ impl Component for DataGrid {
                     canvas.draw_line(PointF::new(ax, ay + d), PointF::new(ax + 4.0, ay - d), &s);
                 }
                 let edge = (x + c.width).round() - 0.5;
-                canvas.draw_line(PointF::new(edge, 8.0), PointF::new(edge, HEADER - 8.0), &Stroke::new(border, 1.0));
+                canvas.draw_line(PointF::new(edge, 8.0), PointF::new(edge, HEADER - 8.0), &Stroke::new(header_line, 1.0));
                 if self.filter_row {
                     let cell = RectF::new(x + 2.0, HEADER + 2.0, c.width - 4.0, FILTER_ROW - 4.0);
                     canvas.fill_rect(cell, 4.0, &Brush::Solid(theme.color("surface")));
@@ -2102,7 +2278,7 @@ impl Component for DataGrid {
             }
             canvas.restore();
         }
-        canvas.draw_line(PointF::new(0.0, top - 0.5), PointF::new(r.width, top - 0.5), &Stroke::new(border, 1.0));
+        canvas.draw_line(PointF::new(0.0, top - 0.5), PointF::new(r.width, top - 0.5), &Stroke::new(header_line, 1.0));
 
         // ----- coluna sendo arrastada: o título segue o mouse e uma barra marca onde entra -----
         if let Drag::Title { column, start_x, x, moved: true, .. } = self.drag {
@@ -2126,13 +2302,17 @@ impl Component for DataGrid {
             let mut empty = ctx.text_style();
             empty.color = muted;
             empty.h_align = TextAlign::Center;
-            canvas.draw_text(&ctx.ui.tr("Sem registros"), RectF::new(0.0, top, r.width, self.row_height * 2.0), &empty);
+            let text = if self.empty_text.is_empty() { ctx.ui.tr("Sem registros") } else { self.empty_text.clone() };
+            canvas.draw_text(&text, RectF::new(0.0, top, r.width, self.row_height * 2.0), &empty);
         }
-        let selection = theme.color("primary").with_opacity(0.12);
-        let selected_fill = theme.color("primary").with_opacity(0.22);
-        let stripe = theme.color("text").with_opacity(0.025);
-        let hover = theme.color("text").with_opacity(0.05);
-        let surface = theme.color("surface");
+        // As cores das linhas: o estilo `DataGrid.row` (o `focused` é a linha atual, o `checked`
+        // a selecionada, o `hover` a do mouse) e o `DataGrid.stripe` (a zebra); sem eles, as de
+        // sempre.
+        let selection = look.current_fill.unwrap_or(theme.color("primary").with_opacity(0.12));
+        let selected_fill = look.selected_fill.unwrap_or(theme.color("primary").with_opacity(0.22));
+        let stripe = look.stripe.unwrap_or(theme.color("text").with_opacity(0.025));
+        let hover = look.hover_fill.unwrap_or(theme.color("text").with_opacity(0.05));
+        let surface = look.row_fill.unwrap_or(theme.color("surface"));
         for (k, row) in self.cache.rows.iter().enumerate() {
             let index = self.cache.first + k;
             let y = top + k as f32 * self.row_height;
@@ -2142,7 +2322,7 @@ impl Component for DataGrid {
             let line = RectF::new(0.0, y, data_right, self.row_height);
             // Fundo opaco: as colunas fixas cobrem as que rolam por baixo delas.
             let fill = row.row_style.background.unwrap_or(surface);
-            if row.row_style.background.is_some() {
+            if row.row_style.background.is_some() || look.row_fill.is_some() {
                 canvas.fill_rect(line, 0.0, &Brush::Solid(fill));
             }
             let mut overlays = Vec::new();
@@ -2161,7 +2341,11 @@ impl Component for DataGrid {
                 canvas.fill_rect(line, 0.0, &Brush::Solid(*o));
             }
             let mut row_text = ctx.text_style();
-            row_text.color = if row.error { theme.color("danger") } else { row.row_style.color.unwrap_or(text_color) };
+            // O texto da linha: o do app (`on_draw_cell`), senão o do estado no estilo.
+            let state_text = if row.current && self.highlight_current { look.current_text } else { None }
+                .or(if row.selected { look.selected_text } else { None })
+                .or(look.row_text);
+            row_text.color = if row.error { theme.color("danger") } else { row.row_style.color.or(state_text).unwrap_or(text_color) };
             if row.row_style.bold {
                 row_text.font.weight = aylis_core::FontWeight::Bold;
             }
@@ -2256,8 +2440,15 @@ impl Component for DataGrid {
                     // também com o foco vindo do clique (que tira o `focused` do `ctx.state`).
                     let focused = ctx.ui.control(ctx.id).is_some_and(|c| c.state().focused);
                     if row.current && i == self.col && focused && self.editor.is_none() {
-                        let cell = RectF::new(x + 1.0, y + 1.0, c.width - 2.0, self.row_height - 2.0);
-                        canvas.stroke_rect(cell, 3.0, &Stroke::new(self.cursor_color.unwrap_or(theme.color("primary")), 2.0));
+                        // A moldura da célula atual: o `cursor_color` da grade, senão o estilo
+                        // `DataGrid.cursor` (cor, largura e raio), senão 2 na cor de destaque.
+                        let color = self.cursor_color.or(look.cursor_color).unwrap_or(theme.color("primary"));
+                        let width = look.cursor_width.unwrap_or(2.0);
+                        if width > 0.0 {
+                            let inset = width / 2.0;
+                            let cell = RectF::new(x + inset, y + inset, c.width - width, self.row_height - width);
+                            canvas.stroke_rect(cell, look.cursor_radius.unwrap_or(3.0), &Stroke::new(color, width));
+                        }
                     }
                 }
                 canvas.restore();
@@ -2315,7 +2506,7 @@ impl Component for DataGrid {
             ts.h_align = TextAlign::Leading;
             let label = aylis_core::messages::tf("Buscar: {0}", &[&self.search]);
             let w = canvas.measure_text(&label, &ts).width + 20.0;
-            let chip = RectF::new(r.width - w - SCROLLBAR - 12.0, r.height - hbar - footer - self.row_height - 8.0, w, self.row_height);
+            let chip = RectF::new(r.width - w - self.bar() - 12.0, r.height - hbar - footer - self.row_height - 8.0, w, self.row_height);
             canvas.fill_rect(chip, chip.height / 2.0, &Brush::Solid(theme.color("text").with_opacity(0.85)));
             ts.color = theme.color("surface");
             canvas.draw_text(&label, chip.inflate(-10.0), &ts);
@@ -2328,7 +2519,7 @@ impl Component for DataGrid {
             ts.h_align = TextAlign::Leading;
             ts.font.size = (ts.font.size - 1.0).max(9.0);
             let warning = theme.color("warning");
-            let band = RectF::new(self.indicator_w(), r.height - hbar - footer - self.row_height, (r.width - self.indicator_w() - SCROLLBAR - 4.0).max(0.0), self.row_height);
+            let band = RectF::new(self.indicator_w(), r.height - hbar - footer - self.row_height, (r.width - self.indicator_w() - self.bar() - 4.0).max(0.0), self.row_height);
             canvas.fill_rect(band, 0.0, &Brush::Solid(theme.color("surface")));
             canvas.fill_rect(band, 0.0, &Brush::Solid(warning.with_opacity(0.16)));
             canvas.fill_rect(RectF::new(band.x, band.y, 3.0, band.height), 0.0, &Brush::Solid(warning));
@@ -2337,21 +2528,37 @@ impl Component for DataGrid {
         }
 
         // ----- barra de rolagem -----
+        // Pelo estilo `ScrollBar` do tema (o `hover` dele vale arrastando); o que ele não diz,
+        // como era: 10 de largura, o trilho quase invisível, o polegar apagado, raio de meia
+        // largura.
+        let paint_bar = |canvas: &mut dyn Canvas, track: RectF, thumb: RectF, dragging: bool| {
+            let bar = aylis_controls::scroll_bar::resolve(
+                ctx,
+                dragging,
+                aylis_controls::scroll_bar::Defaults {
+                    width: SCROLLBAR,
+                    track: Some(theme.color("text").with_opacity(0.04)),
+                    thumb: muted.with_opacity(if dragging { 0.45 } else { 0.28 }),
+                },
+            );
+            let radius = bar.radius.unwrap_or(self.bar() / 2.0);
+            if let Some(color) = bar.track.filter(|c| !c.is_transparent()) {
+                canvas.fill_rect(track, radius, &Brush::Solid(color));
+            }
+            canvas.fill_rect(thumb.inflate(-1.0), radius, &Brush::Solid(bar.thumb));
+        };
         if self.has_vbar() {
-            let track = self.track();
-            canvas.fill_rect(track, SCROLLBAR / 2.0, &Brush::Solid(theme.color("text").with_opacity(0.04)));
-            let thumb_color = if matches!(self.drag, Drag::Thumb { .. }) { 0.45 } else { 0.28 };
-            canvas.fill_rect(self.thumb().inflate(-1.0), SCROLLBAR / 2.0, &Brush::Solid(muted.with_opacity(thumb_color)));
+            paint_bar(canvas, self.track(), self.thumb(), matches!(self.drag, Drag::Thumb { .. }));
         }
         if hbar > 0.0 {
             let track = self.htrack();
             canvas.fill_rect(RectF::new(0.0, track.y - 2.0, r.width, hbar + 2.0), 0.0, &Brush::Solid(theme.color("surface")));
-            canvas.fill_rect(track, SCROLLBAR / 2.0, &Brush::Solid(theme.color("text").with_opacity(0.04)));
-            let thumb_color = if matches!(self.drag, Drag::HThumb { .. }) { 0.45 } else { 0.28 };
-            canvas.fill_rect(self.hthumb().inflate(-1.0), SCROLLBAR / 2.0, &Brush::Solid(muted.with_opacity(thumb_color)));
+            paint_bar(canvas, track, self.hthumb(), matches!(self.drag, Drag::HThumb { .. }));
         }
         canvas.restore();
-        canvas.stroke_rect(r, 6.0, &Stroke::new(if ctx.state.focused { theme.color("focus_ring") } else { border }, 1.0));
+        if self.frame {
+            canvas.stroke_rect(r, 6.0, &Stroke::new(if ctx.state.focused { theme.color("focus_ring") } else { border }, 1.0));
+        }
     }
 }
 
@@ -2367,10 +2574,14 @@ impl aylis_core::AccessibleItems for DataGrid {
         }
         match target {
             GridTarget::Header(c) => {
-                if !self.sortable || action == ItemAction::Select {
+                if action == ItemAction::Select {
                     return false;
                 }
-                self.sort_by(ctx, c, false);
+                if self.sortable {
+                    self.sort_by(ctx, c, false);
+                } else if let Some(col) = self.cols.get(c) {
+                    ctx.fire("on_title_click", EventArgs::Text(col.field.clone()));
+                }
             }
             GridTarget::Row(row) | GridTarget::Cell(row, _) => {
                 if let GridTarget::Cell(_, c) = target {
@@ -2390,6 +2601,80 @@ impl aylis_core::AccessibleItems for DataGrid {
 impl aylis_core::DragDrop for DataGrid {
     fn drag_item(&self, ui: &Ui) -> Option<(String, String)> {
         self.current_key(ui)
+    }
+}
+
+/// As partes da grade pelo tema: os sub-estilos `DataGrid.header` (o fundo,
+/// o texto e a `border_color` das divisões), `DataGrid.row` (o fundo e o texto das linhas; os
+/// estados `hover`, `checked` = selecionada e `focused` = a atual), `DataGrid.stripe` (o
+/// `fill` da zebra; `transparent` tira) e `DataGrid.cursor` (a `border_color`, a
+/// `border_width` e o `radius` da moldura da célula atual), cada um também por variante
+/// (`DataGrid.row.compacta`). O que o tema não diz fica como sempre foi.
+#[derive(Default)]
+struct GridLook {
+    header_fill: Option<Color>,
+    header_text: Option<Color>,
+    header_line: Option<Color>,
+    row_fill: Option<Color>,
+    row_text: Option<Color>,
+    hover_fill: Option<Color>,
+    selected_fill: Option<Color>,
+    selected_text: Option<Color>,
+    current_fill: Option<Color>,
+    current_text: Option<Color>,
+    stripe: Option<Color>,
+    cursor_color: Option<Color>,
+    cursor_width: Option<f32>,
+    cursor_radius: Option<f32>,
+}
+
+impl GridLook {
+    fn of(ctx: &PaintCtx<'_>) -> GridLook {
+        let theme = ctx.theme;
+        let variant = ctx.variant();
+        // O sub-estilo e, por cima, o da variante (sem nenhum dos dois: `None`).
+        let part = |name: &str| -> Option<aylis_core::Style> {
+            let base = theme.style(&format!("DataGrid.{name}"));
+            let own = (!variant.is_empty()).then(|| theme.style(&format!("DataGrid.{name}.{variant}"))).flatten();
+            match (base, own) {
+                (None, None) => None,
+                (base, own) => {
+                    let mut style = base.cloned().unwrap_or_default();
+                    if let Some(own) = own {
+                        style.merge(own);
+                    }
+                    Some(style)
+                }
+            }
+        };
+        let color = |c: &Option<aylis_core::ColorRef>| c.as_ref().map(|c| theme.color_of(c));
+        let mut look = GridLook::default();
+        if let Some(h) = part("header") {
+            look.header_fill = color(&h.base.fill);
+            look.header_text = color(&h.base.text);
+            look.header_line = color(&h.base.border_color);
+        }
+        if let Some(row) = part("row") {
+            look.row_fill = color(&row.base.fill);
+            look.row_text = color(&row.base.text);
+            look.hover_fill = color(&row.hover.fill);
+            look.selected_fill = color(&row.checked.fill);
+            look.selected_text = color(&row.checked.text);
+            look.current_fill = color(&row.focused.fill);
+            look.current_text = color(&row.focused.text);
+        }
+        if let Some(stripe) = part("stripe") {
+            look.stripe = color(&stripe.base.fill);
+        }
+        if let Some(cursor) = part("cursor") {
+            look.cursor_color = color(&cursor.base.border_color);
+            look.cursor_width = cursor.base.border_width;
+            look.cursor_radius = cursor.base.radius.as_ref().map(|m| match m {
+                aylis_core::Metric::Value(v) => *v,
+                aylis_core::Metric::Token(t) => theme.radius.get(t).copied().unwrap_or(0.0),
+            });
+        }
+        look
     }
 }
 

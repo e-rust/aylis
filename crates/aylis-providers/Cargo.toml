@@ -14,6 +14,10 @@ default = ["pdf"]
 pdf = ["dep:krilla", "dep:skrifa", "dep:fontdb"]
 # As tags de mídia pelo lofty (o `LoftyTagsProvider` do `MediaInfo`).
 tags = ["dep:lofty"]
+# Os clientes de rede (HttpClient e WebSocketClient): o ureq e o tungstenite, com rustls (sem
+# OpenSSL), fora do navegador; o fetch e o WebSocket do navegador na web.
+http = ["dep:ureq", "dep:serde", "dep:web-sys", "dep:wasm-bindgen", "dep:wasm-bindgen-futures", "dep:js-sys"]
+websocket = ["dep:tungstenite", "dep:rustls", "dep:webpki-roots", "dep:serde", "dep:web-sys", "dep:wasm-bindgen", "dep:wasm-bindgen-futures", "dep:js-sys"]
 
 [dependencies]
 aylis-core = { version = "0.9.2", path = "../aylis-core" }
@@ -31,10 +35,25 @@ serde_json = "1"
 krilla = { version = "0.8.2", optional = true, default-features = false, features = ["simple-text", "raster-images"] }
 # As medidas do texto para quebrar as linhas (o leitor de fontes que o krilla já usa).
 skrifa = { version = "0.42", optional = true }
+# Os registros dos eventos do HttpClient e do WebSocketClient.
+serde = { version = "1", optional = true, features = ["derive"] }
 
 # As fontes do sistema para o PDF (fora da web, que não tem; lá valem as do projeto).
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 fontdb = { version = "0.24", optional = true, default-features = false, features = ["std", "fs", "memmap"] }
+# O HTTP do HttpClient (rustls, as raízes do Mozilla embutidas).
+ureq = { version = "3", optional = true }
+# O WebSocket do WebSocketClient, com o rustls (ring) e as raízes do Mozilla.
+tungstenite = { version = "0.26", optional = true, features = ["rustls-tls-webpki-roots"] }
+rustls = { version = "0.23", optional = true, default-features = false, features = ["ring", "std", "tls12"] }
+webpki-roots = { version = "1", optional = true }
+
+# O fetch e o WebSocket do navegador (as features `http` e `websocket` na web).
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+web-sys = { version = "0.3", optional = true, features = ["Window", "Headers", "Request", "RequestInit", "RequestCredentials", "RequestRedirect", "Response", "AbortController", "AbortSignal", "WebSocket", "MessageEvent", "CloseEvent", "BinaryType"] }
+wasm-bindgen = { version = "0.2", optional = true }
+wasm-bindgen-futures = { version = "0.4", optional = true }
+js-sys = { version = "0.3", optional = true }
 
 [dev-dependencies]
 aylis-controls = { path = "../aylis-controls" }
@@ -42,3 +61,7 @@ aylis-dbcontrols = { path = "../aylis-dbcontrols" }
 zip = { version = "9", default-features = false, features = ["deflate"] }
 # Ler de volta o PDF do krilla nos testes (o texto desenhado de verdade).
 aylis-docview = { path = "../aylis-docview" }
+# Os testes de rede: os clientes ligados e o servidor WebSocket de teste.
+aylis-providers = { path = ".", features = ["http", "websocket"] }
+aylis-json = { path = "../aylis-json" }
+tungstenite = "0.26"

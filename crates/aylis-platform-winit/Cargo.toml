@@ -80,6 +80,8 @@ windows = { version = "0.62", features = [
     "Win32_System_Power", "Networking_Connectivity", "Devices_Geolocation",
     # Os monitores: o nome do aparelho (a configuração de vídeo).
     "Win32_Devices_Display",
+    # O aviso de "perdeu o topo" (`on_topmost_lost`): a troca da janela em primeiro plano.
+    "Win32_UI_Accessibility",
     # A amostragem da pilha do profiler (desenrolar a pilha e os nomes do PDB).
     "Win32_System_Diagnostics_Debug", "Win32_System_Kernel",
     # Os controles de mídia do sistema (o MediaSession): o SMTC.
@@ -115,6 +117,9 @@ tray-icon = { version = "0.25", optional = true, default-features = false }
 # Linux: o WebKitGTK do wry roda no laço do GTK, que o aylis avança junto com o dele.
 [target.'cfg(target_os = "linux")'.dependencies]
 gtk = { version = "0.18", optional = true }
+# O mouse na tela, o Caps/Num Lock e a captura de monitor no X11 (`desktop.rs`): a `libX11`
+# carregada na hora, a mesma versão que o winit já traz.
+x11-dl = "2.21"
 # Notificações push pelo UnifiedPush (D-Bus); o mesmo zbus que a acessibilidade já usa.
 zbus = { version = "5", default-features = false, features = ["async-io", "blocking-api"] }
 # O corretor do sistema (Enchant), aberto em tempo de execução.

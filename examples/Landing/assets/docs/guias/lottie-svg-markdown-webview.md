@@ -86,9 +86,20 @@ O `Svg` desenha uma imagem SVG como vetor.
 - `opacity`, `fill-opacity` e `stroke-opacity`;
 - `fill-rule="evenodd"`, pontas, junções e tracejado;
 - `vector-effect="non-scaling-stroke"` (o traço não engrossa com o `zoom_to`);
+- `clip-path` com `<clipPath>` (uma ou várias formas, `clip-rule`, `clipPathUnits`);
+- `mask` com `<mask>`: de luminância (o padrão do SVG: branco mostra, preto esconde) ou de
+  alfa (`mask-type="alpha"`), com `maskUnits` e `maskContentUnits`;
+- `fill` (e `stroke`) com `<pattern>`: o ladrilho repetido, com `patternUnits`,
+  `patternContentUnits`, `patternTransform`, `viewBox` e `href`;
 - os atributos ou o `style="..."`.
 
-Fica de fora: texto, filtros, máscaras, `clipPath`, imagens e folhas `<style>`.
+O recorte, a máscara e o padrão são desenhados pelo próprio Aylis, com as formas, os recortes
+e as máscaras do `Canvas`: saem iguais no Direct2D, no Skia e no navegador. Como as camadas da
+máscara custam a cada pintura, o desenho de um SVG com eles fica guardado como imagem enquanto
+o SVG, o tamanho e as cores não mudam (o controle `Svg` guarda sempre; o `svg.render` num
+`paint` próprio, quando o SVG tem um deles).
+
+Fica de fora: texto, filtros, imagens, marcadores e folhas `<style>`.
 
 `SvgImage` e `Animation` também servem sozinhos, num `paint` próprio:
 `svg.render(canvas, rect, cor)` e `anim.render(canvas, quadro, rect)`.

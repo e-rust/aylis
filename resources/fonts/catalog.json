@@ -379,5 +379,14 @@
   "files": [
    "NotoColorEmoji-Regular.ttf"
   ]
+ },
+ {
+  "family": "Noto Emoji",
+  "folder": "notoemoji",
+  "license": "SIL OFL 1.1",
+  "category": "SANS_SERIF",
+  "files": [
+   "NotoEmoji[wght].ttf"
+  ]
  }
 ]

@@ -135,6 +135,8 @@ fn texts(locale: &str) -> Texts {
 struct Plan<'a> {
     app: String,
     publisher: String,
+    /// Os direitos (`publish.copyright`; vazio: `© <fabricante>`), como no `.exe`.
+    copyright: String,
     version: String,
     version4: String,
     w: &'a WindowsOptions,
@@ -155,7 +157,9 @@ impl<'a> Plan<'a> {
         let app = project.app_name().to_string();
         let publisher = if project.publish.publisher.is_empty() { app.clone() } else { project.publish.publisher.clone() };
         let icon = Some(project.dir().join(aylis_build::APP_ICON)).filter(|p| p.is_file());
+        let copyright = if project.publish.copyright.trim().is_empty() { format!("© {publisher}") } else { project.publish.copyright.trim().to_string() };
         Plan {
+            copyright,
             out_name: format!("{}-{}-setup.exe", crate::file_name(&app), project.version()),
             version: project.version().to_string(),
             version4: version4(project.version()),
@@ -273,7 +277,7 @@ fn nsis_script(p: &Plan, target: &Path) -> String {
         ("FileDescription", format!("{} {app}", t.description)),
         ("FileVersion", p.version.clone()),
         ("ProductVersion", p.version.clone()),
-        ("LegalCopyright", p.publisher.clone()),
+        ("LegalCopyright", p.copyright.clone()),
         ("OriginalFilename", p.out_name.clone()),
     ] {
         line(&format!("VIAddVersionKey /LANG=${{{lang_id}}} \"{key}\" {}", nsis_str(&value)));
@@ -510,7 +514,7 @@ fn inno_script(p: &Plan, out: &Path, guid: &str) -> String {
     line(&format!("VersionInfoProductName={app}"));
     line(&format!("VersionInfoCompany={}", p.publisher));
     line(&format!("VersionInfoDescription={} {app}", t.description));
-    line(&format!("VersionInfoCopyright={}", p.publisher));
+    line(&format!("VersionInfoCopyright={}", p.copyright));
     line(&format!("DefaultDirName={}", p.install_dir(false)));
     line(&format!("DefaultGroupName={app}"));
     line("DisableProgramGroupPage=yes");

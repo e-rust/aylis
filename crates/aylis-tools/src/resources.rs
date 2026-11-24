@@ -32,12 +32,14 @@ use serde_json::{Value, json};
 const MATERIAL: (&str, &str) = ("@material-symbols/svg-400", "0.48.1");
 const FLUENT: (&str, &str) = ("@fluentui/svg-icons", "1.1.344");
 
-/// Fontes populares do Google Fonts (pasta em google/fonts: licença/nome).
-const FONTS: [&str; 32] = [
+/// Fontes populares do Google Fonts (pasta em google/fonts: licença/nome). A `notoemoji` é a
+/// Noto Emoji sem cor (SIL OFL 1.1, ~2 MB): o `color_glyphs: false` do `TextStyle` desenha os
+/// emoji com ela, igual nos três renderizadores, quando o projeto a tem em `assets/fonts/`.
+const FONTS: [&str; 33] = [
     "ofl/inter", "ofl/roboto", "ofl/robotomono", "ofl/robotoflex", "ofl/opensans", "ofl/lato", "ofl/montserrat", "ofl/poppins", "ofl/nunito",
     "ofl/notosans", "ofl/notoserif", "ofl/sourcesans3", "ofl/raleway", "ofl/worksans", "ofl/rubik", "ofl/manrope", "ofl/dmsans",
     "ofl/ibmplexsans", "ofl/ibmplexmono", "ufl/ubuntu", "ofl/merriweather", "ofl/playfairdisplay", "ofl/jetbrainsmono", "ofl/firacode",
-    "ofl/firasans", "ofl/lora", "ofl/outfit", "ofl/quicksand", "ofl/oswald", "ofl/ptsans", "ofl/mulish", "ofl/notocoloremoji",
+    "ofl/firasans", "ofl/lora", "ofl/outfit", "ofl/quicksand", "ofl/oswald", "ofl/ptsans", "ofl/mulish", "ofl/notocoloremoji", "ofl/notoemoji",
 ];
 
 const FLUENT_LICENSE: &str = "MIT License

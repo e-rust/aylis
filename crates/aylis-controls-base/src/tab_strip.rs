@@ -21,6 +21,14 @@
 //! app, a aba muda para lá, no lugar marcado; de volta na própria faixa, só muda de lugar;
 //! longe de todas, vira uma janela.
 //!
+//! Aparência pelo tema: o estilo `TabStrip.tab` (quando o tema tem) pinta cada aba, a ativa
+//! pelo estado `checked` e as outras (as inativas) pelo normal e pelo `hover`: fundo, texto e
+//! fonte. Sem ele, a ativa tem o fundo `surface` e as outras ficam na faixa (o `fill` da faixa).
+//! `hover_preview` mostra a miniatura da página da aba sob o mouse (só das abas que já foram
+//! mostradas). `hit_tabs_only` deixa o mouse passar na parte vazia da faixa (para a barra de
+//! título de baixo arrastar a janela); a aba solta ali chega pela barra, com
+//! [`TabStrip::receive_drag`].
+//!
 //! Com páginas ([`TabStrip::add_page`]: cada aba com o seu conteúdo) a faixa cuida de tudo:
 //! mostra só a página da aba escolhida, leva a página junto para a outra faixa, abre a janela
 //! nova (com uma faixa igual, os mesmos handlers e a página) onde a aba foi solta, e fecha a
@@ -50,7 +58,7 @@ const PREVIEW_HEAD: f32 = 34.0;
 /// Uma aba da propriedade `tabs` (no JSON).
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-struct TabItem {
+struct TabStripItem {
     title: String,
     #[serde(skip_serializing_if = "String::is_empty")]
     icon: String,
@@ -61,8 +69,10 @@ struct TabItem {
 }
 
 /// O registro das abas do `TabStrip.tabs`.
-pub const TAB_ITEM: aylis_core::RecordInfo = aylis_core::RecordInfo {
-    name: "TabItem",
+/// `TabStripItem`, e não `TabItem`: este é o nome da classe da página do `TabControl`, e os dois
+/// no mesmo acesso tipado não compilavam (decidido pelo autor em 23/11).
+pub const TAB_STRIP_ITEM: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "TabStripItem",
     fields: &[("title", aylis_core::PropKind::String), ("icon", aylis_core::PropKind::String), ("hint", aylis_core::PropKind::String), ("modified", aylis_core::PropKind::Bool)],
 };
 
@@ -167,6 +177,19 @@ pub struct TabStrip {
     /// A janela de um form com `dockable`, arrastada pela barra de título até a faixa, entra
     /// como aba (o form vira a página dela; veja `crate::docking`).
     pub accept_forms: bool,
+    /// Com o mouse parado sobre uma aba, a miniatura da página dela (como a do navegador). Só
+    /// das abas com página que já foram mostradas: a imagem é a da última vez que a página
+    /// esteve à vista.
+    pub hover_preview: bool,
+    /// O mouse só vale sobre as abas, o × e o "+": a parte vazia da faixa deixa passar para o
+    /// que está embaixo (a `TitleBar`, que arrasta a janela). A aba solta na parte vazia chega
+    /// pelo `on_drop` de quem está embaixo, que a entrega com [`TabStrip::receive_drag`].
+    pub hit_tabs_only: bool,
+    /// A miniatura de cada página que já esteve à vista (para o `hover_preview`).
+    previews: Vec<(ComponentId, aylis_core::Image)>,
+    /// A prévia na tela (no form) e o aviso que espera o mouse parar.
+    preview_popup: Option<ComponentId>,
+    preview_timer: Option<u64>,
     hits: RefCell<Hits>,
     hover: Cell<Option<usize>>,
     hover_close: Cell<bool>,
@@ -226,6 +249,11 @@ impl Default for TabStrip {
             page_host: None,
             close_empty: true,
             accept_forms: false,
+            hover_preview: false,
+            hit_tabs_only: false,
+            previews: Vec::new(),
+            preview_popup: None,
+            preview_timer: None,
             hits: RefCell::default(),
             hover: Cell::new(None),
             hover_close: Cell::new(false),
@@ -367,19 +395,20 @@ impl TabStrip {
     /// As abas em JSON (`[{"title": "Início", "icon": "home"}]`): o título, o ícone, a dica e
     /// se tem alteração não salva.
     pub fn tabs_text(&self) -> String {
-        let items: Vec<TabItem> = self.tabs.iter().map(|t| TabItem { title: t.title.clone(), icon: t.icon.clone(), hint: t.hint.clone(), modified: t.modified }).collect();
+        let items: Vec<TabStripItem> = self.tabs.iter().map(|t| TabStripItem { title: t.title.clone(), icon: t.icon.clone(), hint: t.hint.clone(), modified: t.modified }).collect();
         crate::records::to_json(&items)
     }
 
     pub fn set_tabs_text(&mut self, text: String) {
         self.offsets.clear();
-        let items: Vec<TabItem> = crate::records::parse_list(&text);
+        let items: Vec<TabStripItem> = crate::records::parse_list(&text);
         self.tabs = items.into_iter().map(|i| Tab { title: i.title, icon: i.icon, hint: i.hint, modified: i.modified, ..Default::default() }).collect();
         self.tab_index = self.tab_index.clamp(0, self.tabs.len().saturating_sub(1) as i64);
     }
 
     fn select(&mut self, ctx: &mut EventCtx<'_>, index: usize) {
         if self.tab_index != index as i64 {
+            self.remember_preview(ctx.ui);
             self.tab_index = index as i64;
             show_pages(ctx.ui, &self.pages());
             ctx.fire("on_change", EventArgs::Value((index as i64).into()));
@@ -408,6 +437,103 @@ impl TabStrip {
             }
         }
         ctx.repaint();
+    }
+
+    /// Guarda a miniatura da página que está à vista (vai sair): a prévia do `hover_preview`.
+    fn remember_preview(&mut self, ui: &Ui) {
+        if !self.hover_preview {
+            return;
+        }
+        let Some(page) = self.tabs.get(self.tab_index.max(0) as usize).and_then(|t| t.page) else { return };
+        if !ui.control(page).is_some_and(|cb| cb.visible()) {
+            return;
+        }
+        if let Some(image) = ui.snapshot(page, PREVIEW_SCALE) {
+            self.previews.retain(|(p, _)| *p != page);
+            self.previews.push((page, image));
+        }
+    }
+
+    /// A miniatura guardada da aba `index` (a página dela já esteve à vista).
+    fn preview_of(&self, index: usize) -> Option<&aylis_core::Image> {
+        let page = self.tabs.get(index)?.page?;
+        self.previews.iter().find(|(p, _)| *p == page).map(|(_, image)| image)
+    }
+
+    /// Tira a prévia da tela (e o aviso que esperava para mostrar).
+    fn hide_preview(&mut self, ui: &mut Ui) {
+        if let Some(timer) = self.preview_timer.take() {
+            ui.clear_timeout(timer);
+        }
+        if let Some(popup) = self.preview_popup.take() {
+            ui.free(popup);
+        }
+    }
+
+    /// O mouse parou sobre a aba `index`: depois de um instante, a prévia embaixo dela.
+    fn schedule_preview(&mut self, ctx: &mut EventCtx<'_>, index: usize) {
+        self.hide_preview(ctx.ui);
+        if !self.hover_preview || index as i64 == self.tab_index || self.preview_of(index).is_none() || self.drag.is_some() {
+            return;
+        }
+        let Some(tab_rect) = self.hits.borrow().tabs.get(index).copied() else { return };
+        let strip = ctx.id;
+        let timer = ctx.ui.set_timeout(PREVIEW_DELAY_MS, move |ui| {
+            let form = ui.root_of(strip);
+            let origin = ui.absolute_rect(strip).unwrap_or_default();
+            let form_rect = ui.absolute_rect(form).unwrap_or_default();
+            let Some(s) = ui.get_mut::<TabStrip>(strip) else { return };
+            s.preview_timer = None;
+            if s.hover.get() != Some(index) {
+                return;
+            }
+            let Some(image) = s.preview_of(index).cloned() else { return };
+            let title = s.tabs.get(index).map(|t| t.title.clone()).unwrap_or_default();
+            let popup = TabPreview::new(title, image);
+            let size = popup.size();
+            let mut popup = popup;
+            let x = (origin.x - form_rect.x + tab_rect.x).clamp(0.0, (form_rect.width - size.width).max(0.0));
+            let y = origin.y - form_rect.y + tab_rect.bottom() + 4.0;
+            popup.base.set_rect(x, y, size.width, size.height).set_hit_test(false);
+            let id = ui.add(popup, form);
+            let _ = ui.set_child_index(id, usize::MAX);
+            if let Some(s) = ui.get_mut::<TabStrip>(strip) {
+                s.preview_popup = Some(id);
+            }
+            ui.invalidate();
+        });
+        self.preview_timer = Some(timer);
+    }
+
+    /// Recebe uma aba arrastada que chegou por outro controle (a `TitleBar` embaixo da faixa
+    /// com `hit_tabs_only`, no `on_drop` dela): `data` é o texto do arrasto (`aylis-tab:...`, ou
+    /// a janela inteira de um form), e `slot`, o lugar dela (`None`: no fim). Devolve se a faixa
+    /// aceitou (o mesmo `drop_group`, como no soltar sobre a faixa). Também pelo nome:
+    /// `receive_drag(data, slot)`, com `slot` -1 para o fim.
+    pub fn receive_drag(ui: &mut Ui, strip: ComponentId, data: &str, slot: Option<usize>) -> bool {
+        let slot = slot.map_or(-1, |s| s as i64);
+        matches!(ui.invoke(strip, "receive_drag", &[PropValue::from(data), PropValue::Int(slot)]), Ok(PropValue::Bool(true)))
+    }
+
+    /// O arrasto `data` entra no lugar `slot` (o soltar sobre a faixa e o [`receive_drag`](Self::receive_drag)).
+    fn accept_drag(&mut self, ctx: &mut EventCtx<'_>, data: &str, slot: usize) {
+        // Um form inteiro: entra como aba no lugar marcado, depois deste evento (a faixa é
+        // mexida pelo `dock_form`).
+        if let Some(form) = form_drag(data) {
+            let strip = ctx.id;
+            ctx.ui.set_timeout(0, move |ui| {
+                if let Err(e) = crate::docking::dock_form(ui, form, strip, Some(slot)) {
+                    aylis_core::stderr_line!("aylis: o form não entrou na faixa ({e})");
+                }
+            });
+            ctx.repaint();
+            return;
+        }
+        let Some((_, source, from)) = parse_drag(data) else { return };
+        if source == ctx.id {
+            self.lifted = None;
+        }
+        self.receive(ctx, source, from, slot);
     }
 
     /// Chegou uma aba arrastada (de outra faixa ou desta mesma) no lugar `slot`.
@@ -500,6 +626,16 @@ impl TabStrip {
     /// Acrescenta uma aba com o seu conteúdo (`page`, que passa para o `page_host`, ocupando
     /// o espaço todo se não tiver alinhamento) e a escolhe. Devolve o índice.
     pub fn add_page(ui: &mut Ui, strip: ComponentId, title: &str, icon: &str, page: ComponentId) -> usize {
+        // A página que sai da vista deixa a miniatura (o `hover_preview`).
+        let shown = ui.get::<TabStrip>(strip).filter(|s| s.hover_preview).and_then(|s| s.tabs.get(s.tab_index.max(0) as usize)).and_then(|t| t.page);
+        if let Some(page) = shown.filter(|&p| ui.control(p).is_some_and(|cb| cb.visible())) {
+            if let Some(image) = ui.snapshot(page, PREVIEW_SCALE) {
+                if let Some(s) = ui.get_mut::<TabStrip>(strip) {
+                    s.previews.retain(|(p, _)| *p != page);
+                    s.previews.push((page, image));
+                }
+            }
+        }
         let Some(host) = ui.get::<TabStrip>(strip).map(|s| s.page_host).map(|h| h.or_else(|| ui.parent(strip))) else { return 0 };
         if let Some(host) = host.filter(|&h| ui.parent(page) != Some(h)) {
             let _ = ui.set_parent(page, Some(host));
@@ -647,6 +783,12 @@ impl TabStrip {
         let (window, new_strip, host, strip_origin) = match self.new_instance(ctx.ui, ctx.id, form) {
             Some((window, strip, host)) => (window, strip, host, origin),
             None => {
+                // Do projeto e sem a instância nova (um form que não bate com o código, a faixa
+                // sem nome): a janela genérica, mas sem calar o motivo.
+                if ctx.ui.services().forms.is_some() {
+                    let class = ctx.ui.form_class(form).or_else(|| ctx.ui.name(form)).unwrap_or("").to_string();
+                    aylis_core::stderr_line!("aylis: a aba arrancada abriu numa janela genérica: o form '{class}' não montou outra instância com a faixa '{}'", ctx.ui.name(ctx.id).unwrap_or(""));
+                }
                 let (window, strip, host) = self.plain_window(ctx.ui, ctx.id, form, &tab.title);
                 (window, strip, host, PointF::default())
             }
@@ -668,6 +810,16 @@ impl TabStrip {
             ctx.ui.set_window_placement(window, WindowPlacement { x, y, width: placement.width, height: placement.height, maximized: false, full_screen: false });
         }
         let _ = ctx.ui.show(window);
+        // O teclado vai junto com a aba: sem um `active_control` no form, o foco vai ao
+        // primeiro controle da página (a janela nova chegava sem foco). Sem nenhum na página, o
+        // primeiro da janela.
+        if ctx.ui.focused(window).is_none() {
+            let order = ctx.ui.tab_order(window);
+            let first = tab.page.and_then(|page| order.iter().copied().find(|&c| c == page || ctx.ui.is_ancestor(page, c))).or_else(|| order.first().copied());
+            if let Some(first) = first {
+                ctx.ui.set_focus(first);
+            }
+        }
         // Como as do navegador: janela independente, não presa por cima da outra.
         ctx.ui.set_form_owner(window, None);
         ctx.fire("on_new_window", EventArgs::Value(PropValue::Component(Some(new_strip))));
@@ -680,7 +832,9 @@ impl TabStrip {
     /// a aba arrancada lá dentro e pode pular as abas iniciais. `None`: o form não veio de
     /// um projeto (sem nome ou sem fábrica de forms).
     fn new_instance(&self, ui: &mut Ui, id: ComponentId, form: ComponentId) -> Option<(ComponentId, ComponentId, Option<ComponentId>)> {
-        let form_name = ui.name(form).filter(|n| !n.is_empty())?.to_string();
+        // O form pela classe: numa segunda instância, o nome é outro (`frmPrincipal2`) e não há
+        // form com ele no projeto.
+        let form_name = ui.form_class(form).or_else(|| ui.name(form)).filter(|n| !n.is_empty())?.to_string();
         let strip_name = ui.name(id).filter(|n| !n.is_empty())?.to_string();
         ui.services().forms.as_ref()?;
         let window = ui.create_form_instance(&form_name).ok()?;
@@ -712,6 +866,57 @@ impl TabStrip {
             s.page_host = Some(host);
         }
         (window, new_strip, Some(host))
+    }
+}
+
+/// A miniatura da página e o espaço do título na prévia do `hover_preview`.
+const PREVIEW_SCALE: f32 = 0.5;
+const PREVIEW_DELAY_MS: u64 = 450;
+
+/// A prévia de uma aba (o `hover_preview`): o título e a miniatura da página, por cima do form,
+/// sem pegar o mouse. Cores do tema (`surface`, `border`, `text`).
+struct TabPreview {
+    base: ControlBase,
+    title: String,
+    image: aylis_core::Image,
+}
+
+impl TabPreview {
+    fn new(title: String, image: aylis_core::Image) -> Self {
+        Self { base: ControlBase::new(PREVIEW_WIDTH, PREVIEW_HEAD), title, image }
+    }
+
+    /// Do tamanho da largura da prévia, com a altura da miniatura na proporção dela.
+    fn size(&self) -> SizeF {
+        let px = self.image.known_size().unwrap_or(SizeF::new(PREVIEW_WIDTH, PREVIEW_WIDTH * 0.6));
+        let body = ((PREVIEW_WIDTH - 2.0) * px.height / px.width.max(1.0)).clamp(60.0, 220.0);
+        SizeF::new(PREVIEW_WIDTH, PREVIEW_HEAD + body + 1.0)
+    }
+}
+
+impl Component for TabPreview {
+    leaf_control!("TabPreview");
+
+    fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
+        let r = ctx.rect;
+        let theme = ctx.theme;
+        canvas.draw_shadow(r, 8.0, &aylis_core::Shadow::new(Color::rgba(0, 0, 0, 60), 16.0, 0.0, 4.0));
+        canvas.fill_rect(r, 8.0, &Brush::Solid(theme.color("surface")));
+        let mut style = ctx.text_style();
+        style.v_align = TextAlign::Center;
+        style.trimming = Trimming::Character;
+        style.font.weight = aylis_core::FontWeight::SemiBold;
+        canvas.draw_text(&self.title, RectF::new(r.x + 12.0, r.y, r.width - 24.0, PREVIEW_HEAD), &style);
+        let dest = RectF::new(r.x + 1.0, r.y + PREVIEW_HEAD, r.width - 2.0, r.height - PREVIEW_HEAD - 1.0);
+        if let Some(px) = canvas.image_size(&self.image) {
+            // Mais alta que a prévia: a parte de cima, sem achatar.
+            let src_h = (px.width * dest.height / dest.width.max(1.0)).min(px.height);
+            canvas.save();
+            canvas.clip_round_rect(dest, 7.0);
+            canvas.draw_image(&self.image, RectF::new(0.0, 0.0, px.width, src_h), RectF::new(dest.x, dest.y, dest.width, dest.width * src_h / px.width.max(1.0)), 1.0);
+            canvas.restore();
+        }
+        canvas.stroke_rect(r.inflate(-0.5), 8.0, &Stroke::new(theme.color("border"), 1.0));
     }
 }
 
@@ -754,14 +959,53 @@ impl Component for TabStrip {
         drop_group: String => "Behavior",
         page_host: Option<ComponentId> => "Behavior",
         close_empty: bool => "Behavior",
-        accept_forms: bool => "Behavior";
+        accept_forms: bool => "Behavior",
+        hover_preview: bool => "Behavior",
+        hit_tabs_only: bool => "Behavior";
         events: on_change: i64, on_close: i64, on_add: (), on_reorder: TabMove, on_tear_off: i64, on_tab_drop: TabMove, on_new_window: Option<aylis_core::ComponentId>;
-        computed: tabs: String as RecordList(&TAB_ITEM) => tabs_text / set_tabs_text
+        computed: tabs: String as RecordList(&TAB_STRIP_ITEM) => tabs_text / set_tabs_text
+    }
+
+    fn methods(&self) -> &'static [aylis_core::MethodInfo] {
+        use aylis_core::{MethodInfo, PropKind};
+        const METHODS: &[MethodInfo] = &[MethodInfo::new("receive_drag", &[PropKind::String, PropKind::Int], Some(PropKind::Bool)).params(&["data", "slot"])];
+        METHODS
+    }
+
+    fn invoke(&mut self, ctx: &mut EventCtx<'_>, method: &str, args: &[PropValue]) -> Result<PropValue, String> {
+        match method {
+            "receive_drag" => {
+                let data = args.first().and_then(|v| v.to_str().ok()).unwrap_or_default().to_string();
+                let slot = args.get(1).and_then(|v| v.to_i64().ok()).unwrap_or(-1);
+                if !aylis_core::DragDrop::drop_accepts(self, ctx.ui, ctx.id, &data) {
+                    return Ok(PropValue::Bool(false));
+                }
+                let slot = if slot < 0 { self.tabs.len() } else { (slot as usize).min(self.tabs.len()) };
+                self.drop_at.set(None);
+                self.accept_drag(ctx, &data, slot);
+                Ok(PropValue::Bool(true))
+            }
+            _ => Err(format!("TabStrip não tem o método '{method}'")),
+        }
+    }
+
+    /// Com `hit_tabs_only`, só as abas, o × e o "+" pegam o mouse (a parte vazia deixa passar).
+    fn contains_point(&self, local: PointF, size: SizeF) -> bool {
+        let inside = local.x >= 0.0 && local.y >= 0.0 && local.x < size.width && local.y < size.height;
+        if !self.hit_tabs_only || !inside || self.drag.is_some() {
+            return inside;
+        }
+        let hits = self.hits.borrow();
+        hits.tabs.iter().any(|r| r.contains(local)) || hits.add.is_some_and(|r| r.contains(local))
     }
 
     fn notification(&mut self, freed: ComponentId) {
         if self.page_host == Some(freed) {
             self.page_host = None;
+        }
+        self.previews.retain(|(p, _)| *p != freed);
+        if self.preview_popup == Some(freed) {
+            self.preview_popup = None;
         }
         for t in &mut self.tabs {
             if t.page == Some(freed) {
@@ -776,6 +1020,7 @@ impl Component for TabStrip {
 
     fn pointer_down(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
         let p = event.position;
+        self.hide_preview(ctx.ui);
         let hit_add = self.hits.borrow().add.is_some_and(|r| r.contains(p));
         if event.button == PointerButton::Primary && hit_add {
             ctx.fire("on_add", EventArgs::None);
@@ -852,7 +1097,13 @@ impl Component for TabStrip {
         let over_add = self.hits.borrow().add.is_some_and(|r| r.contains(p));
         if (over != self.hover.replace(over)) | (over_close != self.hover_close.replace(over_close)) | (over_add != self.hover_add.replace(over_add)) {
             let hint = over.and_then(|i| self.tabs.get(i)).map(|t| if t.hint.is_empty() { t.title.clone() } else { t.hint.clone() }).unwrap_or_default();
-            self.base.set_hint(hint);
+            // Com a prévia da aba, a miniatura faz as vezes da dica.
+            let previewed = self.hover_preview && over.is_some_and(|i| self.preview_of(i).is_some());
+            self.base.set_hint(if previewed { String::new() } else { hint });
+            match over {
+                Some(i) => self.schedule_preview(ctx, i),
+                None => self.hide_preview(ctx.ui),
+            }
             ctx.repaint();
         }
     }
@@ -872,6 +1123,7 @@ impl Component for TabStrip {
     }
 
     fn pointer_leave(&mut self, ctx: &mut EventCtx<'_>) {
+        self.hide_preview(ctx.ui);
         // O mouse saiu: a largura presa vai até a natural, deslizando.
         if std::mem::take(&mut self.width_held) && self.width_now.is_some() {
             self.start_frames(ctx);
@@ -922,6 +1174,13 @@ impl Component for TabStrip {
         self.scroll_max.set(overflow);
         let left = left - scroll;
         let hover = self.hover.get();
+        // O estilo `TabStrip.tab` do tema: a ativa pelo `checked`, as outras pelo normal e pelo
+        // `hover` (fundo, texto e fonte). Sem ele, o visual de sempre.
+        let themed = theme.styles.contains_key("TabStrip.tab");
+        let look = |i: usize| {
+            let state = aylis_core::ControlState { checked: i == self.tab_index.max(0) as usize, hover: hover == Some(i), ..Default::default() };
+            theme.resolve(&["TabStrip.tab"], ctx.variant(), state)
+        };
         let mut style = ctx.text_style();
         style.v_align = TextAlign::Center;
         style.trimming = Trimming::Character;
@@ -959,6 +1218,7 @@ impl Component for TabStrip {
                 continue;
             }
             let is_active = i == active;
+            let tab_look = themed.then(|| look(i));
             if is_active {
                 // A aba ativa: cantos de cima redondos e as curvas para fora na base.
                 let (x0, x1) = (x, x + w);
@@ -972,7 +1232,11 @@ impl Component for TabStrip {
                     .line_to(x1, bottom - RADIUS)
                     .quad_to(x1, bottom, x1 + RADIUS, bottom)
                     .close();
-                canvas.fill_path(&path, &Brush::Solid(active_fill));
+                let fill = tab_look.as_ref().map(|l| l.fill).filter(|c| !c.is_transparent()).unwrap_or(active_fill);
+                canvas.fill_path(&path, &Brush::Solid(fill));
+            } else if let Some(fill) = tab_look.as_ref().map(|l| l.fill).filter(|c| !c.is_transparent()) {
+                // A inativa com fundo próprio pelo tema (o do `hover` junto, quando o tema dá).
+                canvas.fill_rect(RectF::new(x + 2.0, top + 3.0, w - 4.0, bottom - top - 7.0), 6.0, &Brush::Solid(fill));
             } else if hover == Some(i) {
                 canvas.fill_rect(RectF::new(x + 2.0, top + 3.0, w - 4.0, bottom - top - 7.0), 6.0, &Brush::Solid(text.with_opacity(0.07)));
             }
@@ -982,15 +1246,23 @@ impl Component for TabStrip {
                 canvas.draw_line(PointF::new(x + w, top + 9.0), PointF::new(x + w, bottom - 9.0), &Stroke::new(muted.with_opacity(0.45), 1.0));
             }
             let mut cx = x + 12.0;
+            let tab_text = match &tab_look {
+                Some(l) => l.text,
+                None if is_active => text,
+                None => muted,
+            };
             if !tab.icon.is_empty() && w > MIN_TAB + 8.0 {
-                ctx.draw_icon(canvas, &tab.icon, RectF::new(cx, top + (bottom - top - 16.0) / 2.0, 16.0, 16.0), if is_active { text } else { muted });
+                ctx.draw_icon(canvas, &tab.icon, RectF::new(cx, top + (bottom - top - 16.0) / 2.0, 16.0, 16.0), tab_text);
                 cx += 22.0;
             }
             let show_close = self.closable && (is_active || hover == Some(i) || tab.modified) && w > MIN_TAB + 12.0;
             let close = RectF::new(x + w - 30.0, top + (bottom - top - 22.0) / 2.0, 22.0, 22.0);
             let text_right = if show_close { close.x - 4.0 } else { x + w - 10.0 };
             let mut ts = style.clone();
-            ts.color = if is_active { text } else { muted };
+            ts.color = tab_text;
+            if let Some(l) = &tab_look {
+                ts.font = l.font.clone();
+            }
             canvas.draw_text(&tab.title, RectF::new(cx, top, (text_right - cx).max(0.0), bottom - top), &ts);
             if show_close {
                 let over_close = hover == Some(i) && self.hover_close.get();
@@ -1104,23 +1376,7 @@ impl aylis_core::DragDrop for TabStrip {
 
     fn drop_receive(&mut self, ctx: &mut EventCtx<'_>, data: &str, position: PointF) {
         let slot = self.drop_at.take().unwrap_or_else(|| self.slot_at(position.x));
-        // Um form inteiro: entra como aba no lugar marcado, depois deste evento (a faixa é
-        // mexida pelo `dock_form`).
-        if let Some(form) = form_drag(data) {
-            let strip = ctx.id;
-            ctx.ui.set_timeout(0, move |ui| {
-                if let Err(e) = crate::docking::dock_form(ui, form, strip, Some(slot)) {
-                    aylis_core::stderr_line!("aylis: o form não entrou na faixa ({e})");
-                }
-            });
-            ctx.repaint();
-            return;
-        }
-        let Some((_, source, from)) = parse_drag(data) else { return };
-        if source == ctx.id {
-            self.lifted = None;
-        }
-        self.receive(ctx, source, from, slot);
+        self.accept_drag(ctx, data, slot);
     }
 
     fn drag_ended(&mut self, ctx: &mut EventCtx<'_>, _data: &str, end: DragEnd) {

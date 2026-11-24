@@ -187,7 +187,7 @@ impl Headless {
                 ' ' => (Key::Space, false),
                 c => (Key::Char(c.to_lowercase().next().unwrap_or(c)), c.is_uppercase()),
             };
-            let event = KeyEvent { key, modifiers: Modifiers { shift, ..Default::default() }, repeat: false };
+            let event = KeyEvent { key, modifiers: Modifiers { shift, ..Default::default() }, repeat: false, form: None };
             self.ui.key_down(root, event);
             if c != '\n' {
                 self.ui.text_input(root, &c.to_string());
@@ -371,7 +371,9 @@ fn differences(a: &[u8], b: &[u8], width: u32) -> Option<(usize, (u32, u32))> {
 impl Application {
     /// O aplicativo sem janela, para testes e fotos ([`Headless`]): o texto e o desenho fora da
     /// tela do renderizador do projeto, com o form principal aberto.
-    pub fn headless(self) -> Headless {
+    pub fn headless(mut self) -> Headless {
+        // O `on_create` dos DataModules do início, como no `run`.
+        aylis_project::fire_created(&mut self.ui, &std::mem::take(&mut self.created));
         let renderer = self.options().renderer;
         let main = self.main_form;
         let mut h = Headless::from_ui(self.ui, renderer);

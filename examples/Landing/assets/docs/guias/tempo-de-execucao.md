@@ -117,7 +117,15 @@ ui.show_modal(f, |ui, result| {             // modal com retorno (como ShowModal
     if result == ModalResult::Ok { /* ... */ }
 })?;
 ui.close(f);
+ui.show_modal_in(f, self.pnlPagina.id, |ui, result| { /* ... */ })?; // modal só na página
 ```
+
+- **Modal de uma parte da tela:** `ui.show_modal_in(form, contêiner, |ui, r| ...)` põe o form por
+  cima do contêiner (a página de uma aba), centrado e com o fundo escurecido (o estilo
+  `ModalVeil` do tema), e só ele fica bloqueado: as outras abas e janelas continuam respondendo.
+  O teclado fica no form (o Tab dá a volta nele), o Esc cancela, e o retorno é o mesmo do
+  `show_modal`. Vai junto com a página quando a aba é arrancada para outra janela e fecha como
+  `Cancel` quando o form de fora fecha. No protocolo, o `show_modal` com `container`.
 
 - **A janela:** o `on_show` vem antes de a janela existir; o `on_window_created` vem quando ela já
   existe (no Windows, com o HWND em `aylis::platform::win::hwnd`).

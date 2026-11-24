@@ -82,13 +82,21 @@ pub struct ScrollBox {
     pub char_map: String,
     /// O efeito de fim da rolagem no toque (`auto`: o do sistema; veja `aylis_core::overscroll`).
     pub overscroll: aylis_core::Overscroll,
+    /// A largura da barra: a do tema (`ScrollBar`, ou o `scroll_bar` do estilo) ou [`BAR`].
+    /// Guardada para a calha, o clique e a repintura usarem a mesma.
+    bar: f32,
+    /// O mouse sobre o polegar (o `hover` do estilo `ScrollBar`).
+    bar_hover: bool,
+    /// A última pintura desenhou um trilho: a rolagem repinta a faixa inteira (a cópia dos
+    /// pixels levaria as pontas dele junto).
+    bar_track: std::cell::Cell<bool>,
 }
 
 impl Default for ScrollBox {
     fn default() -> Self {
         let mut base = ControlBase::new(200.0, 200.0);
         base.set_clip_children(true).set_padding([0.0, 0.0, BAR + 2.0, 0.0]);
-        Self { overscroll: aylis_core::Overscroll::Auto, base, horizontal: false, pull_to_refresh: false, refreshing: false, wheel_step: 0.0, smooth: SmoothScroll::Default, gutter: true, glide: None, dragging: None, exact: 0.0, pull: std::cell::Cell::new((0.0, 0.0)), end_fired_at: None, allowed_chars: String::new(), blocked_chars: String::new(), only_allowed: false, chars_override: false, char_map: String::new() }
+        Self { overscroll: aylis_core::Overscroll::Auto, base, horizontal: false, pull_to_refresh: false, refreshing: false, wheel_step: 0.0, smooth: SmoothScroll::Default, gutter: true, glide: None, dragging: None, exact: 0.0, pull: std::cell::Cell::new((0.0, 0.0)), end_fired_at: None, allowed_chars: String::new(), blocked_chars: String::new(), only_allowed: false, chars_override: false, char_map: String::new(), bar: BAR, bar_hover: false, bar_track: std::cell::Cell::new(false) }
     }
 }
 
@@ -108,7 +116,7 @@ impl ScrollBox {
 
     /// O padding do lado da barra: a calha, ou nada.
     fn apply_gutter(&mut self) {
-        let room = if self.gutter { BAR + 2.0 } else { 0.0 };
+        let room = if self.gutter { self.bar + 2.0 } else { 0.0 };
         self.base.set_padding(if self.horizontal { [0.0, 0.0, 0.0, room] } else { [0.0, 0.0, room, 0.0] });
     }
 
@@ -140,12 +148,12 @@ impl ScrollBox {
         let b = self.base.bounds();
         let moved = before.1 - self.scroll();
         let bar = match (before.0, self.thumb()) {
-            (Some(old), Some(new)) => {
+            (Some(old), Some(new)) if !self.bar_track.get() => {
                 let ghost = if self.horizontal { old.offset(moved, 0.0) } else { old.offset(0.0, moved) };
                 ghost.union(old).union(new).inflate(1.0)
             }
-            _ if self.horizontal => RectF::new(0.0, b.height - BAR - 2.0, b.width, BAR + 2.0),
-            _ => RectF::new(b.width - BAR - 2.0, 0.0, BAR + 2.0, b.height),
+            _ if self.horizontal => RectF::new(0.0, b.height - self.bar - 2.0, b.width, self.bar + 2.0),
+            _ => RectF::new(b.width - self.bar - 2.0, 0.0, self.bar + 2.0, b.height),
         };
         ctx.repaint_part(bar);
         // Chegou perto do fim: avisa uma vez por tamanho de conteúdo (rolagem infinita).
@@ -168,7 +176,18 @@ impl ScrollBox {
         }
         let len = (view * view / content).max(24.0);
         let at = (view - len) * self.scroll() / self.max_scroll().max(1.0);
-        Some(if self.horizontal { RectF::new(at, b.height - BAR - 1.0, len, BAR) } else { RectF::new(b.width - BAR - 1.0, at, BAR, len) })
+        let bar = self.bar;
+        Some(if self.horizontal { RectF::new(at, b.height - bar - 1.0, len, bar) } else { RectF::new(b.width - bar - 1.0, at, bar, len) })
+    }
+
+    /// Relê a largura da barra no tema; mudou: a calha acompanha e o layout é refeito.
+    fn refresh_bar(&mut self, ctx: &mut EventCtx<'_>) {
+        let width = crate::scroll_bar::look_of(ctx.ui, ctx.id, &*self, false).width.unwrap_or(BAR);
+        if width != self.bar {
+            self.bar = width;
+            self.apply_gutter();
+            ctx.invalidate();
+        }
     }
 
     fn sync(&mut self, name: &str) {
@@ -421,6 +440,7 @@ impl Component for ScrollBox {
     }
 
     fn resized(&mut self, ctx: &mut EventCtx<'_>) {
+        self.refresh_bar(ctx);
         let mut y = self.scroll();
         if self.horizontal {
             self.set_scroll(ctx, y, false);
@@ -453,6 +473,13 @@ impl Component for ScrollBox {
     }
 
     fn pointer_move(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
+        let over = self.dragging.is_none() && self.thumb().is_some_and(|t| t.inflate(2.0).contains(event.position));
+        if over != self.bar_hover {
+            self.bar_hover = over;
+            if let Some(t) = self.thumb() {
+                ctx.repaint_part(t.inflate(1.0));
+            }
+        }
         let (Some(offset), Some(thumb)) = (self.dragging, self.thumb()) else { return };
         let b = self.base.bounds();
         let (room, pos) = if self.horizontal { (b.width - thumb.width, event.position.x) } else { (b.height - thumb.height, event.position.y) };
@@ -462,6 +489,21 @@ impl Component for ScrollBox {
 
     fn pointer_up(&mut self, _ctx: &mut EventCtx<'_>, _event: &PointerEvent) {
         self.dragging = None;
+    }
+
+    fn pointer_leave(&mut self, ctx: &mut EventCtx<'_>) {
+        if std::mem::take(&mut self.bar_hover) {
+            if let Some(t) = self.thumb() {
+                ctx.repaint_part(t.inflate(1.0));
+            }
+        }
+    }
+
+    // Outro estilo ou tema: a barra pode ter outra largura.
+    fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
+        if matches!(name, "style" | "theme") {
+            self.refresh_bar(ctx);
+        }
     }
 
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
@@ -487,8 +529,21 @@ impl Component for ScrollBox {
             ctx.request_frame();
         }
         if let Some(thumb) = self.thumb() {
-            let alpha = if self.dragging.is_some() { 0.5 } else { 0.3 };
-            canvas.fill_rect(thumb, BAR / 2.0, &Brush::Solid(ctx.theme.color("text_muted").with_opacity(alpha)));
+            let dragging = self.dragging.is_some();
+            let alpha = if dragging { 0.5 } else { 0.3 };
+            let look = crate::scroll_bar::resolve(ctx, dragging || self.bar_hover, crate::scroll_bar::Defaults {
+                width: self.bar,
+                track: None,
+                thumb: ctx.theme.color("text_muted").with_opacity(alpha),
+            });
+            let b = self.base.bounds();
+            let track = if self.horizontal {
+                RectF::new(0.0, b.height - self.bar - 1.0, b.width, self.bar)
+            } else {
+                RectF::new(b.width - self.bar - 1.0, 0.0, self.bar, b.height)
+            };
+            self.bar_track.set(look.track.is_some_and(|c| !c.is_transparent()));
+            look.paint(canvas, Some(track), thumb, self.bar / 2.0);
         }
     }
 }

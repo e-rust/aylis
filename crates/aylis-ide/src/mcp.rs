@@ -1476,7 +1476,7 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
         "editor_key" => {
             let form = crate::codewindow::code_form(ui).ok_or("a janela de código não está aberta (open_code)")?;
             let (modifiers, key) = aylis_core::parse_shortcut(arg(args, "key")).ok_or("tecla inválida")?;
-            let event = aylis_core::KeyEvent { key, modifiers, repeat: false };
+            let event = aylis_core::KeyEvent { key, modifiers, repeat: false, form: None };
             ui.key_down(form, event);
             ui.key_up(form, event);
             Ok(crate::codewindow::editor_state(ui))
@@ -1552,7 +1552,7 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
                 ui.text_input(form, arg(args, "text"));
             } else {
                 let (modifiers, key) = aylis_core::parse_shortcut(arg(args, "key")).ok_or("tecla inválida")?;
-                let event = aylis_core::KeyEvent { key, modifiers, repeat: false };
+                let event = aylis_core::KeyEvent { key, modifiers, repeat: false, form: None };
                 ui.key_down(form, event);
                 ui.key_up(form, event);
             }

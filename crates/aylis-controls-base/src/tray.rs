@@ -1,6 +1,9 @@
 //! TrayIcon: ícone na bandeja do sistema (perto do relógio). Ícone
 //! parado ou animado, dica, indicador (ponto ou número, como os apps de mensagem) e um menu
-//! próprio no clique direito, claro, escuro ou de qualquer cor.
+//! próprio no clique direito, claro, escuro ou de qualquer cor. Antes do menu, o
+//! `on_context` (com o ponto da tela): o erro do handler não abre o menu, e o handler que
+//! adia a resposta (o backend em outra linguagem, uma pergunta ao servidor) abre quando
+//! aceitar. O `open_menu` abre por código.
 
 use std::any::Any;
 use std::cell::{Cell, RefCell};
@@ -79,23 +82,78 @@ impl TrayIcon {
         *self.loaded.borrow_mut() = (self.icons.clone(), frames);
     }
 
-    /// As cores do menu: (fundo, texto, destaque).
-    fn menu_colors(&self) -> (Color, Color, Color) {
-        match self.menu_theme.trim() {
-            "dark" => (Color::rgb(0x2B, 0x2B, 0x2B), Color::rgb(0xF2, 0xF2, 0xF2), Color::rgb(0x3D, 0x3D, 0x3D)),
-            "" | "light" => (Color::rgb(0xF9, 0xF9, 0xF9), Color::rgb(0x1A, 0x1A, 0x1A), Color::rgb(0xE5, 0xE5, 0xE5)),
-            hex => {
-                let bg = Color::from_hex(hex).unwrap_or(Color::WHITE);
-                let light = 0.299 * bg.r as f32 + 0.587 * bg.g as f32 + 0.114 * bg.b as f32 > 140.0;
-                let fg = if light { Color::rgb(0x1A, 0x1A, 0x1A) } else { Color::WHITE };
-                (bg, fg, fg.with_opacity(0.12))
+    /// As cores do menu, sem nenhuma fixa no código:
+    /// - o estilo `PopupMenu` do tema do app, quando ele tem um e o `menu_theme` é o padrão
+    ///   (`light` ou vazio): o fundo, o texto, a borda, o raio, a fonte e o destaque (o estado
+    ///   sob o mouse), como o `PopupMenu` dentro do app;
+    /// - `light` e `dark`: os temas claro e escuro do Aylis;
+    /// - uma cor: o fundo, com o texto do tema (claro ou escuro) que contrasta com ela.
+    fn menu_colors(&self, theme: &aylis_core::Theme) -> MenuColors {
+        let choice = self.menu_theme.trim();
+        if matches!(choice, "" | "light") && theme.styles.contains_key("PopupMenu") {
+            let normal = theme.resolve(&["PopupMenu"], "", aylis_core::ControlState::default());
+            let hover = theme.resolve(&["PopupMenu"], "", aylis_core::ControlState { hover: true, ..Default::default() });
+            let line = if normal.border_color.a > 0 { normal.border_color } else { theme.color("border") };
+            let highlight = if hover.fill != normal.fill { hover.fill } else { normal.text.with_opacity(0.12) };
+            return MenuColors { fill: normal.fill, text: normal.text, hover: highlight, hover_text: hover.text, border: line, separator: line, radius: normal.radius, font: Some(normal.font) };
+        }
+        let from = |t: &aylis_core::Theme, fill: Color| {
+            let text = t.color("text");
+            MenuColors { fill, text, hover: t.color("hover_overlay"), hover_text: text, border: text.with_opacity(0.15), separator: text.with_opacity(0.2), radius: 0.0, font: None }
+        };
+        match choice {
+            "dark" => {
+                let t = aylis_core::Theme::dark();
+                from(&t, t.color("surface"))
             }
+            "" | "light" => {
+                let t = aylis_core::Theme::light();
+                from(&t, t.color("surface"))
+            }
+            hex => {
+                let bg = Color::from_hex(hex).unwrap_or_else(|| theme.color("surface"));
+                let light = 0.299 * bg.r as f32 + 0.587 * bg.g as f32 + 0.114 * bg.b as f32 > 140.0;
+                let t = if light { aylis_core::Theme::light() } else { aylis_core::Theme::dark() };
+                let mut c = from(&t, bg);
+                c.hover = c.text.with_opacity(0.12);
+                c
+            }
+        }
+    }
+
+    /// Abre o menu do ícone `id` no ponto da tela `(x, y)` em pixels físicos (o canto de baixo
+    /// à direita do menu fica ali, dentro da tela), por cima de tudo, sem passar pelo
+    /// `on_context`: o app abre depois de decidir, ou noutro momento. `None`:
+    /// no mouse ([`Ui::cursor_position`]; sem ele, no canto da tela). Fecha ao perder o foco ou
+    /// ao escolher (`on_menu` com o item).
+    pub fn open_menu(ui: &mut Ui, id: ComponentId, at: Option<(i32, i32)>) {
+        let (x, y) = at.or_else(|| ui.cursor_position().map(|c| (c.x, c.y))).unwrap_or((0, 0));
+        let scale = ui
+            .monitors()
+            .iter()
+            .find(|m| x >= m.x && y >= m.y && x < m.x + m.width as i32 && y < m.y + m.height as i32)
+            .map_or(1.0, |m| m.scale as f32);
+        TrayIcon::show_menu(ui, id, PointF::new(x as f32, y as f32), scale);
+    }
+
+    /// O clique direito: o `on_context` decide (o erro não abre; a resposta adiada abre quando
+    /// chegar, se aceitar) e o menu abre no ponto do clique.
+    fn context(ui: &mut Ui, id: ComponentId, screen: PointF, scale: f32) {
+        let args = EventArgs::Pointer(PointerEvent { position: screen, button: PointerButton::Secondary, ..Default::default() });
+        match ui.ask(id, "on_context", &args) {
+            aylis_core::Asked::Answered(aylis_core::Answer::Refused(_)) => {}
+            aylis_core::Asked::Answered(_) => TrayIcon::show_menu(ui, id, screen, scale),
+            aylis_core::Asked::Deferred(token) => ui.on_answer(token, move |ui, answer| {
+                if !matches!(answer, aylis_core::Answer::Refused(_)) && ui.contains(id) {
+                    TrayIcon::show_menu(ui, id, screen, scale);
+                }
+            }),
         }
     }
 
     /// Abre o menu no ponto `screen` (pixels físicos), por cima de tudo; fecha ao perder o
     /// foco ou ao escolher (`on_menu` com o item).
-    fn open_menu(ui: &mut Ui, id: ComponentId, screen: PointF, scale: f32) {
+    fn show_menu(ui: &mut Ui, id: ComponentId, screen: PointF, scale: f32) {
         let Some(tray) = ui.get::<TrayIcon>(id) else { return };
         let items: Vec<Entry> = match tray.popup_menu.filter(|&m| ui.contains(m)) {
             Some(menu) => {
@@ -112,7 +170,7 @@ impl TrayIcon {
         if items.is_empty() {
             return;
         }
-        let colors = tray.menu_colors();
+        let colors = tray.menu_colors(ui.theme());
         if let Some(old) = tray.menu.get().filter(|&m| ui.contains(m)) {
             ui.close(old);
             ui.free(old);
@@ -174,17 +232,21 @@ impl Component for TrayIcon {
         menu_items: String as RecordList(&TRAY_MENU_ITEM) => "Behavior",
         menu_theme: String => "Appearance",
         popup_menu: Option<ComponentId> => "Behavior";
-        events: on_click: (), on_dbl_click: (), on_menu: String
+        events: on_click: (), on_dbl_click: (), on_menu: String, on_context: PointerEvent
     }
 
     fn methods(&self) -> &'static [aylis_core::MethodInfo] {
         use aylis_core::{MethodInfo, PropKind};
-        const METHODS: &[MethodInfo] = &[MethodInfo::new("show_balloon", &[PropKind::String, PropKind::String], None).params(&["title", "text"])];
+        const METHODS: &[MethodInfo] = &[
+            MethodInfo::new("show_balloon", &[PropKind::String, PropKind::String], None).params(&["title", "text"]),
+            MethodInfo::new("open_menu", &[PropKind::Int, PropKind::Int], None).params(&["x", "y"]),
+        ];
         METHODS
     }
 
     /// `show_balloon(title, text)`: o balão do ícone, pelo
-    /// serviço de notificações do sistema (C27 do Tabernáculo).
+    /// serviço de notificações do sistema (C27 do Tabernáculo). `open_menu(x, y)`: o menu no
+    /// ponto da tela em pixels físicos (o do `on_context`); negativos, no mouse.
     fn invoke(&mut self, ctx: &mut EventCtx<'_>, method: &str, args: &[aylis_core::PropValue]) -> Result<aylis_core::PropValue, String> {
         match method {
             "show_balloon" => {
@@ -194,6 +256,17 @@ impl Component for TrayIcon {
                 };
                 let (title, body, id) = (text(0), text(1), ctx.id);
                 TrayIcon::show_balloon(ctx.ui, id, &title, &body)?;
+                Ok(aylis_core::PropValue::Null)
+            }
+            "open_menu" => {
+                let int = |i: usize| args.get(i).and_then(|v| v.to_i64().ok());
+                let at = match (int(0), int(1)) {
+                    (Some(x), Some(y)) if x >= 0 && y >= 0 => Some((x as i32, y as i32)),
+                    _ => None,
+                };
+                let id = ctx.id;
+                // Depois deste evento (o menu é um form novo).
+                ctx.ui.poster().post(move |ui| TrayIcon::open_menu(ui, id, at));
                 Ok(aylis_core::PropValue::Null)
             }
             _ => Err(format!("método desconhecido: {method}")),
@@ -221,7 +294,7 @@ impl Component for TrayIcon {
             TrayEventKind::DoubleClick => ctx.fire("on_dbl_click", EventArgs::None),
             TrayEventKind::RightClick => {
                 let (id, screen, scale) = (ctx.id, e.screen, e.scale);
-                ctx.ui.poster().post(move |ui| TrayIcon::open_menu(ui, id, screen, scale));
+                ctx.ui.poster().post(move |ui| TrayIcon::context(ui, id, screen, scale));
             }
         }
     }
@@ -315,12 +388,27 @@ impl TrayIcon {
     }
 }
 
-/// A lista do menu da bandeja (as cores dela, não as do tema).
+/// As cores e a forma do menu da bandeja ([`TrayIcon::menu_colors`]).
+#[derive(Clone, Default)]
+struct MenuColors {
+    fill: Color,
+    text: Color,
+    /// O fundo do item sob o mouse.
+    hover: Color,
+    hover_text: Color,
+    border: Color,
+    separator: Color,
+    radius: f32,
+    /// A fonte do estilo `PopupMenu` (sem ela, a do tema).
+    font: Option<aylis_core::FontSpec>,
+}
+
+/// A lista do menu da bandeja (as cores do `menu_theme` ou do estilo `PopupMenu`).
 #[derive(Default)]
 struct MenuList {
     base: ControlBase,
     items: Vec<Entry>,
-    colors: (Color, Color, Color),
+    colors: MenuColors,
     hover: Cell<Option<usize>>,
     /// O item escolhido (o `MenuItem`, com o `popup_menu`).
     chosen: Cell<Option<ComponentId>>,
@@ -373,11 +461,15 @@ impl Component for MenuList {
     }
 
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
-        let (bg, fg, hover) = self.colors;
+        let c = &self.colors;
+        let fg = c.text;
         let r = ctx.rect;
-        canvas.fill_rect(r, 0.0, &Brush::Solid(bg));
-        canvas.stroke_rect(r.inflate(-0.5), 0.0, &aylis_core::Stroke::new(fg.with_opacity(0.15), 1.0));
+        canvas.fill_rect(r, c.radius, &Brush::Solid(c.fill));
+        canvas.stroke_rect(r.inflate(-0.5), c.radius, &aylis_core::Stroke::new(c.border, 1.0));
         let mut t = ctx.text_style();
+        if let Some(font) = &c.font {
+            t.font = font.clone();
+        }
         t.color = fg;
         t.h_align = TextAlign::Leading;
         for (i, row) in self.rows() {
@@ -385,13 +477,14 @@ impl Component for MenuList {
             let entry = &self.items[i];
             if entry.separator {
                 let y = row.y + row.height / 2.0;
-                canvas.draw_line(PointF::new(row.x + 8.0, y), PointF::new(row.right() - 8.0, y), &aylis_core::Stroke::new(fg.with_opacity(0.2), 1.0));
+                canvas.draw_line(PointF::new(row.x + 8.0, y), PointF::new(row.right() - 8.0, y), &aylis_core::Stroke::new(c.separator, 1.0));
                 continue;
             }
-            if self.hover.get() == Some(i) {
-                canvas.fill_rect(row, 4.0, &Brush::Solid(hover));
-            }
             let mut s = t.clone();
+            if self.hover.get() == Some(i) {
+                canvas.fill_rect(row, 4.0, &Brush::Solid(c.hover));
+                s.color = c.hover_text;
+            }
             if entry.header || !entry.enabled {
                 s.color = fg.with_opacity(0.55);
             }

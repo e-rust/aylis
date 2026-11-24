@@ -192,6 +192,9 @@ type
     function FieldText(const DataSet, Field: string): string;
     procedure FormsFreed(Msg: TJSONObject);
     function WaitFor(const Cmd: string; Fields: TJSONObject): string;
+    { A resposta adiada como veio (TJSONNull no Cancelar do Prompt); fica com o TAylis. }
+    function WaitForData(const Cmd: string; Fields: TJSONObject): TJSONData;
+    procedure DialogIcon(Fields: TJSONObject; const Icon, IconColor: string);
   protected
     { Escreve e lê uma mensagem (no stdin e no stdout; numa sessão, pelo servidor). }
     procedure WriteMessage(Msg: TJSONObject); virtual;
@@ -234,10 +237,20 @@ type
     { Caixa de mensagem que espera: devolve o botão ('yes', 'no',
       'ok'...). Kind: information, warning, error, confirmation. Enquanto espera, os eventos
       continuam rodando (os Post também). }
-    function MessageDlg(const Text: string; const Kind: string; const Buttons: array of string): string;
+    function MessageDlg(const Text: string; const Kind: string; const Buttons: array of string): string; overload;
+    { A caixa de mensagem com outro ícone: Icon (nome de ícone) e IconColor (token do tema,
+      como 'danger', ou '#rrggbb'); vazios, fica o do tipo. }
+    function MessageDlg(const Text: string; const Kind: string; const Buttons: array of string;
+      const Icon: string; const IconColor: string = ''): string; overload;
+    { A pergunta com um campo de texto (OK e Cancelar), que espera, como o InputQuery: Value
+      entra como o valor inicial e sai com o texto digitado; False no Cancelar. Required não
+      deixa confirmar vazio. Enquanto espera, os eventos continuam rodando. }
+    function Prompt(const Title, LabelText: string; var Value: string; Required: Boolean = False;
+      const Icon: string = ''; const IconColor: string = ''): Boolean;
     { Abre o form como modal e espera ele fechar: devolve o
-      resultado ('ok', 'cancel'...). }
-    function ShowModal(Form: TAylisForm): string;
+      resultado ('ok', 'cancel'...). Com Container (um componente de outro form, como a página
+      de uma aba), o modal fica só nele e o resto da tela continua respondendo. }
+    function ShowModal(Form: TAylisForm; Container: TAylisComponent = nil): string;
     { Abre o form e trata os eventos até a tela fechar. }
     procedure Run(const Form: string);
     { Trata os eventos até a tela fechar. }
@@ -1730,6 +1743,16 @@ end;
 function TAylis.WaitFor(const Cmd: string; Fields: TJSONObject): string;
 var
   Got: TJSONData;
+begin
+  Got := WaitForData(Cmd, Fields);
+  if (Got <> nil) and (Got.JSONType = jtString) then
+    Result := Got.AsString
+  else
+    Result := '';
+end;
+
+function TAylis.WaitForData(const Cmd: string; Fields: TJSONObject): TJSONData;
+var
   I: Integer;
 begin
   Fields.Add('wait', True);
@@ -1739,19 +1762,30 @@ begin
       fechar. }
     for I := 1 to FQueued.Count do
       HandleNested(TJSONObject(FQueued.Pop));
-    Got := Call(Cmd, Fields);
-    if (Got <> nil) and (Got.JSONType = jtString) then
-      Result := Got.AsString
-    else
-      Result := '';
+    Result := Call(Cmd, Fields);
   finally
     Dec(FWaiting);
   end;
 end;
 
+procedure TAylis.DialogIcon(Fields: TJSONObject; const Icon, IconColor: string);
+begin
+  if Icon <> '' then
+    Fields.Add('icon', Icon);
+  if IconColor <> '' then
+    Fields.Add('icon_color', IconColor);
+end;
+
 function TAylis.MessageDlg(const Text: string; const Kind: string; const Buttons: array of string): string;
+begin
+  Result := MessageDlg(Text, Kind, Buttons, '', '');
+end;
+
+function TAylis.MessageDlg(const Text: string; const Kind: string; const Buttons: array of string;
+  const Icon: string; const IconColor: string): string;
 var
   List: TJSONArray;
+  Fields: TJSONObject;
   I: Integer;
 begin
   List := TJSONArray.Create;
@@ -1759,12 +1793,35 @@ begin
     List.Add(Buttons[I]);
   if List.Count = 0 then
     List.Add('ok');
-  Result := WaitFor('message_dlg', TJSONObject.Create(['text', Text, 'kind', Kind, 'buttons', List]));
+  Fields := TJSONObject.Create(['text', Text, 'kind', Kind, 'buttons', List]);
+  DialogIcon(Fields, Icon, IconColor);
+  Result := WaitFor('message_dlg', Fields);
 end;
 
-function TAylis.ShowModal(Form: TAylisForm): string;
+function TAylis.Prompt(const Title, LabelText: string; var Value: string; Required: Boolean;
+  const Icon: string; const IconColor: string): Boolean;
+var
+  Fields: TJSONObject;
+  Got: TJSONData;
 begin
-  Result := WaitFor('show_modal', TJSONObject.Create(['target', Form.Id]));
+  Fields := TJSONObject.Create(['title', Title, 'label', LabelText, 'value', Value]);
+  if Required then
+    Fields.Add('required', True);
+  DialogIcon(Fields, Icon, IconColor);
+  Got := WaitForData('prompt', Fields);
+  Result := (Got <> nil) and (Got.JSONType = jtString);
+  if Result then
+    Value := Got.AsString;
+end;
+
+function TAylis.ShowModal(Form: TAylisForm; Container: TAylisComponent): string;
+var
+  Fields: TJSONObject;
+begin
+  Fields := TJSONObject.Create(['target', Form.Id]);
+  if Container <> nil then
+    Fields.Add('container', Container.Id);
+  Result := WaitFor('show_modal', Fields);
 end;
 
 function TAylis.CreateForm(const Form: string; Another: Boolean): TAylisForm;

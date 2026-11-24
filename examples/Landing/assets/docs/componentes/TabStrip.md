@@ -27,6 +27,8 @@ Faixa de abas como as de um navegador: fechar, acrescentar, arrastar para reorde
 | `page_host` | Lugar das páginas | componente | Onde ficam as páginas das abas (vazio: o pai da faixa). |
 | `close_empty` | Fecha a janela vazia | lógico | Com páginas: a janela que fica sem abas (a última foi para outra faixa) fecha. |
 | `accept_forms` | Aceitar forms | lógico | A janela de um form com `dockable`, arrastada pela barra de título até a faixa, entra como aba (o form vira a página dela; veja `crate::docking`). |
+| `hover_preview` | Prévia ao passar o mouse | lógico | Com o mouse parado sobre uma aba, a miniatura da página dela (como a do navegador). Só das abas com página que já foram mostradas: a imagem é a da última vez que a página esteve à vista. |
+| `hit_tabs_only` | Mouse só nas abas | lógico | O mouse só vale sobre as abas, o × e o "+": a parte vazia da faixa deixa passar para o que está embaixo (a `TitleBar`, que arrasta a janela). A aba solta na parte vazia chega pelo `on_drop` de quem está embaixo, que a entrega com `TabStrip::receive_drag`. |
 
 ## Eventos
 

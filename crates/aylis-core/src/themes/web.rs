@@ -121,6 +121,9 @@ fn vuetify(dark: bool) -> Theme {
             .disabled(p().opacity(DISABLED)),
     );
     t.set_style("Edit.outlined", Style::new(p().fill(Color::TRANSPARENT).border("input", 1.0)).focused(p().border("primary", 2.0)));
+    // O ComboBox com `style: outlined` como o Edit.
+    let outlined = t.styles["Edit.outlined"].clone();
+    t.set_style("ComboBox.outlined", outlined);
     t.set_style("Panel.card", Style::new(p().fill("surface").border(Color::TRANSPARENT, 0.0).radius(4.0).shadow("md")));
     t
 }
@@ -334,6 +337,9 @@ fn quasar(dark: bool) -> Theme {
             .disabled(p().opacity(DISABLED)),
     );
     t.set_style("Edit.outlined", Style::new(p().fill(Color::TRANSPARENT).border("input", 1.0).radius(4.0).padding((12.0, 4.0))).focused(p().border("primary", 2.0)));
+    // O ComboBox com `style: outlined` como o Edit.
+    let outlined = t.styles["Edit.outlined"].clone();
+    t.set_style("ComboBox.outlined", outlined);
     t.set_style("Edit.filled", Style::new(p().fill("surface_2").border(Color::TRANSPARENT, 0.0).radius(4.0).padding((12.0, 4.0))).focused(p().border("primary", 2.0)));
     // O QCard: branco com a sombra padrão (shadow-1) e cantos 4.
     t.set_style("Panel.card", Style::new(p().fill("surface").border(Color::TRANSPARENT, 0.0).radius(4.0).shadow("sm")));

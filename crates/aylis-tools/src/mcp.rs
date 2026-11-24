@@ -59,7 +59,9 @@ set_translations, set_app_icon, resolve_conflict, close_project;
 
 Código do Aylis: componentes pelo acesso tipado (self.btnSalvar, frmCliente.edtNome), nunca \
 procurando pelo nome em texto (os tipos gerados têm o nome dos controles do aylis::prelude: no \
-form use os do acesso tipado e os do prelude pelo caminho, aylis::prelude::Label); handlers \
+form use os do acesso tipado e os do prelude pelo caminho, aylis::prelude::Label); dentro de um \
+handler do próprio form, o self (o FrmX::get(ui) dá None ali: a instância está com o handler; no \
+código que o handler chama, FrmX::components(ui)); handlers \
 devolvem Result e a recusa é um erro; mensagem ao usuário pelo MessageDialog do Aylis, nunca a \
 caixa do sistema; nada de banco na tela (o ClientDataSet guarda os dados e o delta, o backend \
 aplica); thread volta à tela por post/post_to (no navegador, aylis::background).";

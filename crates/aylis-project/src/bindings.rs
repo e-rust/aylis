@@ -187,8 +187,15 @@ fn enum_spec(text: &str) -> Option<(bool, String, Vec<String>)> {
     let inner = rest.strip_suffix(')')?;
     let (ty, values) = inner.split_once(':').unwrap_or(("", inner));
     let values: Vec<String> = values.split('|').filter(|v| !v.is_empty()).map(str::to_string).collect();
+    // O `font_weight` é o `FontWeight` do núcleo (com o `default` como `None`), e não um enum
+    // gerado com outros nomes (`Semibold` × `SemiBold`).
+    let ty = if !set && ty.is_empty() && values.iter().map(String::as_str).eq(aylis_core::FONT_WEIGHTS) { "FontWeight" } else { ty };
     (!values.is_empty()).then(|| (set, ty.to_string(), values))
 }
+
+/// Os tipos do núcleo que o catálogo usa como `Option<T>`: o primeiro valor (`default`) é o
+/// `None`, porque o tipo não o tem (o peso "do pai" não é um peso).
+const OPTIONAL_CORE_ENUMS: [&str; 1] = ["FontWeight"];
 
 /// Um argumento de método do catálogo (`path:string`, `string`, `orientation:enum(T:a|b)`):
 /// o nome (vazio, sem nome) e o tipo.
@@ -768,6 +775,7 @@ fn rust_ty(kind: &Kind, enums: &BTreeMap<String, EnumDef>) -> String {
         Kind::Bounds => "aylis::prelude::Bounds".into(),
         Kind::Component => "Option<ComponentId>".into(),
         Kind::Enum(n) => match enums.get(n).and_then(|d| d.rust.as_ref()) {
+            Some(r) if OPTIONAL_CORE_ENUMS.contains(&r.as_str()) => format!("Option<aylis::prelude::{r}>"),
             Some(r) => format!("aylis::prelude::{r}"),
             None => n.clone(),
         },
@@ -1199,7 +1207,9 @@ fn generator(language: Language, m: &Model) -> Out {
 /// 25: o `field` dos registros em Python e o campo com o nome do registro em C# (19/11).
 /// 26: o `problems` do `bind` sem o aviso de `mut` num form sem componentes (19/11).
 /// 27: o import do form em Python traz também as classes das anotações dos handlers (21/11).
-const GENERATOR_VERSION: u32 = 29;
+/// 30: no Rust, a cor e a medida dos registros com `Option` (sem valor fica fora do JSON), o
+/// `to_json` sem `.clone()` nos `Copy` e o `font_weight` com o `FontWeight` do núcleo (23/11).
+const GENERATOR_VERSION: u32 = 32;
 
 /// Entre os pedaços de um arquivo (os laços do gerador), nos arquivos das linguagens que juntam.
 const SEP: &str = "\u{1e}\n";
@@ -1831,7 +1841,8 @@ fn rust(m: &Model) -> Out {
         // instância está emprestada e o `get` dá `None`): a cópia dos componentes.
         s.push_str(&format!(
             "    /// Os componentes do {name} aberto (o primeiro, se houver dois), sem o estado: valem\n\
-             \x20   /// também enquanto um handler dele roda, quando o `get` dá `None`.\n\
+             \x20   /// também enquanto um handler dele roda, quando o `get` dá `None`. É o caminho no\n\
+             \x20   /// código que um handler do próprio {name} chama (no handler mesmo, o `self`).\n\
              \x20   pub fn components(ui: &Ui) -> Option<{ty}Components> {{\n        ui.form_components(ui.find_path(\"{name}\")?)\n    }}\n\n",
             name = f.name
         ));
@@ -1869,6 +1880,10 @@ fn rust(m: &Model) -> Out {
         // Outro form chegando neste: o primeiro aberto.
         s.push_str(&format!(
             "    /// O {name} aberto (o primeiro, se houver dois), para outro form ler ou mexer nele.\n\
+             \x20   ///\n\
+             \x20   /// Dentro de um handler do próprio {name}, dá `None`: a instância está emprestada ao\n\
+             \x20   /// handler que roda. Ali, use o `self` do handler ou, no código chamado por ele,\n\
+             \x20   /// [`components`](Self::components) (em debug, o `None` por empréstimo avisa no stderr).\n\
              \x20   pub fn get(ui: &Ui) -> Option<&{ty}> {{\n        ui.form_instance(ui.find_path(\"{name}\")?)\n    }}\n\n\
              \x20   pub fn get_mut(ui: &mut Ui) -> Option<&mut {ty}> {{\n        let form = ui.find_path(\"{name}\")?;\n        ui.form_instance_mut(form)\n    }}\n",
             name = f.name
@@ -4044,7 +4059,22 @@ fn event_record(arg: &EventKind) -> Option<(&'static str, Vec<(String, Kind)>)> 
             fields(&[("phase", Text), ("x", Float), ("y", Float), ("scale", Float), ("delta_scale", Float), ("rotation", Float), ("delta_rotation", Float), ("pan_x", Float), ("pan_y", Float)]),
         ),
         EventKind::Swipe => ("SwipeEvent", fields(&[("direction", Text), ("x", Float), ("y", Float), ("dx", Float), ("dy", Float), ("vx", Float), ("vy", Float)])),
-        EventKind::Key => ("KeyEvent", fields(&[("key", Text), ("ctrl", Bool), ("shift", Bool), ("alt", Bool)])),
+        // A janela em que a tecla chegou (`form`, `form_id`) e o Caps Lock e o Num Lock, como o
+        // `args_to_json` do `aylis-remote` manda.
+        EventKind::Key => (
+            "KeyEvent",
+            fields(&[
+                ("key", Text),
+                ("ctrl", Bool),
+                ("shift", Bool),
+                ("alt", Bool),
+                ("meta", Bool),
+                ("caps_lock", Bool),
+                ("num_lock", Bool),
+                ("form", Text),
+                ("form_id", Int),
+            ]),
+        ),
         _ => return None,
     })
 }
@@ -4417,6 +4447,12 @@ fn field_kind(k: &Kind) -> Kind {
     }
 }
 
+/// Um campo de registro que é medida (`width`, `min_width`...): o 0 é um valor, e não informar é
+/// "o padrão do controle". No Rust vira `Option<f64>`, como a cor vira `Option<Color>`.
+fn is_measure(field: &str) -> bool {
+    matches!(field, "width" | "min_width" | "max_width" | "height" | "min_height" | "max_height")
+}
+
 fn rust_records(records: &Records, order: &[String], enums: &BTreeMap<String, EnumDef>) -> String {
     let mut s = String::new();
     for name in order {
@@ -4426,8 +4462,10 @@ fn rust_records(records: &Records, order: &[String], enums: &BTreeMap<String, En
             let ty = match field_kind(k) {
                 Kind::Bool => "bool".to_string(),
                 Kind::Int => "i64".into(),
+                Kind::Float if is_measure(f) => "Option<f64>".into(),
                 Kind::Float => "f64".into(),
-                Kind::Color => "aylis::prelude::Color".into(),
+                // Sem cor: a do tema (e não um `#00000000`, que some com o texto).
+                Kind::Color => "Option<aylis::prelude::Color>".into(),
                 Kind::Date => "Option<aylis::prelude::Date>".into(),
                 Kind::DateTime => "Option<aylis::prelude::DateTime>".into(),
                 Kind::List => "Vec<String>".into(),
@@ -4445,8 +4483,9 @@ fn rust_records(records: &Records, order: &[String], enums: &BTreeMap<String, En
             let value = match field_kind(k) {
                 Kind::Bool => format!("{get}.and_then(|x| x.as_bool()).unwrap_or_default()"),
                 Kind::Int => format!("{get}.and_then(|x| x.as_i64()).unwrap_or_default()"),
+                Kind::Float if is_measure(f) => format!("{get}.and_then(|x| x.as_f64())"),
                 Kind::Float => format!("{get}.and_then(|x| x.as_f64()).unwrap_or_default()"),
-                Kind::Color => format!("{get}.and_then(|x| x.as_str()).and_then(aylis::prelude::Color::from_hex).unwrap_or_default()"),
+                Kind::Color => format!("{get}.and_then(|x| x.as_str()).and_then(aylis::prelude::Color::from_hex)"),
                 Kind::Date => format!("{get}.and_then(|x| x.as_str()).and_then(aylis::prelude::Date::parse_iso)"),
                 Kind::DateTime => format!("{get}.and_then(|x| x.as_str()).and_then(aylis::prelude::DateTime::parse_iso)"),
                 Kind::List => format!("{get}.and_then(|x| x.as_array()).map(|a| a.iter().filter_map(|x| x.as_str().map(str::to_string)).collect()).unwrap_or_default()"),
@@ -4464,8 +4503,20 @@ fn rust_records(records: &Records, order: &[String], enums: &BTreeMap<String, En
         s.push_str("        }\n    }\n\n    /// O registro em JSON.\n    pub fn to_json(&self) -> aylis::json::serde_json::Value {\n        let mut m = aylis::json::serde_json::Map::new();\n");
         for (f, k) in fields {
             let id = rust_ident(f);
+            // Sem valor (a cor e a medida): o campo fica de fora, e o controle usa o padrão.
+            let optional = match field_kind(k) {
+                Kind::Color => Some(".to_hex()"),
+                Kind::Float if is_measure(f) => Some(""),
+                _ => None,
+            };
+            if let Some(to) = optional {
+                s.push_str(&format!("        if let Some(x) = self.{id} {{\n            m.insert(\"{f}\".into(), aylis::json::serde_json::Value::from(x{to}));\n        }}\n"));
+                continue;
+            }
             let value = match field_kind(k) {
-                Kind::Color => format!("aylis::json::serde_json::Value::from(self.{id}.to_hex())"),
+                // Os `Copy` vão por valor (o `.clone()` neles o clippy recusa num código que o
+                // usuário não edita).
+                Kind::Bool | Kind::Int | Kind::Float => format!("aylis::json::serde_json::Value::from(self.{id})"),
                 Kind::Date | Kind::DateTime => format!("aylis::json::serde_json::Value::from(self.{id}.map(|d| d.to_string()).unwrap_or_default())"),
                 Kind::Record(_) => format!("self.{id}.as_ref().map_or(aylis::json::serde_json::Value::Null, |r| r.to_json())"),
                 Kind::RecordList(_) => format!("aylis::json::serde_json::Value::Array(self.{id}.iter().map(|r| r.to_json()).collect())"),
@@ -5036,6 +5087,58 @@ mod tests {
         // Mudada pelo usuário: fica.
         let mine = format!("{doc}\nfrom .components import frmCliente as janela\n{handlers}");
         assert_eq!(with_import(Language::Python, &mine, "frmCliente"), None);
+    }
+
+    /// Os registros tipados em Rust: a cor e a medida sem valor são `None` (e ficam fora do
+    /// JSON: o controle usa o padrão do tema, e não um `#00000000` que some com o texto), e o
+    /// `to_json` não faz `.clone()` nos `Copy` (o clippy recusa num código que o usuário não
+    /// edita).
+    #[test]
+    fn typed_records_have_no_value_and_no_clone_on_copy() {
+        let catalog = Catalog::load();
+        let text = rust_records(&catalog.records, &record_order(&catalog.records), &catalog.enums);
+        let column = text.split("pub struct ColumnSpec {").nth(1).and_then(|t| t.split("\n}").next()).expect("o ColumnSpec");
+        assert!(column.contains("pub text_color: Option<aylis::prelude::Color>,"), "{column}");
+        assert!(column.contains("pub width: Option<f64>,"), "{column}");
+        let series = text.split("pub struct ChartSeries {").nth(1).and_then(|t| t.split("\n}").next()).expect("o ChartSeries");
+        assert!(series.contains("pub color: Option<aylis::prelude::Color>,") && series.contains("pub width: Option<f64>,"), "{series}");
+        assert!(text.contains("if let Some(x) = self.text_color {"), "a cor sem valor fica de fora do JSON");
+        for (name, fields) in &catalog.records {
+            let one = rust_records(&catalog.records, std::slice::from_ref(name), &catalog.enums);
+            for (f, k) in fields {
+                if matches!(field_kind(k), Kind::Bool | Kind::Int | Kind::Float) {
+                    assert!(!one.contains(&format!("self.{}.clone()", rust_ident(f))), "{name}.{f}: .clone() num Copy");
+                }
+            }
+        }
+    }
+
+    /// O `KeyEvent` das outras linguagens tem os campos que o protocolo manda na tecla
+    /// (`args_to_json` do `aylis-remote`): os modificadores, o Caps Lock, o Num Lock e a janela
+    /// em que ela chegou (`form`, `form_id`).
+    #[test]
+    fn the_key_event_has_the_fields_of_the_protocol() {
+        let (name, fields) = event_record(&EventKind::Key).unwrap();
+        assert_eq!(name, "KeyEvent");
+        let names: Vec<&str> = fields.iter().map(|(n, _)| n.as_str()).collect();
+        assert_eq!(names, ["key", "ctrl", "shift", "alt", "meta", "caps_lock", "num_lock", "form", "form_id"]);
+        let records: Records = [(name.to_string(), fields)].into_iter().collect();
+        let python = python_records(&records, &["KeyEvent".to_string()]);
+        for field in ["caps_lock", "num_lock", "form_id", "meta"] {
+            assert!(python.contains(field), "{field}: {python}");
+        }
+    }
+
+    /// O `font_weight` usa o `FontWeight` do núcleo (`SemiBold`, com o `default` como `None`), e
+    /// o Rust não gera outro enum com o mesmo nome (`Semibold`).
+    #[test]
+    fn the_font_weight_is_the_core_type() {
+        let catalog = Catalog::load();
+        let name = catalog.enum_of.get(&("Label".to_string(), "font_weight".to_string())).expect("o font_weight do Label");
+        assert_eq!(rust_ty(&Kind::Enum(name.clone()), &catalog.enums), "Option<aylis::prelude::FontWeight>");
+        assert!(!rust_types(&catalog.enums).contains("pub enum FontWeight"));
+        // As outras linguagens continuam com o enum delas.
+        assert!(python_types(&catalog.enums).contains("FontWeight"));
     }
 
     #[test]

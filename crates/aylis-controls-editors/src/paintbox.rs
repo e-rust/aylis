@@ -3,7 +3,12 @@
 //! - **Ferramentas** (`tool`): `pencil` (lápis, quadrado, sem suavizar), `brush` (pincel
 //!   redondo), `eraser` (borracha: pinta com `back_color`), `line`, `rectangle`, `ellipse`
 //!   (as formas: arrastar mostra a prévia, soltar desenha), `fill` (balde: pinta a área da
-//!   mesma cor), `picker` (conta-gotas: pega a cor do ponto) e `select` (seleção).
+//!   mesma cor), `picker` (conta-gotas: pega a cor do ponto), `select` (seleção), `arrow`
+//!   (a seta: uma linha com a ponta cheia no fim, como as formas) e `text` (clicar abre a
+//!   caixa do texto; digitar escreve, Shift+Enter quebra a linha, Enter ou clicar fora
+//!   confirma, Esc desiste). O texto vira pixel ao confirmar (não se edita depois, como no
+//!   Paint), na fonte do controle (`font`) e na cor 1, desenhado pelo renderizador da
+//!   plataforma fora da tela (o mesmo caminho dos prints).
 //! - **Cores:** o botão esquerdo usa `color`, o direito `back_color` (as "Cor 1" e "Cor 2"
 //!   do Paint). Com `filled`, retângulo e elipse são preenchidos com `back_color` e
 //!   contornados com `color`.
@@ -14,7 +19,8 @@
 //! - **Métodos** (`Ui::invoke`, ou `invoke` pelo protocolo, iguais em todas as linguagens):
 //!   `undo`, `redo`, `clear`, `new` (largura, altura), `resize` (largura, altura), `open` (arquivo), `save` (arquivo:
 //!   PNG, JPEG ou BMP pela extensão), `can_undo`, `can_redo`, `size` (`"800 × 600"`) e
-//!   `checksum` (um resumo dos pixels, para comparar imagens).
+//!   `checksum` (um resumo dos pixels, para comparar imagens), `draw_text` (x, y, texto:
+//!   escreve na hora, como a ferramenta `text`) e `commit_text` (confirma a caixa aberta).
 //! - **Tamanho da imagem:** as alças na borda (direita, embaixo, canto) arrastam o tamanho
 //!   novo, como no Paint; o que cresce fica com a cor 2 e o que sobra é cortado.
 //! - **Seleção** (`select`): puxar um retângulo seleciona; arrastar por dentro ou as setas
@@ -45,13 +51,17 @@ pub enum PaintTool {
     Fill,
     Picker,
     Select,
+    /// A seta: uma linha do ponto apertado até o solto, com a ponta cheia no fim.
+    Arrow,
+    /// O texto: a caixa abre no clique e vira pixel ao confirmar.
+    Text,
 }
 
 impl PropEnum for PaintTool {
-    const NAMES: &'static [&'static str] = &["pencil", "brush", "eraser", "line", "rectangle", "ellipse", "fill", "picker", "select"];
+    const NAMES: &'static [&'static str] = &["pencil", "brush", "eraser", "line", "rectangle", "ellipse", "fill", "picker", "select", "arrow", "text"];
     fn from_index(i: usize) -> Option<Self> {
         use PaintTool::*;
-        [Pencil, Brush, Eraser, Line, Rectangle, Ellipse, Fill, Picker, Select].get(i).copied()
+        [Pencil, Brush, Eraser, Line, Rectangle, Ellipse, Fill, Picker, Select, Arrow, Text].get(i).copied()
     }
     fn index(self) -> usize {
         self as usize
@@ -60,7 +70,7 @@ impl PropEnum for PaintTool {
 
 impl PaintTool {
     fn is_shape(self) -> bool {
-        matches!(self, PaintTool::Line | PaintTool::Rectangle | PaintTool::Ellipse)
+        matches!(self, PaintTool::Line | PaintTool::Rectangle | PaintTool::Ellipse | PaintTool::Arrow)
     }
 }
 
@@ -272,6 +282,62 @@ impl Bitmap {
         }
     }
 
+    /// A seta de `a` a `b`: a linha (redonda, da espessura `size`) e a ponta cheia em `b`, do
+    /// tamanho proporcional à espessura.
+    fn arrow(&mut self, a: (i32, i32), b: (i32, i32), size: i32, c: Color) {
+        let (dx, dy) = ((b.0 - a.0) as f32, (b.1 - a.1) as f32);
+        let len = (dx * dx + dy * dy).sqrt();
+        if len < 1.0 {
+            self.line(a, b, size, true, c);
+            return;
+        }
+        let head = (size as f32 * 3.0 + 6.0).min(len);
+        let half = head * 0.5;
+        let (ux, uy) = (dx / len, dy / len);
+        let base = (b.0 as f32 - ux * head, b.1 as f32 - uy * head);
+        // A linha para na base da ponta (a ponta redonda não passa da seta).
+        self.line(a, (base.0.round() as i32, base.1.round() as i32), size, true, c);
+        let tip = (b.0 as f32 + 0.5, b.1 as f32 + 0.5);
+        let left = (base.0 + 0.5 - uy * half, base.1 + 0.5 + ux * half);
+        let right = (base.0 + 0.5 + uy * half, base.1 + 0.5 - ux * half);
+        self.fill_triangle(tip, left, right, c);
+    }
+
+    /// Um triângulo cheio (os pixels com o centro dentro dele).
+    fn fill_triangle(&mut self, p: (f32, f32), q: (f32, f32), r: (f32, f32), c: Color) {
+        let edge = |a: (f32, f32), b: (f32, f32), x: f32, y: f32| (b.0 - a.0) * (y - a.1) - (b.1 - a.1) * (x - a.0);
+        let (x0, x1) = (p.0.min(q.0).min(r.0).floor() as i32, p.0.max(q.0).max(r.0).ceil() as i32);
+        let (y0, y1) = (p.1.min(q.1).min(r.1).floor() as i32, p.1.max(q.1).max(r.1).ceil() as i32);
+        for y in y0.max(0)..=y1.min(self.height as i32 - 1) {
+            for x in x0.max(0)..=x1.min(self.width as i32 - 1) {
+                let (cx, cy) = (x as f32 + 0.5, y as f32 + 0.5);
+                let (e0, e1, e2) = (edge(p, q, cx, cy), edge(q, r, cx, cy), edge(r, p, cx, cy));
+                if (e0 >= 0.0 && e1 >= 0.0 && e2 >= 0.0) || (e0 <= 0.0 && e1 <= 0.0 && e2 <= 0.0) {
+                    self.set(x, y, c);
+                }
+            }
+        }
+    }
+
+    /// Mistura os pixels RGBA `rgba` (`w` x `h`, sem pré-multiplicar) com o canto em (x, y),
+    /// pelo alfa deles: o texto com a beirada suave sobre a imagem.
+    fn blend(&mut self, x: i32, y: i32, w: u32, h: u32, rgba: &[u8]) {
+        for yy in 0..h as i32 {
+            for xx in 0..w as i32 {
+                let i = ((yy as u32 * w + xx as u32) * 4) as usize;
+                let Some(src) = rgba.get(i..i + 4) else { return };
+                if src[3] == 0 {
+                    continue;
+                }
+                let Some(dst) = self.get(x + xx, y + yy) else { continue };
+                let a = src[3] as f32 / 255.0;
+                let mix = |s: u8, d: u8| (s as f32 * a + d as f32 * (1.0 - a)).round() as u8;
+                let out_a = (src[3] as f32 + dst.a as f32 * (1.0 - a)).round().min(255.0) as u8;
+                self.set(x + xx, y + yy, Color::rgba(mix(src[0], dst.r), mix(src[1], dst.g), mix(src[2], dst.b), out_a));
+            }
+        }
+    }
+
     fn fill_rect(&mut self, x: i32, y: i32, w: i32, h: i32, c: Color) {
         for yy in y..y + h {
             for xx in x..x + w {
@@ -285,7 +351,8 @@ impl Bitmap {
 pub struct PaintCanvas {
     pub base: ControlBase,
     /// A ferramenta do mouse: `pencil`, `brush`, `eraser`, `line`, `rectangle`, `ellipse`,
-    /// `fill` (balde), `picker` (conta-gotas) ou `select`.
+    /// `fill` (balde), `picker` (conta-gotas), `select`, `arrow` (seta) ou `text` (o texto, que
+    /// vira pixel ao confirmar).
     pub tool: PaintTool,
     /// Cor 1 (botão esquerdo).
     pub color: Color,
@@ -314,6 +381,19 @@ pub struct PaintCanvas {
     grab: Option<(i32, i32)>,
     /// Arrastando uma alça da borda: qual e o tamanho novo (em pixels da imagem).
     resizing: Option<(Edge, (u32, u32))>,
+    /// A caixa do texto aberta (a ferramenta `text`), até confirmar.
+    text_box: Option<TextBox>,
+    /// A fonte do controle na última pintura: a do texto que vira pixel.
+    text_font: RefCell<aylis_core::FontSpec>,
+}
+
+/// O texto sendo escrito: o canto (em pixels da imagem), o texto e a cor.
+#[derive(Clone, Debug)]
+struct TextBox {
+    x: i32,
+    y: i32,
+    text: String,
+    color: Color,
 }
 
 /// As alças da borda da imagem, como no Paint: à direita, embaixo e no canto.
@@ -353,6 +433,8 @@ impl Default for PaintCanvas {
             selection: None,
             grab: None,
             resizing: None,
+            text_box: None,
+            text_font: RefCell::new(aylis_core::FontSpec::default()),
         };
         c.fit();
         c
@@ -536,6 +618,7 @@ impl PaintCanvas {
             PaintTool::Line => bitmap.line(a, b, self.size(), true, fore),
             PaintTool::Rectangle => bitmap.rectangle(a, b, self.size(), fore, fill),
             PaintTool::Ellipse => bitmap.ellipse(a, b, self.size(), fore, fill),
+            PaintTool::Arrow => bitmap.arrow(a, b, self.size(), fore),
             _ => {}
         }
     }
@@ -713,6 +796,63 @@ impl PaintCanvas {
         result.map_err(|e| format!("{path}: {e}"))
     }
 
+    // ----- texto -----
+
+    /// A altura de uma linha do texto na fonte `font`.
+    fn text_line_height(font: &aylis_core::FontSpec) -> f32 {
+        (font.size * 1.3).ceil().max(1.0)
+    }
+
+    /// O estilo do texto que vira pixel.
+    fn text_style(&self, color: Color) -> aylis_core::TextStyle {
+        let font = self.text_font.borrow().clone();
+        aylis_core::TextStyle { font, color, wrap: false, ..Default::default() }
+    }
+
+    /// Escreve `text` (com `\n` quebrando a linha) com o canto em (x, y) da imagem, na fonte
+    /// do controle e na cor `color`: o renderizador da plataforma desenha fora da tela e os
+    /// pixels se misturam na imagem (dá para desfazer). `false` sem o desenho fora da tela
+    /// (o navegador, por enquanto) ou com o texto vazio.
+    pub fn draw_text_at(&mut self, ui: &Ui, x: i32, y: i32, text: &str, color: Color) -> bool {
+        if text.trim().is_empty() {
+            return false;
+        }
+        let style = self.text_style(color);
+        let lh = Self::text_line_height(&style.font);
+        let lines: Vec<&str> = text.split('\n').collect();
+        let width = lines.iter().map(|l| ui.measure_text(l, &style).width).fold(0.0f32, f32::max);
+        let (w, h) = ((width.ceil() as u32 + 4).min(8192), ((lh * lines.len() as f32).ceil() as u32 + 2).min(8192));
+        let Some(service) = ui.services().offscreen.as_ref() else { return false };
+        let rgba = service.render_rgba(w, h, 1.0, Color::TRANSPARENT, &mut |canvas| {
+            for (i, line) in lines.iter().enumerate() {
+                canvas.draw_text(line, RectF::new(1.0, 1.0 + i as f32 * lh, w as f32, lh), &style);
+            }
+        });
+        let Some(rgba) = rgba.filter(|px| px.len() >= (w * h * 4) as usize) else { return false };
+        self.commit_selection();
+        self.checkpoint();
+        self.bitmap.blend(x - 1, y - 1, w, h, &rgba);
+        self.changed_area(x - 1, y - 1, x + w as i32, y + h as i32);
+        true
+    }
+
+    /// Confirma a caixa do texto aberta: o texto vira pixel. `true` se mudou a imagem.
+    pub fn commit_text(&mut self, ui: &Ui) -> bool {
+        let Some(tb) = self.text_box.take() else { return false };
+        self.draw_text_at(ui, tb.x, tb.y, &tb.text, tb.color)
+    }
+
+    /// A caixa do texto na tela (com o zoom), para a prévia e a repintura.
+    fn text_box_area(&self, mut canvas_measure: impl FnMut(&str, &aylis_core::TextStyle) -> f32) -> Option<RectF> {
+        let tb = self.text_box.as_ref()?;
+        let style = self.text_style(tb.color);
+        let lh = Self::text_line_height(&style.font);
+        let lines: Vec<&str> = tb.text.split('\n').collect();
+        let width = lines.iter().map(|l| canvas_measure(l, &style)).fold(style.font.size, f32::max);
+        let z = self.zoom.clamp(0.1, 16.0);
+        Some(RectF::new(tb.x as f32 * z, tb.y as f32 * z, (width + 4.0) * z, lh * lines.len() as f32 * z).inflate(3.0))
+    }
+
     fn after_set(&mut self, name: &str) {
         if name == "tool" && self.tool != PaintTool::Select {
             self.commit_selection();
@@ -761,6 +901,8 @@ impl Component for PaintCanvas {
             MethodInfo::new("paste", &[], Some(Bool)),
             MethodInfo::new("delete", &[], Some(Bool)),
             MethodInfo::new("deselect", &[], Some(Bool)),
+            MethodInfo::new("draw_text", &[Int, Int, String], Some(Bool)).params(&["x", "y", "text"]),
+            MethodInfo::new("commit_text", &[], Some(Bool)),
         ];
         METHODS
     }
@@ -776,7 +918,35 @@ impl Component for PaintCanvas {
         on_set: after_set
     }
 
+    // A ferramenta `text` recebe o que se digita (e o teclado virtual).
+    fn accepts_text(&self) -> bool {
+        self.tool == PaintTool::Text
+    }
+
+    fn text_input(&mut self, ctx: &mut EventCtx<'_>, text: &str) {
+        let Some(tb) = &mut self.text_box else { return };
+        tb.text.extend(text.chars().filter(|c| !c.is_control()));
+        ctx.repaint();
+        ctx.set_handled();
+    }
+
+    // Trocar de ferramenta ou sair do controle confirma o texto aberto.
+    fn property_changed(&mut self, ctx: &mut EventCtx<'_>, name: &str) {
+        if name == "tool" && self.tool != PaintTool::Text && self.commit_text(ctx.ui) {
+            ctx.fire("on_change", EventArgs::None);
+            ctx.repaint();
+        }
+    }
+
+    fn focus_exit(&mut self, ctx: &mut EventCtx<'_>) {
+        if self.commit_text(ctx.ui) {
+            ctx.fire("on_change", EventArgs::None);
+        }
+        ctx.repaint();
+    }
+
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
+        *self.text_font.borrow_mut() = ctx.text_style().font;
         let b = &self.bitmap;
         let z = self.zoom.clamp(0.1, 16.0);
         let (cols, rows) = self.tile_grid();
@@ -838,9 +1008,60 @@ impl Component for PaintCanvas {
             let r = RectF::new(0.5, 0.5, w as f32 * z - 1.0, h as f32 * z - 1.0);
             canvas.stroke_rect(r, 0.0, &Stroke::new(Color::rgb(0, 120, 215), 1.0).dashed(vec![3.0, 3.0]));
         }
+        // A caixa do texto aberto: o texto como vai ficar (com o zoom), o contorno tracejado e
+        // o cursor no fim.
+        if let Some(tb) = &self.text_box {
+            let mut style = self.text_style(tb.color);
+            let lh = Self::text_line_height(&style.font) * z;
+            style.font.size *= z;
+            let lines: Vec<&str> = tb.text.split('\n').collect();
+            let (x, y) = (tb.x as f32 * z, tb.y as f32 * z);
+            for (i, line) in lines.iter().enumerate() {
+                let w = canvas.measure_text(line, &style).width + 8.0;
+                canvas.draw_text(line, RectF::new(x, y + i as f32 * lh, w, lh), &style);
+            }
+            let last = lines.last().copied().unwrap_or("");
+            let caret_x = x + canvas.measure_text(last, &style).width + 1.0;
+            let caret_y = y + (lines.len() - 1) as f32 * lh;
+            canvas.draw_line(PointF::new(caret_x, caret_y + 2.0), PointF::new(caret_x, caret_y + lh - 2.0), &Stroke::new(tb.color, 1.0));
+            let area = self.text_box_area(|t, st| canvas.measure_text(t, st).width);
+            if let Some(area) = area {
+                canvas.stroke_rect(area, 0.0, &Stroke::new(ctx.theme.color("primary"), 1.0).dashed(vec![3.0, 3.0]));
+            }
+        }
     }
 
     fn key_down(&mut self, ctx: &mut EventCtx<'_>, e: &KeyEvent) {
+        // A caixa do texto: apagar, quebrar a linha (Shift+Enter), confirmar (Enter) e
+        // desistir (Esc).
+        if let Some(tb) = &mut self.text_box {
+            let done = match e.key {
+                Key::Backspace => {
+                    tb.text.pop();
+                    true
+                }
+                Key::Enter if e.modifiers.shift => {
+                    tb.text.push('\n');
+                    true
+                }
+                Key::Enter => {
+                    if self.commit_text(ctx.ui) {
+                        ctx.fire("on_change", EventArgs::None);
+                    }
+                    true
+                }
+                Key::Escape => {
+                    self.text_box = None;
+                    true
+                }
+                _ => false,
+            };
+            if done {
+                ctx.set_handled();
+                ctx.repaint();
+            }
+            return;
+        }
         if self.selection.is_none() || e.modifiers.ctrl || e.modifiers.alt {
             return;
         }
@@ -875,7 +1096,19 @@ impl Component for PaintCanvas {
             return;
         }
         let p = self.to_image(e.position);
+        // Um clique com a caixa do texto aberta confirma o que foi escrito.
+        if self.commit_text(ctx.ui) {
+            ctx.fire("on_change", EventArgs::None);
+        }
         match self.tool {
+            PaintTool::Text => {
+                let inside = p.0 >= 0 && p.1 >= 0 && (p.0 as u32) < self.bitmap.width && (p.1 as u32) < self.bitmap.height;
+                if inside {
+                    let (color, _) = self.colors(e.button);
+                    self.text_box = Some(TextBox { x: p.0, y: p.1, text: String::new(), color });
+                }
+                ctx.request_focus(ctx.id);
+            }
             PaintTool::Picker => {
                 if let Some(c) = self.bitmap.get(p.0, p.1) {
                     let c = Color::rgb(c.r, c.g, c.b);
@@ -1103,6 +1336,25 @@ impl Component for PaintCanvas {
             "deselect" => {
                 self.commit_selection();
                 PropValue::Bool(true)
+            }
+            "draw_text" => {
+                let at = |i: usize| args.get(i).and_then(|v| v.to_i64().ok()).unwrap_or(0) as i32;
+                let content = match args.get(2) {
+                    Some(PropValue::String(s)) => s.clone(),
+                    _ => return Err("draw_text: falta o texto".into()),
+                };
+                let ok = self.draw_text_at(ctx.ui, at(0), at(1), &content, self.color);
+                if ok {
+                    ctx.fire("on_change", EventArgs::None);
+                }
+                PropValue::Bool(ok)
+            }
+            "commit_text" => {
+                let ok = self.commit_text(ctx.ui);
+                if ok {
+                    ctx.fire("on_change", EventArgs::None);
+                }
+                PropValue::Bool(ok)
             }
             _ => return Err(format!("PaintCanvas não tem o método '{method}'")),
         };

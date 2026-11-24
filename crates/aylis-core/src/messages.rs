@@ -223,6 +223,16 @@ const EN: &[(&str, &str)] = &[
     ("o WmiQuery precisa da consulta", "the WmiQuery needs a query"),
     ("o WMI não respondeu a tempo", "WMI did not answer in time"),
     ("o data_set do WmiQuery tem de ser um ClientDataSet", "the WmiQuery data_set must be a ClientDataSet"),
+    // A versão da tag do git na publicação (aylis-project, `Project::published_version`).
+    ("O projeto usa a versão da última tag do git, mas o git não foi encontrado. Instale o git ou desmarque \"Versão da tag do git\" em Publicar.", "The project uses the version of the latest git tag, but git was not found. Install git or uncheck \"Version from git tag\" in Publish."),
+    ("O projeto usa a versão da última tag do git, mas a pasta do projeto não está num repositório do git. Desmarque \"Versão da tag do git\" em Publicar ou crie o repositório.", "The project uses the version of the latest git tag, but the project folder is not in a git repository. Uncheck \"Version from git tag\" in Publish or create the repository."),
+    ("O projeto usa a versão da última tag do git, mas o repositório não tem tag. Crie uma (git tag v1.0.0) ou desmarque \"Versão da tag do git\" em Publicar.", "The project uses the version of the latest git tag, but the repository has no tag. Create one (git tag v1.0.0) or uncheck \"Version from git tag\" in Publish."),
+    ("A última tag do git ({0}) não é uma versão. Use tags como v1.2.0 ou 1.2.0-beta.1.", "The latest git tag ({0}) is not a version. Use tags like v1.2.0 or 1.2.0-beta.1."),
+    // A captura de um monitor (`Ui::capture_monitor`, a plataforma).
+    ("A captura da tela não existe neste sistema.", "Screen capture is not available on this system."),
+    ("A captura da tela está desligada no projeto (allow_screen_capture).", "Screen capture is turned off in the project (allow_screen_capture)."),
+    ("O monitor {0} não existe.", "Monitor {0} does not exist."),
+    ("A captura da tela não deu certo.", "The screen capture failed."),
 ];
 
 const ES: &[(&str, &str)] = &[
@@ -380,6 +390,16 @@ const ES: &[(&str, &str)] = &[
     ("o WmiQuery precisa da consulta", "el WmiQuery necesita la consulta"),
     ("o WMI não respondeu a tempo", "WMI no respondió a tiempo"),
     ("o data_set do WmiQuery tem de ser um ClientDataSet", "el data_set del WmiQuery debe ser un ClientDataSet"),
+    // A versão da tag do git na publicação (aylis-project, `Project::published_version`).
+    ("O projeto usa a versão da última tag do git, mas o git não foi encontrado. Instale o git ou desmarque \"Versão da tag do git\" em Publicar.", "El proyecto usa la versión de la última etiqueta de git, pero no se encontró git. Instale git o desmarque \"Versión de la etiqueta de git\" en Publicar."),
+    ("O projeto usa a versão da última tag do git, mas a pasta do projeto não está num repositório do git. Desmarque \"Versão da tag do git\" em Publicar ou crie o repositório.", "El proyecto usa la versión de la última etiqueta de git, pero la carpeta del proyecto no está en un repositorio de git. Desmarque \"Versión de la etiqueta de git\" en Publicar o cree el repositorio."),
+    ("O projeto usa a versão da última tag do git, mas o repositório não tem tag. Crie uma (git tag v1.0.0) ou desmarque \"Versão da tag do git\" em Publicar.", "El proyecto usa la versión de la última etiqueta de git, pero el repositorio no tiene etiquetas. Cree una (git tag v1.0.0) o desmarque \"Versión de la etiqueta de git\" en Publicar."),
+    ("A última tag do git ({0}) não é uma versão. Use tags como v1.2.0 ou 1.2.0-beta.1.", "La última etiqueta de git ({0}) no es una versión. Use etiquetas como v1.2.0 o 1.2.0-beta.1."),
+    // A captura de um monitor (`Ui::capture_monitor`, a plataforma).
+    ("A captura da tela não existe neste sistema.", "La captura de pantalla no existe en este sistema."),
+    ("A captura da tela está desligada no projeto (allow_screen_capture).", "La captura de pantalla está desactivada en el proyecto (allow_screen_capture)."),
+    ("O monitor {0} não existe.", "El monitor {0} no existe."),
+    ("A captura da tela não deu certo.", "La captura de pantalla falló."),
 ];
 
 #[cfg(test)]

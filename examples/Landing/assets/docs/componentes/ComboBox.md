@@ -13,6 +13,7 @@ Lista suspensa: mostra a opção escolhida e abre a lista para trocar. Os itens 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
 | `arrow` | Seta | um de: `chevron`, `triangle` | O desenho da seta. |
+| `label` | Rótulo | texto | O rótulo do campo (como o do `Edit`); vazio: sem rótulo. |
 
 ### Comportamento
 
@@ -20,6 +21,7 @@ Lista suspensa: mostra a opção escolhida e abre a lista para trocar. Os itens 
 |---|---|---|---|
 | `sensitive` | Dado pessoal (LGPD: mascarado nas gravações) | lógico | Dado pessoal (LGPD): as gravações do `EventRecorder` mascaram o que é digitado aqui, a não ser com o `record_sensitive` dele ligado. Liga e desliga em tempo de execução. |
 | `drop_down_count` | Linhas da lista aberta | inteiro | Quantas linhas a lista aberta mostra de uma vez (mínimo 1). Com mais opções, ela rola; sem lugar no form, mostra menos. |
+| `clear_button` | Botão de limpar | lógico | O "×" que limpa a escolha, com uma opção escolhida. |
 
 ### Dados
 

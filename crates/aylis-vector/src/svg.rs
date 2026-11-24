@@ -3,16 +3,25 @@
 //!
 //! Lê o que ícones, logos e ilustrações usam: `path`, `rect` (com cantos), `circle`,
 //! `ellipse`, `line`, `polyline`, `polygon`, grupos com `transform`, `use`, `svg`
-//! aninhado, preenchimento e contorno (cor, `currentColor`, gradiente linear e radial,
-//! opacidades, `fill-rule`, pontas, junções e tracejado), atributos ou `style="..."`.
-//! Fica de fora: texto, filtros, máscaras, `clipPath`, imagens e folhas `<style>`.
+//! aninhado, preenchimento e contorno (cor, `currentColor`, gradiente linear e radial, padrão
+//! `<pattern>`, opacidades, `fill-rule`, pontas, junções e tracejado), recorte (`clip-path` com
+//! `<clipPath>`), máscara (`mask` com `<mask>`, de luminância ou de alfa), atributos ou
+//! `style="..."`.
+//!
+//! O recorte, a máscara e o padrão são feitos aqui, com as formas, os recortes e as máscaras do
+//! [`Canvas`] (e não rasterizados à parte): saem iguais no Direct2D, no Skia e no Canvas 2D.
+//! Um SVG com eles é guardado como imagem pelo [`render`](SvgImage::render) enquanto nada muda
+//! (o controle `Svg` guarda sempre).
+//!
+//! Fica de fora: texto, filtros, imagens, marcadores e folhas `<style>`.
 
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use aylis_core::{Brush, Canvas, Color, GradientStop, LineCap, LineJoin, Path, PointF, RectF, Stroke};
 use roxmltree::{Document, Node};
 
-use crate::geom::{Affine, has_figures};
+use crate::geom::{Affine, has_figures, rect_path};
 
 #[derive(Clone, Debug)]
 enum Paint {
@@ -20,6 +29,8 @@ enum Paint {
     /// `currentColor`, com a opacidade.
     Current(f32),
     Brush(Brush),
+    /// Um `<pattern>`, com a opacidade.
+    Pattern(Arc<Pattern>, f32),
 }
 
 #[derive(Clone, Debug)]
@@ -34,11 +45,54 @@ struct Shape {
     stroke: Option<(Paint, Stroke)>,
 }
 
+/// O que é desenhado, em ordem: uma forma, ou um grupo com recorte ou máscara.
+#[derive(Clone, Debug)]
+enum Item {
+    Shape(Shape),
+    Group(Arc<Group>),
+}
+
+/// Um elemento com `clip-path` ou `mask`: o que ele desenha e o que o recorta. Tudo nas
+/// coordenadas da lista onde o grupo está.
+#[derive(Debug)]
+struct Group {
+    items: Vec<Item>,
+    /// As formas do `<clipPath>` (cada uma com o `clip-rule` dela); vazio: sem recorte.
+    clip: Vec<Path>,
+    mask: Option<Mask>,
+}
+
+/// Um `<mask>` aplicado: a área dele e o que ele desenha.
+#[derive(Debug)]
+struct Mask {
+    region: Path,
+    items: Vec<Item>,
+    /// O brilho recorta (o padrão do SVG); `false`: o alfa (`mask-type: alpha`).
+    luminance: bool,
+}
+
+/// Um `<pattern>` aplicado a uma forma: o ladrilho repetido.
+#[derive(Debug)]
+struct Pattern {
+    /// Largura e altura do ladrilho, no espaço do padrão.
+    size: (f32, f32),
+    /// Do ladrilho (origem no canto do primeiro) para as coordenadas da forma.
+    to_parent: Affine,
+    /// O conteúdo, nas coordenadas do ladrilho.
+    items: Vec<Item>,
+    /// O conteúdo passa do ladrilho: cada um é recortado (o `overflow: hidden` do SVG).
+    overflows: bool,
+}
+
 /// Um SVG lido.
 #[derive(Clone, Debug)]
 pub struct SvgImage {
     view: RectF,
-    shapes: Vec<Shape>,
+    items: Vec<Item>,
+    /// Tem recorte, máscara ou padrão (o [`render`](SvgImage::render) guarda como imagem).
+    costly: bool,
+    /// Identifica o conteúdo (a chave da imagem guardada).
+    uid: u64,
 }
 
 #[derive(Clone, Debug)]
@@ -59,6 +113,7 @@ struct Inherited {
     fill_opacity: f32,
     stroke_opacity: f32,
     fill_rule_even_odd: bool,
+    clip_rule_even_odd: bool,
     cap: LineCap,
     join: LineJoin,
     dash: Option<Vec<f32>>,
@@ -76,6 +131,7 @@ impl Default for Inherited {
             fill_opacity: 1.0,
             stroke_opacity: 1.0,
             fill_rule_even_odd: false,
+            clip_rule_even_odd: false,
             cap: LineCap::Butt,
             join: LineJoin::Miter,
             dash: None,
@@ -192,6 +248,12 @@ fn href<'a>(node: Node<'a, 'a>) -> Option<&'a str> {
     node.attributes().find(|a| a.name() == "href").map(|a| a.value().trim_start_matches('#'))
 }
 
+/// O `id` de um `url(#id)`.
+fn url_id(spec: &str) -> Option<&str> {
+    let inner = spec.trim().strip_prefix("url(")?.split(')').next()?;
+    Some(inner.trim().trim_matches(['\'', '"']).trim_start_matches('#'))
+}
+
 fn read_gradients(doc: &Document) -> HashMap<String, Gradient> {
     let mut raw: Vec<(String, Node)> = Vec::new();
     for n in doc.descendants() {
@@ -248,15 +310,77 @@ fn read_gradients(doc: &Document) -> HashMap<String, Gradient> {
     out
 }
 
+/// A caixa das formas (sem o traço): o "bounding box" do SVG, para as unidades
+/// `objectBoundingBox` do recorte e da máscara.
+fn items_bounds(items: &[Item]) -> Option<RectF> {
+    let mut out: Option<RectF> = None;
+    let mut add = |b: RectF| {
+        out = Some(match out {
+            None => b,
+            Some(a) => {
+                let (x, y) = (a.x.min(b.x), a.y.min(b.y));
+                RectF::new(x, y, a.right().max(b.right()) - x, a.bottom().max(b.bottom()) - y)
+            }
+        });
+    };
+    for item in items {
+        match item {
+            Item::Shape(s) => add(s.path.bounds()),
+            Item::Group(g) => {
+                if let Some(b) = items_bounds(&g.items) {
+                    add(b);
+                }
+            }
+        }
+    }
+    out
+}
+
+/// Até onde as formas desenham (com o traço).
+fn items_reach(items: &[Item]) -> Option<RectF> {
+    let mut out: Option<RectF> = None;
+    for item in items {
+        let b = match item {
+            Item::Shape(s) => Some(s.path.bounds().inflate(s.stroke.as_ref().map_or(0.0, |(_, st)| st.width / 2.0 * 1.5))),
+            Item::Group(g) => items_reach(&g.items),
+        };
+        if let Some(b) = b {
+            out = Some(match out {
+                None => b,
+                Some(a) => {
+                    let (x, y) = (a.x.min(b.x), a.y.min(b.y));
+                    RectF::new(x, y, a.right().max(b.right()) - x, a.bottom().max(b.bottom()) - y)
+                }
+            });
+        }
+    }
+    out
+}
+
+/// A caixa como transformação do quadrado unitário (as unidades `objectBoundingBox`).
+fn unit_box(b: RectF) -> Affine {
+    Affine::new(b.width, 0.0, 0.0, b.height, b.x, b.y)
+}
+
+fn costly(items: &[Item]) -> bool {
+    items.iter().any(|i| match i {
+        Item::Group(_) => true,
+        Item::Shape(s) => matches!(s.fill, Some(Paint::Pattern(..))) || matches!(s.stroke, Some((Paint::Pattern(..), _))),
+    })
+}
+
 struct Reader<'a> {
     gradients: HashMap<String, Gradient>,
     ids: HashMap<&'a str, Node<'a, 'a>>,
-    shapes: Vec<Shape>,
+    items: Vec<Item>,
     view_w: f32,
+    /// Dentro de um `<clipPath>`: só a geometria vale (cada forma preenchida, com o
+    /// `clip-rule`).
+    clip_mode: bool,
 }
 
 impl<'a> Reader<'a> {
-    fn paint(&self, spec: &str, opacity: f32, local_bounds: RectF, m: Affine) -> Option<Paint> {
+    fn paint(&mut self, spec: &str, opacity: f32, local_bounds: RectF, m: Affine, depth: usize) -> Option<Paint> {
         let spec = spec.trim();
         if spec == "none" || opacity <= 0.0 {
             return None;
@@ -264,8 +388,10 @@ impl<'a> Reader<'a> {
         if spec == "currentColor" {
             return Some(Paint::Current(opacity));
         }
-        if let Some(id) = spec.strip_prefix("url(").and_then(|r| r.split(')').next()) {
-            let id = id.trim().trim_matches(['\'', '"']).trim_start_matches('#');
+        if let Some(id) = url_id(spec) {
+            if let Some(node) = self.ids.get(id).copied().filter(|n| n.tag_name().name() == "pattern") {
+                return self.pattern(node, local_bounds, m, depth).map(|p| Paint::Pattern(Arc::new(p), opacity));
+            }
             let g = self.gradients.get(id)?;
             if g.stops.is_empty() {
                 return None;
@@ -274,11 +400,7 @@ impl<'a> Reader<'a> {
                 return Some(Paint::Color(g.stops[0].color.with_opacity(opacity)));
             }
             // Coordenadas do gradiente → espaço do usuário → espaço do SVG.
-            let unit = if g.user_units {
-                Affine::IDENTITY
-            } else {
-                Affine::new(local_bounds.width, 0.0, 0.0, local_bounds.height, local_bounds.x, local_bounds.y)
-            };
+            let unit = if g.user_units { Affine::IDENTITY } else { unit_box(local_bounds) };
             let gm = m.then(unit).then(g.transform);
             let stops = g.stops.iter().map(|s| GradientStop::new(s.offset, s.color.with_opacity(opacity))).collect();
             let c = |k: &str| g.coords.get(k).copied().unwrap_or(0.0);
@@ -290,6 +412,101 @@ impl<'a> Reader<'a> {
             return Some(Paint::Brush(brush));
         }
         css_color(spec).map(|c| Paint::Color(c.with_opacity(opacity)))
+    }
+
+    /// Lê os filhos de `node` (com a transformação `m`) numa lista à parte.
+    fn collect(&mut self, node: Node<'a, 'a>, m: Affine, clip_mode: bool, depth: usize) -> Vec<Item> {
+        let outer = std::mem::take(&mut self.items);
+        let outer_mode = std::mem::replace(&mut self.clip_mode, clip_mode);
+        for child in node.children() {
+            self.walk(child, m, &Inherited::default(), 1.0, depth + 1);
+        }
+        self.clip_mode = outer_mode;
+        std::mem::replace(&mut self.items, outer)
+    }
+
+    /// O `<pattern>` aplicado a uma forma de caixa `bbox` (nas coordenadas dela) e
+    /// transformação `m`. Os atributos e os filhos podem vir de outro padrão (`href`).
+    fn pattern(&mut self, node: Node<'a, 'a>, bbox: RectF, m: Affine, depth: usize) -> Option<Pattern> {
+        if depth > 32 {
+            return None;
+        }
+        let mut chain = vec![node];
+        while let Some(next) = href(*chain.last()?).and_then(|h| self.ids.get(h).copied()).filter(|n| n.tag_name().name() == "pattern") {
+            if chain.len() > 8 {
+                break;
+            }
+            chain.push(next);
+        }
+        let attr = |name: &str| chain.iter().find_map(|n| n.attribute(name));
+        let user_units = attr("patternUnits") == Some("userSpaceOnUse");
+        let content_box = attr("patternContentUnits") == Some("objectBoundingBox");
+        let percent_of = if user_units { self.view_w } else { 1.0 };
+        let num = |k: &str| attr(k).and_then(|v| length(v, percent_of)).unwrap_or(0.0);
+        let (x, y, w, h) = (num("x"), num("y"), num("width"), num("height"));
+        let tile = if user_units { RectF::new(x, y, w, h) } else { RectF::new(bbox.x + x * bbox.width, bbox.y + y * bbox.height, w * bbox.width, h * bbox.height) };
+        if !(tile.width > 0.0 && tile.height > 0.0) {
+            return None;
+        }
+        let transform = attr("patternTransform").map(parse_transform).unwrap_or_default();
+        // O conteúdo dentro do ladrilho: pelo `viewBox` (centrado, sem distorcer), pela caixa da
+        // forma ou nas unidades do usuário.
+        let view = attr("viewBox").map(numbers).filter(|v| v.len() == 4 && v[2] > 0.0 && v[3] > 0.0);
+        let content = if let Some(v) = view {
+            let s = (tile.width / v[2]).min(tile.height / v[3]);
+            Affine::translate((tile.width - v[2] * s) / 2.0, (tile.height - v[3] * s) / 2.0).then(Affine::scale(s, s)).then(Affine::translate(-v[0], -v[1]))
+        } else if content_box {
+            Affine::scale(bbox.width, bbox.height)
+        } else {
+            Affine::IDENTITY
+        };
+        let source = chain.iter().copied().find(|n| n.children().any(|c| c.is_element()))?;
+        let items = self.collect(source, content, false, depth);
+        let reach = items_reach(&items)?;
+        let overflows = reach.x < 0.0 || reach.y < 0.0 || reach.right() > tile.width || reach.bottom() > tile.height;
+        Some(Pattern {
+            size: (tile.width, tile.height),
+            to_parent: m.then(transform).then(Affine::translate(tile.x, tile.y)),
+            items,
+            overflows,
+        })
+    }
+
+    /// As formas do `<clipPath>` aplicado ao elemento de transformação `m` e caixa `bbox`.
+    fn clip_paths(&mut self, node: Node<'a, 'a>, m: Affine, bbox: RectF, depth: usize) -> Vec<Path> {
+        let mut cm = if node.attribute("clipPathUnits") == Some("objectBoundingBox") { unit_box(bbox) } else { m };
+        if let Some(t) = node.attribute("transform") {
+            cm = cm.then(parse_transform(t));
+        }
+        self.collect(node, cm, true, depth)
+            .into_iter()
+            .filter_map(|i| match i {
+                Item::Shape(s) => Some(s.path),
+                Item::Group(_) => None,
+            })
+            .collect()
+    }
+
+    /// O `<mask>` aplicado ao elemento de transformação `m` e caixa `bbox`.
+    fn mask(&mut self, node: Node<'a, 'a>, m: Affine, bbox: RectF, depth: usize) -> Mask {
+        let user_units = node.attribute("maskUnits") == Some("userSpaceOnUse");
+        let region = if user_units {
+            let num = |k: &str, d: &str| length(node.attribute(k).unwrap_or(d), self.view_w).unwrap_or(0.0);
+            rect_path(&m, RectF::new(num("x", "-10%"), num("y", "-10%"), num("width", "120%"), num("height", "120%")))
+        } else {
+            let num = |k: &str, d: &str| length(node.attribute(k).unwrap_or(d), 1.0).unwrap_or(0.0);
+            rect_path(&unit_box(bbox), RectF::new(num("x", "-10%"), num("y", "-10%"), num("width", "120%"), num("height", "120%")))
+        };
+        let cm = if node.attribute("maskContentUnits") == Some("objectBoundingBox") { unit_box(bbox) } else { m };
+        let items = self.collect(node, cm, false, depth);
+        let luminance = prop(node, "mask-type") != Some("alpha");
+        Mask { region, items, luminance }
+    }
+
+    /// O elemento `url(#id)` de um `clip-path` ou `mask`, se for do tipo `tag`.
+    fn reference(&self, spec: Option<&str>, tag: &str) -> Option<Node<'a, 'a>> {
+        let id = url_id(spec?)?;
+        self.ids.get(id).copied().filter(|n| n.tag_name().name() == tag)
     }
 
     fn inherit(&self, node: Node, parent: &Inherited) -> Inherited {
@@ -311,6 +528,9 @@ impl<'a> Reader<'a> {
         }
         if let Some(v) = prop(node, "fill-rule") {
             s.fill_rule_even_odd = v == "evenodd";
+        }
+        if let Some(v) = prop(node, "clip-rule") {
+            s.clip_rule_even_odd = v == "evenodd";
         }
         if let Some(v) = prop(node, "stroke-linecap") {
             s.cap = match v {
@@ -362,6 +582,38 @@ impl<'a> Reader<'a> {
             style.fixed_stroke = effect == "non-scaling-stroke";
         }
         let opacity = opacity * prop(node, "opacity").and_then(|v| length(v, 1.0)).unwrap_or(1.0);
+        // O recorte e a máscara valem para tudo o que o elemento desenha (dentro de um
+        // `<clipPath>`, só a geometria conta).
+        let (clip, mask) = if self.clip_mode {
+            (None, None)
+        } else {
+            (self.reference(prop(node, "clip-path"), "clipPath"), self.reference(prop(node, "mask"), "mask"))
+        };
+        if clip.is_none() && mask.is_none() {
+            self.content(node, name, m, &style, opacity, depth);
+            return;
+        }
+        let outer = std::mem::take(&mut self.items);
+        self.content(node, name, m, &style, opacity, depth);
+        let items = std::mem::replace(&mut self.items, outer);
+        let Some(bbox) = items_bounds(&items) else { return };
+        let clip = match clip {
+            Some(c) => {
+                let paths = self.clip_paths(c, m, bbox, depth + 1);
+                if paths.is_empty() {
+                    // Um recorte vazio não deixa nada aparecer.
+                    return;
+                }
+                paths
+            }
+            None => Vec::new(),
+        };
+        let mask = mask.map(|k| self.mask(k, m, bbox, depth + 1));
+        self.items.push(Item::Group(Arc::new(Group { items, clip, mask })));
+    }
+
+    /// O que o elemento desenha: os filhos de um grupo ou a forma dele.
+    fn content(&mut self, node: Node<'a, 'a>, name: &str, m: Affine, style: &Inherited, opacity: f32, depth: usize) {
         let num = |k: &str, of: f32| node.attribute(k).and_then(|v| length(v, of)).unwrap_or(0.0);
         let w = self.view_w;
         let mut path = Path::new();
@@ -369,7 +621,7 @@ impl<'a> Reader<'a> {
             "svg" | "g" | "a" | "switch" => {
                 let m = if name == "svg" && node.parent_element().is_some() { m.then(Affine::translate(num("x", w), num("y", w))) } else { m };
                 for child in node.children() {
-                    self.walk(child, m, &style, opacity, depth + 1);
+                    self.walk(child, m, style, opacity, depth + 1);
                 }
                 return;
             }
@@ -378,10 +630,10 @@ impl<'a> Reader<'a> {
                     let m = m.then(Affine::translate(num("x", w), num("y", w)));
                     if target.tag_name().name() == "symbol" {
                         for child in target.children() {
-                            self.walk(child, m, &style, opacity, depth + 1);
+                            self.walk(child, m, style, opacity, depth + 1);
                         }
                     } else {
-                        self.walk(target, m, &style, opacity, depth + 1);
+                        self.walk(target, m, style, opacity, depth + 1);
                     }
                 }
                 return;
@@ -425,13 +677,23 @@ impl<'a> Reader<'a> {
         if !has_figures(&path) {
             return;
         }
+        if self.clip_mode {
+            // Dentro do `<clipPath>`: a forma inteira, preenchida, com o `clip-rule`.
+            if name == "line" || name == "polyline" {
+                return;
+            }
+            let mut path = m.path(&path);
+            path.even_odd = style.clip_rule_even_odd;
+            self.items.push(Item::Shape(Shape { path, id: None, fixed_stroke: false, fill: Some(Paint::Color(Color::BLACK)), stroke: None }));
+            return;
+        }
         let bounds = path.bounds();
         let fill = if name == "line" {
             None
         } else {
-            self.paint(&style.fill, style.fill_opacity * opacity, bounds, m)
+            self.paint(&style.fill, style.fill_opacity * opacity, bounds, m, depth)
         };
-        let stroke = self.paint(&style.stroke, style.stroke_opacity * opacity, bounds, m).map(|p| {
+        let stroke = self.paint(&style.stroke, style.stroke_opacity * opacity, bounds, m, depth).map(|p| {
             let width = if style.fixed_stroke { style.stroke_width } else { style.stroke_width * m.scale_factor() };
             let mut s = Stroke::new(Color::BLACK, width);
             s.cap = style.cap;
@@ -449,8 +711,177 @@ impl<'a> Reader<'a> {
             (Paint::Current(o), Some(c)) => Paint::Color(c.with_opacity(o)),
             (p, _) => p,
         };
-        self.shapes.push(Shape { path, id: style.id.clone(), fixed_stroke: style.fixed_stroke, fill: fill.map(fix), stroke: stroke.map(|(p, s)| (fix(p), s)) });
+        self.items.push(Item::Shape(Shape { path, id: style.id.clone(), fixed_stroke: style.fixed_stroke, fill: fill.map(fix), stroke: stroke.map(|(p, s)| (fix(p), s)) }));
     }
+}
+
+/// As formas de uma lista, em ordem (as de dentro dos grupos também; as das máscaras, dos
+/// recortes e dos padrões não).
+fn for_each_shape<'s>(items: &'s [Item], f: &mut dyn FnMut(&'s Shape)) {
+    for item in items {
+        match item {
+            Item::Shape(s) => f(s),
+            Item::Group(g) => for_each_shape(&g.items, f),
+        }
+    }
+}
+
+/// Quantos ladrilhos de um padrão desenham, no máximo, numa forma (um ladrilho minúsculo numa
+/// forma enorme não trava a pintura).
+const MAX_TILES: i64 = 20_000;
+
+/// O que a pintura precisa além das formas.
+struct Look<'h> {
+    current: Color,
+    highlight: &'h [&'h str],
+    highlight_color: Color,
+}
+
+impl Look<'_> {
+    fn brush(&self, p: &Paint, m: &Affine) -> Brush {
+        match p {
+            Paint::Color(c) => Brush::Solid(*c),
+            Paint::Current(o) => Brush::Solid(self.current.with_opacity(*o)),
+            Paint::Brush(b) => map_brush(b, m),
+            // O padrão é desenhado à parte (`draw_pattern`).
+            Paint::Pattern(..) => Brush::Solid(Color::TRANSPARENT),
+        }
+    }
+}
+
+/// Desenha os itens com `m` (das coordenadas deles para as do canvas). `visible`: a área
+/// recortada, nas coordenadas dos itens (o que cai fora nem é desenhado).
+fn draw_items(canvas: &mut dyn Canvas, items: &[Item], m: Affine, visible: Option<RectF>, look: &Look<'_>, depth: usize) {
+    if depth > 32 {
+        return;
+    }
+    for item in items {
+        match item {
+            Item::Shape(shape) => draw_shape(canvas, shape, m, visible, look, depth),
+            Item::Group(g) => draw_group(canvas, g, m, visible, look, depth),
+        }
+    }
+}
+
+fn draw_shape(canvas: &mut dyn Canvas, shape: &Shape, m: Affine, visible: Option<RectF>, look: &Look<'_>, depth: usize) {
+    // Fora da área visível (o município com zoom no mapa do estado): nem desenha.
+    if let Some(v) = visible {
+        let reach = shape.stroke.as_ref().map_or(0.0, |(_, s)| if shape.fixed_stroke { s.width / m.scale_factor().max(1e-6) } else { s.width });
+        if !shape.path.bounds().inflate(reach).intersects(v) {
+            return;
+        }
+    }
+    let path = m.path(&shape.path);
+    if shape.id.as_deref().is_some_and(|id| look.highlight.contains(&id)) {
+        canvas.fill_path(&path, &Brush::Solid(look.highlight_color));
+    } else if let Some(f) = &shape.fill {
+        match f {
+            Paint::Pattern(pattern, opacity) => {
+                canvas.save();
+                canvas.clip_path(&path, false);
+                draw_pattern(canvas, pattern, *opacity, m, path.bounds(), look, depth);
+                canvas.restore();
+            }
+            f => canvas.fill_path(&path, &look.brush(f, &m)),
+        }
+    }
+    if let Some((p, s)) = &shape.stroke {
+        let mut s = s.clone();
+        if !shape.fixed_stroke {
+            s.width *= m.scale_factor();
+        }
+        s.dash = s.dash.map(|d| d.iter().map(|x| x * m.scale_factor()).collect());
+        if let Paint::Pattern(pattern, opacity) = p {
+            // O traço com o padrão: os ladrilhos recortados pelo traço (uma máscara de alfa).
+            if canvas.begin_masked(false) {
+                draw_pattern(canvas, pattern, *opacity, m, path.bounds().inflate(s.width), look, depth);
+                canvas.begin_mask();
+                s.brush = Brush::Solid(Color::BLACK);
+                canvas.stroke_path(&path, &s);
+                canvas.end_mask();
+            }
+            return;
+        }
+        s.brush = look.brush(p, &m);
+        canvas.stroke_path(&path, &s);
+    }
+}
+
+/// Os ladrilhos do padrão que cobrem `area` (nas coordenadas do canvas); quem chama já
+/// recortou pela forma.
+fn draw_pattern(canvas: &mut dyn Canvas, pattern: &Pattern, opacity: f32, m: Affine, area: RectF, look: &Look<'_>, depth: usize) {
+    let to_canvas = m.then(pattern.to_parent);
+    let Some(back) = to_canvas.invert() else { return };
+    let (w, h) = pattern.size;
+    let span = back.bounds(area);
+    let (i0, i1) = ((span.x / w).floor() as i64, (span.right() / w).ceil() as i64);
+    let (j0, j1) = ((span.y / h).floor() as i64, (span.bottom() / h).ceil() as i64);
+    if (i1 - i0).saturating_mul(j1 - j0) > MAX_TILES {
+        return;
+    }
+    if opacity < 1.0 {
+        canvas.save_layer(opacity);
+    }
+    for j in j0..j1 {
+        for i in i0..i1 {
+            let tm = to_canvas.then(Affine::translate(i as f32 * w, j as f32 * h));
+            if pattern.overflows {
+                canvas.save();
+                canvas.clip_path(&rect_path(&tm, RectF::new(0.0, 0.0, w, h)), false);
+            }
+            draw_items(canvas, &pattern.items, tm, None, look, depth + 1);
+            if pattern.overflows {
+                canvas.restore();
+            }
+        }
+    }
+    if opacity < 1.0 {
+        canvas.restore();
+    }
+}
+
+fn draw_group(canvas: &mut dyn Canvas, g: &Group, m: Affine, visible: Option<RectF>, look: &Look<'_>, depth: usize) {
+    canvas.save();
+    // Uma forma recorta direto; várias (a união delas), pela máscara de alfa.
+    let mut clip_mask = false;
+    match g.clip.as_slice() {
+        [] => {}
+        [one] => canvas.clip_path(&m.path(one), false),
+        many => {
+            clip_mask = canvas.begin_masked(false);
+            if !clip_mask {
+                let mut all = Path::new();
+                for p in many {
+                    all.append(p);
+                }
+                canvas.clip_rect(m.bounds(all.bounds()));
+            }
+        }
+    }
+    match &g.mask {
+        Some(mask) if canvas.begin_masked(false) => {
+            draw_items(canvas, &g.items, m, visible, look, depth + 1);
+            if mask.luminance {
+                canvas.begin_luminance_mask();
+            } else {
+                canvas.begin_mask();
+            }
+            canvas.save();
+            canvas.clip_path(&m.path(&mask.region), false);
+            draw_items(canvas, &mask.items, m, None, look, depth + 1);
+            canvas.restore();
+            canvas.end_mask();
+        }
+        _ => draw_items(canvas, &g.items, m, visible, look, depth + 1),
+    }
+    if clip_mask {
+        canvas.begin_mask();
+        for p in &g.clip {
+            canvas.fill_path(&m.path(p), &Brush::Solid(Color::BLACK));
+        }
+        canvas.end_mask();
+    }
+    canvas.restore();
 }
 
 impl SvgImage {
@@ -471,9 +902,16 @@ impl SvgImage {
             .map(|v| RectF::new(v[0], v[1], v[2], v[3]))
             .unwrap_or_else(|| RectF::new(0.0, 0.0, width.unwrap_or(100.0), height.unwrap_or(100.0)));
         let ids = doc.descendants().filter_map(|n| Some((n.attribute("id")?, n))).collect();
-        let mut reader = Reader { gradients: read_gradients(&doc), ids, shapes: Vec::new(), view_w: view.width };
+        let mut reader = Reader { gradients: read_gradients(&doc), ids, items: Vec::new(), view_w: view.width, clip_mode: false };
         reader.walk(root, Affine::IDENTITY, &Inherited::default(), 1.0, 0);
-        Ok(SvgImage { view, shapes: reader.shapes })
+        let uid = {
+            use std::hash::{Hash, Hasher};
+            let mut h = std::collections::hash_map::DefaultHasher::new();
+            text.hash(&mut h);
+            h.finish()
+        };
+        let costly = costly(&reader.items);
+        Ok(SvgImage { view, items: reader.items, costly, uid })
     }
 
     /// O `viewBox` (a área desenhada).
@@ -481,26 +919,52 @@ impl SvgImage {
         self.view
     }
 
-    /// Quantas formas o SVG tem.
+    /// Quantas formas o SVG desenha (as de dentro de recortes e máscaras também; as que só
+    /// recortam, mascaram ou formam um padrão, não).
     pub fn shape_count(&self) -> usize {
-        self.shapes.len()
+        let mut n = 0;
+        for_each_shape(&self.items, &mut |_| n += 1);
+        n
+    }
+
+    /// Tem recorte (`clip-path`), máscara (`mask`) ou padrão (`<pattern>`).
+    pub fn has_effects(&self) -> bool {
+        self.costly
     }
 
     /// Os contornos das formas preenchidas (`<path>`, `<rect>`, `<circle>`, `<ellipse>`,
     /// `<polygon>`..., com os `transform` e `<use>` aplicados), nas coordenadas do `viewBox`,
-    /// e quantas formas só têm traço (essas não viram contorno).
+    /// e quantas formas só têm traço (essas não viram contorno). O recorte e a máscara não
+    /// entram (o contorno é o da forma inteira).
     pub fn fill_outlines(&self) -> (Vec<Path>, usize) {
-        let filled = self.shapes.iter().filter(|s| s.fill.is_some()).map(|s| s.path.clone()).collect();
-        let stroke_only = self.shapes.iter().filter(|s| s.fill.is_none() && s.stroke.is_some()).count();
+        let (mut filled, mut stroke_only) = (Vec::new(), 0);
+        for_each_shape(&self.items, &mut |s| {
+            if s.fill.is_some() {
+                filled.push(s.path.clone());
+            } else if s.stroke.is_some() {
+                stroke_only += 1;
+            }
+        });
         (filled, stroke_only)
     }
 
     /// A área (nas coordenadas do `viewBox`) das formas do elemento `id` (e dos filhos dele).
     pub fn bounds_of(&self, id: &str) -> Option<RectF> {
-        self.shapes.iter().filter(|s| s.id.as_deref() == Some(id)).map(|s| s.path.bounds()).reduce(|a, b| {
-            let (x, y) = (a.x.min(b.x), a.y.min(b.y));
-            RectF::new(x, y, (a.x + a.width).max(b.x + b.width) - x, (a.y + a.height).max(b.y + b.height) - y)
-        })
+        let mut out: Option<RectF> = None;
+        for_each_shape(&self.items, &mut |s| {
+            if s.id.as_deref() != Some(id) {
+                return;
+            }
+            let b = s.path.bounds();
+            out = Some(match out {
+                None => b,
+                Some(a) => {
+                    let (x, y) = (a.x.min(b.x), a.y.min(b.y));
+                    RectF::new(x, y, (a.x + a.width).max(b.x + b.width) - x, (a.y + a.height).max(b.y + b.height) - y)
+                }
+            });
+        });
+        out
     }
 
     /// Desenha o `viewBox` inteiro em `dest`. `current` é a cor do `currentColor`.
@@ -511,12 +975,32 @@ impl SvgImage {
     /// Desenha a área `view` (nas coordenadas do `viewBox`) em `dest`, com as formas dos
     /// elementos de `highlight` (pelo `id`) preenchidas com `highlight_color`: o mapa com o
     /// município escolhido em destaque.
+    ///
+    /// Com recorte, máscara ou padrão ([`has_effects`](Self::has_effects)), o desenho é
+    /// guardado como imagem ([`Canvas::begin_cached`]) enquanto o SVG, a área, o tamanho e as
+    /// cores não mudam: as camadas da máscara custam a cada pintura.
     pub fn render_part(&self, canvas: &mut dyn Canvas, view: RectF, dest: RectF, current: Color, highlight: &[&str], highlight_color: Color) {
-        self.render_visible(canvas, view, dest, None, current, highlight, highlight_color);
+        if !self.costly {
+            self.render_visible(canvas, view, dest, None, current, highlight, highlight_color);
+            return;
+        }
+        let key = {
+            use std::hash::{Hash, Hasher};
+            let mut h = std::collections::hash_map::DefaultHasher::new();
+            (self.uid, current, highlight_color, highlight).hash(&mut h);
+            for v in [view.x, view.y, view.width, view.height, dest.width, dest.height] {
+                v.to_bits().hash(&mut h);
+            }
+            h.finish()
+        };
+        if !canvas.begin_cached(key, dest) {
+            self.render_visible(canvas, view, dest, None, current, highlight, highlight_color);
+            canvas.end_cached();
+        }
     }
 
-    /// Como [`render_part`](Self::render_part), sem desenhar as formas que caem fora de
-    /// `visible` (a área recortada, nas coordenadas de `dest`).
+    /// Como [`render_part`](Self::render_part), sem guardar e sem desenhar as formas que caem
+    /// fora de `visible` (a área recortada, nas coordenadas de `dest`).
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn render_visible(&self, canvas: &mut dyn Canvas, view: RectF, dest: RectF, visible: Option<RectF>, current: Color, highlight: &[&str], highlight_color: Color) {
         let m = Affine::rect_to_rect(view, dest);
@@ -526,37 +1010,8 @@ impl SvgImage {
             let (sx, sy) = (dest.width / view.width.max(1e-6), dest.height / view.height.max(1e-6));
             RectF::new(view.x + (v.x - dest.x) / sx, view.y + (v.y - dest.y) / sy, v.width / sx, v.height / sy)
         });
-        let brush = |p: &Paint| -> Brush {
-            match p {
-                Paint::Color(c) => Brush::Solid(*c),
-                Paint::Current(o) => Brush::Solid(current.with_opacity(*o)),
-                Paint::Brush(b) => map_brush(b, &m),
-            }
-        };
-        for shape in &self.shapes {
-            // Fora da área visível (o município com zoom no mapa do estado): nem desenha.
-            if let Some(v) = visible {
-                let reach = shape.stroke.as_ref().map_or(0.0, |(_, s)| if shape.fixed_stroke { s.width / m.scale_factor().max(1e-6) } else { s.width });
-                if !shape.path.bounds().inflate(reach).intersects(v) {
-                    continue;
-                }
-            }
-            let path = m.path(&shape.path);
-            if shape.id.as_deref().is_some_and(|id| highlight.contains(&id)) {
-                canvas.fill_path(&path, &Brush::Solid(highlight_color));
-            } else if let Some(f) = &shape.fill {
-                canvas.fill_path(&path, &brush(f));
-            }
-            if let Some((p, s)) = &shape.stroke {
-                let mut s = s.clone();
-                s.brush = brush(p);
-                if !shape.fixed_stroke {
-                    s.width *= m.scale_factor();
-                }
-                s.dash = s.dash.map(|d| d.iter().map(|x| x * m.scale_factor()).collect());
-                canvas.stroke_path(&path, &s);
-            }
-        }
+        let look = Look { current, highlight, highlight_color };
+        draw_items(canvas, &self.items, m, visible, &look, 0);
     }
 }
 
@@ -572,6 +1027,12 @@ fn map_brush(b: &Brush, m: &Affine) -> Brush {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn shapes(svg: &SvgImage) -> Vec<&Shape> {
+        let mut out = Vec::new();
+        for_each_shape(&svg.items, &mut |s| out.push(s));
+        out
+    }
 
     #[test]
     fn shapes_styles_and_transforms() {
@@ -589,11 +1050,13 @@ mod tests {
         .unwrap();
         assert_eq!(svg.view_box(), RectF::new(0.0, 0.0, 100.0, 50.0));
         assert_eq!(svg.shape_count(), 3);
-        assert!(matches!(svg.shapes[0].fill, Some(Paint::Current(_))));
-        assert_eq!(svg.shapes[0].path.bounds().x, 10.0, "o transform do grupo");
-        assert!(matches!(svg.shapes[1].fill, Some(Paint::Brush(Brush::Linear { .. }))));
-        assert!(svg.shapes[1].stroke.is_some());
-        assert!(svg.shapes[2].fill.is_none());
+        assert!(!svg.has_effects());
+        let s = shapes(&svg);
+        assert!(matches!(s[0].fill, Some(Paint::Current(_))));
+        assert_eq!(s[0].path.bounds().x, 10.0, "o transform do grupo");
+        assert!(matches!(s[1].fill, Some(Paint::Brush(Brush::Linear { .. }))));
+        assert!(s[1].stroke.is_some());
+        assert!(s[2].fill.is_none());
     }
 
     #[test]
@@ -608,9 +1071,10 @@ mod tests {
             </svg>"##,
         )
         .unwrap();
-        assert_eq!(svg.shapes[0].id.as_deref(), Some("m1"));
-        assert_eq!(svg.shapes[2].id.as_deref(), Some("m2"), "o id do grupo vale para os filhos");
-        assert!(svg.shapes.iter().all(|s| s.fixed_stroke));
+        let s = shapes(&svg);
+        assert_eq!(s[0].id.as_deref(), Some("m1"));
+        assert_eq!(s[2].id.as_deref(), Some("m2"), "o id do grupo vale para os filhos");
+        assert!(s.iter().all(|s| s.fixed_stroke));
         assert_eq!(svg.bounds_of("m1"), Some(RectF::new(10.0, 10.0, 20.0, 30.0)));
         assert_eq!(svg.bounds_of("m2"), Some(RectF::new(50.0, 50.0, 40.0, 40.0)), "a união das formas do grupo");
         assert_eq!(svg.bounds_of("m3"), None);
@@ -624,5 +1088,37 @@ mod tests {
         let m = parse_transform("translate(10,20) scale(2)");
         assert_eq!(m.apply(PointF::new(1.0, 1.0)), PointF::new(12.0, 22.0));
         assert!(SvgImage::parse("<html/>").is_err());
+        let back = m.invert().unwrap();
+        assert_eq!(back.apply(PointF::new(12.0, 22.0)), PointF::new(1.0, 1.0));
+    }
+
+    #[test]
+    fn clip_mask_and_pattern_are_read() {
+        let svg = SvgImage::parse(
+            r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                <defs>
+                    <clipPath id="c" clipPathUnits="objectBoundingBox"><circle cx="0.5" cy="0.5" r="0.5"/></clipPath>
+                    <mask id="k"><rect width="100" height="100" fill="white"/><circle cx="50" cy="50" r="10" fill="black"/></mask>
+                    <pattern id="p" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="5" height="5" fill="red"/></pattern>
+                </defs>
+                <rect x="20" y="20" width="40" height="40" clip-path="url(#c)" fill="blue"/>
+                <g mask="url(#k)"><rect width="100" height="100" fill="url(#p)"/></g>
+            </svg>"##,
+        )
+        .unwrap();
+        assert!(svg.has_effects());
+        assert_eq!(svg.shape_count(), 2, "as formas do recorte e da máscara não contam");
+        let Item::Group(clip) = &svg.items[0] else { panic!("o recorte vira grupo") };
+        assert_eq!(clip.clip.len(), 1);
+        assert_eq!(clip.clip[0].bounds(), RectF::new(20.0, 20.0, 40.0, 40.0), "objectBoundingBox: a caixa do retângulo");
+        let Item::Group(masked) = &svg.items[1] else { panic!("a máscara vira grupo") };
+        let mask = masked.mask.as_ref().unwrap();
+        assert!(mask.luminance);
+        assert_eq!(mask.items.len(), 2);
+        assert_eq!(mask.region.bounds(), RectF::new(-10.0, -10.0, 120.0, 120.0), "a área padrão: 10% em volta da caixa");
+        let Item::Shape(filled) = &masked.items[0] else { panic!() };
+        let Some(Paint::Pattern(p, _)) = &filled.fill else { panic!("o preenchimento com o padrão") };
+        assert_eq!(p.size, (10.0, 10.0));
+        assert!(!p.overflows);
     }
 }

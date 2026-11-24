@@ -24,7 +24,7 @@ fn big_source(dir: &std::path::Path) -> std::path::PathBuf {
 
 fn key(ui: &mut Ui, root: aylis_core::ComponentId, name: &str) {
     let (modifiers, key) = aylis_core::parse_shortcut(name).unwrap();
-    let e = KeyEvent { key, modifiers, repeat: false };
+    let e = KeyEvent { key, modifiers, repeat: false, form: None };
     ui.key_down(root, e);
     ui.key_up(root, e);
 }

@@ -101,18 +101,45 @@ impl Ui {
     }
 
     /// A instância do form (`None` se o form não tem uma desse tipo ou se ela está com um
-    /// handler que roda agora).
+    /// handler que roda agora). Dentro de um handler do próprio form, a instância é o `self`
+    /// do handler; o código chamado por ele chega aos componentes pelo `FrmX::components(ui)`
+    /// gerado ([`Ui::form_components`]). Em debug, o `None` por empréstimo avisa no stderr.
     pub fn form_instance<T: 'static>(&self, form: ComponentId) -> Option<&T> {
         match &self.instances.slots.get(&form)?.state {
             State::Here(b) => b.downcast_ref(),
-            State::Busy(_) => None,
+            State::Busy(_) => {
+                self.warn_busy_instance(form);
+                None
+            }
         }
     }
 
     pub fn form_instance_mut<T: 'static>(&mut self, form: ComponentId) -> Option<&mut T> {
+        let busy = matches!(self.instances.slots.get(&form)?.state, State::Busy(_));
+        if busy {
+            self.warn_busy_instance(form);
+            return None;
+        }
         match &mut self.instances.slots.get_mut(&form)?.state {
             State::Here(b) => b.downcast_mut(),
             State::Busy(_) => None,
+        }
+    }
+
+    /// O aviso do `FrmX::get` que dá `None` por a instância estar com um handler (o caso mais
+    /// comum: o handler do próprio form chamando o `get`). Só em debug, uma vez por form.
+    fn warn_busy_instance(&self, form: ComponentId) {
+        if cfg!(debug_assertions) {
+            thread_local! {
+                static WARNED: std::cell::RefCell<std::collections::HashSet<ComponentId>> = Default::default();
+            }
+            if WARNED.with(|w| w.borrow_mut().insert(form)) {
+                let name = self.form_class(form).map(str::to_string).or_else(|| self.name(form).map(str::to_string)).unwrap_or_default();
+                crate::stderr_line!(
+                    "aylis: a instância do form {name} está com um handler que roda agora, e o get/get_mut dela dá None. \
+                     Dentro de um handler do próprio form, use o self; no código chamado por ele, os componentes pelo components(ui) gerado."
+                );
+            }
         }
     }
 

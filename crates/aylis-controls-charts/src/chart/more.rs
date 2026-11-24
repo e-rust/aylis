@@ -10,7 +10,7 @@ fn y_axis(canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, area: RectF, lo: f64, hi:
     let s = small_text(ctx);
     let label_w = [min, max].iter().map(|v| canvas.measure_text(&short(*v), &s).width).fold(0.0, f32::max) + 10.0;
     let plot = RectF::new(area.x + label_w, area.y + 4.0, area.width - label_w, area.height - bottom - 4.0);
-    let grid = Stroke::new(ctx.theme.color("border").with_opacity(0.8), 1.0);
+    let grid = Stroke::new(super::grid_color(ctx).with_opacity(0.8), 1.0);
     let mut l = s.clone();
     l.h_align = TextAlign::Trailing;
     let mut tick = min;
@@ -68,7 +68,7 @@ impl Chart {
         let gap = (side / 60.0).max(1.0);
         let cell = (side - gap * 9.0) / 10.0;
         let origin = PointF::new(area.x + (area.width - side) / 2.0, area.y + (area.height - side) / 2.0);
-        let empty = ctx.theme.color("border").with_opacity(0.5);
+        let empty = super::grid_color(ctx).with_opacity(0.5);
         let mut hits = self.hits.borrow_mut();
         for k in 0..100 {
             let (col, row) = (k / 10, k % 10);
@@ -277,7 +277,7 @@ impl Chart {
             let a = std::f32::consts::TAU * i as f32 / n as f32 - std::f32::consts::FRAC_PI_2;
             PointF::new(c.x + radius * f * a.cos(), c.y + radius * f * a.sin())
         };
-        let grid = Stroke::new(ctx.theme.color("border"), 1.0);
+        let grid = Stroke::new(super::grid_color(ctx), 1.0);
         for ring in 1..=4 {
             let pts: Vec<PointF> = (0..n).map(|i| at(i, ring as f32 / 4.0)).collect();
             let mut p = Path::new();

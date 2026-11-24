@@ -106,7 +106,15 @@ fn grid_sorts_by_title_and_filters_by_column() {
     assert!(!ui.contains(editor));
     assert_eq!(view(&ui, customers).record_count(), 1);
     assert_eq!(view(&ui, customers).value("nome").unwrap(), Value::from("Ana"));
-    assert_eq!(ui.get::<ClientDataSet>(customers).unwrap().filter, "[cidade] like '%re%'");
+    assert_eq!(ui.get::<ClientDataSet>(customers).unwrap().filter, "fold([cidade]) like '%re%'");
+    // Sem acento e sem maiúscula (o `fold`): "SAO" acha "São Paulo".
+    ui.pointer_down(form, at(22.0 + 60.0 + 150.0 + 40.0, 32.0 + 15.0));
+    ui.key_down(form, KeyEvent { key: Key::Char('a'), modifiers: Modifiers { ctrl: true, ..Default::default() }, ..Default::default() });
+    ui.text_input(form, "SAO");
+    ui.key_down(form, key(Key::Enter));
+    assert_eq!(ui.get::<ClientDataSet>(customers).unwrap().filter, "fold([cidade]) like '%sao%'");
+    assert_eq!(view(&ui, customers).record_count(), 1);
+    assert_eq!(view(&ui, customers).value("nome").unwrap(), Value::from("Maria"));
 }
 
 #[test]

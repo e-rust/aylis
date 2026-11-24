@@ -279,6 +279,16 @@ pub struct Project {
     /// propriedade `orientation`). Substituiu o `publish.android.orientation` (14/11).
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub orientation: String,
+    /// Uma instância só do app (os nomes de [`aylis_core::SingleInstance`]): `user` (uma por
+    /// usuário, o padrão de quem liga), `machine` (uma na máquina) ou vazio/`off` (quantas
+    /// abrirem). A segunda abertura traz a primeira para a frente, entrega a ela os argumentos
+    /// (o `on_second_instance` do `ApplicationEvents`) e sai. Só no desktop.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub single_instance: String,
+    /// Liga o `ui.capture_monitor` (a imagem de um monitor, com o que os outros programas
+    /// mostram): desligado por padrão, por privacidade.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub allow_screen_capture: bool,
     /// Onde o `.aylisproj` está (não vai para o arquivo).
     #[serde(skip)]
     pub path: PathBuf,
@@ -559,6 +569,19 @@ pub struct PublishOptions {
     /// Versão (`1.0.0`). Vazio = `1.0.0`.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub version: String,
+    /// A versão publicada é a da última tag do git (`git describe --tags --abbrev=0`, sem o `v`
+    /// do começo), e não a `version`: vale no `.exe`, no Android, no macOS, no `.deb` e no
+    /// `.rpm`, e o app lê em execução a que foi gravada. Sem git ou sem tag, a publicação para.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub version_from_git_tag: bool,
+    /// A descrição nos dados de versão do `.exe` (Propriedades → Detalhes). Vazio: o nome do
+    /// aplicativo.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub description: String,
+    /// Os direitos autorais nos dados de versão do `.exe` e nos instaladores (`© 2026 Empresa`).
+    /// Vazio: `© <fabricante>`.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub copyright: String,
     /// Ícone: um PNG do projeto (256 px ou mais; 1024 deixa nítido em todos) ou um SVG. A IDE
     /// gera o de cada plataforma ao publicar.
     #[serde(default, skip_serializing_if = "String::is_empty")]
@@ -595,6 +618,11 @@ pub struct PublishOptions {
     /// conecta nele.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub backend_url: String,
+    /// A ponte stdio do servidor MCP no executável publicado (`app.exe --mcp-stdio`): o Claude
+    /// Desktop, que só fala stdio, chega ao `McpServer` do app aberto. Desligada, o app ignora o
+    /// `--mcp-stdio` e o servidor não deixa o endereço para a ponte.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub mcp_stdio: bool,
 }
 
 impl PublishOptions {
@@ -802,6 +830,32 @@ impl Project {
     /// Versão do aplicativo publicado (`1.2.0`, `1.2.0-beta.1`; veja [`is_valid_version`]).
     pub fn version(&self) -> &str {
         if self.publish.version.is_empty() { "1.0.0" } else { &self.publish.version }
+    }
+
+    /// A versão que a publicação grava: a `publish.version` ou, com
+    /// `publish.version_from_git_tag`, a da última tag do git ([`aylis_build::git_tag`]). O erro
+    /// é a mensagem para o usuário (sem git, sem repositório, sem tag ou com a tag que não é
+    /// uma versão), e a publicação para nele.
+    pub fn published_version(&self) -> Result<String, Error> {
+        if !self.publish.version_from_git_tag {
+            return Ok(self.version().to_string());
+        }
+        use aylis_build::GitTagError;
+        use aylis_core::messages::{t, tf};
+        aylis_build::git_tag(&self.dir()).map_err(|e| match e {
+            GitTagError::NoGit => t("O projeto usa a versão da última tag do git, mas o git não foi encontrado. Instale o git ou desmarque \"Versão da tag do git\" em Publicar."),
+            GitTagError::NotRepository => t("O projeto usa a versão da última tag do git, mas a pasta do projeto não está num repositório do git. Desmarque \"Versão da tag do git\" em Publicar ou crie o repositório."),
+            GitTagError::NoTag => t("O projeto usa a versão da última tag do git, mas o repositório não tem tag. Crie uma (git tag v1.0.0) ou desmarque \"Versão da tag do git\" em Publicar."),
+            GitTagError::Invalid(tag) => tf("A última tag do git ({0}) não é uma versão. Use tags como v1.2.0 ou 1.2.0-beta.1.", &[&tag]),
+        })
+    }
+
+    /// Uma cópia do projeto com a `publish.version` resolvida ([`Self::published_version`]):
+    /// o que a publicação usa, para todas as plataformas saírem com a mesma versão.
+    pub fn with_published_version(&self) -> Result<Project, Error> {
+        let mut project = self.clone();
+        project.publish.version = self.published_version()?;
+        Ok(project)
     }
 
     /// Identificador (`com.empresa.app`) do aplicativo publicado.
@@ -1285,23 +1339,9 @@ pub fn is_identifier(name: &str) -> bool {
 /// Cria um projeto novo: a pasta `<local>/<nome>`, as subpastas, o `.aylisproj`, o form
 /// principal (`forms/principal.json`, `frmPrincipal`) e o código inicial na linguagem
 /// escolhida (na pasta dela, como `rust/`). A pasta não pode existir com arquivos dentro.
-/// Uma versão de app que a publicação aceita: números separados por ponto (`1.2.0`) e,
-/// opcional, a pré-release depois do `-` (`1.2.0-beta.1`, `2.0.0-rc.2`) e o build depois do
-/// `+`, com letras, números, `.` e `-`, como no versionamento semântico (pedido do autor em
-/// 17/11: o NoOBS usa `x.y.z-beta`). Onde o sistema só aceita números (o `.msi`, o iOS, os
-/// dados de versão do `.exe`), vai a parte de antes do `-`.
-pub fn is_valid_version(version: &str) -> bool {
-    let (rest, build) = match version.split_once('+') {
-        Some((r, b)) => (r, Some(b)),
-        None => (version, None),
-    };
-    let (core, pre) = match rest.split_once('-') {
-        Some((c, p)) => (c, Some(p)),
-        None => (rest, None),
-    };
-    let label = |s: &str| !s.is_empty() && s.split('.').all(|p| !p.is_empty() && p.chars().all(|c| c.is_ascii_alphanumeric() || c == '-'));
-    !core.is_empty() && core.split('.').count() <= 4 && core.split('.').all(|p| !p.is_empty() && p.len() <= 5 && p.chars().all(|c| c.is_ascii_digit())) && pre.is_none_or(label) && build.is_none_or(label)
-}
+/// Uma versão de app que a publicação aceita (`1.2.0`, `1.2.0-beta.1`); a regra é a do
+/// `aylis-build`, que também confere a tag do git no build.
+pub use aylis_build::is_valid_version;
 
 /// O valor da chave `sdk` que usa o Aylis publicado no crates.io.
 pub const SDK_CRATES_IO: &str = "crates.io";
@@ -1363,6 +1403,8 @@ pub fn create_at(dir: &Path, name: &str, language: Language) -> Result<Project, 
         platforms: Vec::new(),
         device: String::new(),
         orientation: String::new(),
+        single_instance: String::new(),
+        allow_screen_capture: false,
         path: dir.join(format!("{name}.{EXTENSION}")),
     };
     project.add_form("frmPrincipal", name)?;
@@ -1723,8 +1765,11 @@ pub fn uses_in(root: &serde_json::Value) -> Vec<String> {
 /// Cria os forms do projeto pelo nome (carregando o `.json` de cada um). O terceiro campo
 /// guarda o JSON já lido de cada form: um frame repetido (um cartão por item,
 /// `FraX::create_in`) não relê nem reinterpreta o texto a cada instância (G21 do
-/// Tabernáculo: da pasta, o `create_in` relia e interpretava o arquivo a cada cartão).
-pub struct ProjectForms(pub Project, pub Files, pub HashMap<String, CachedForm>);
+/// Tabernáculo: da pasta, o `create_in` relia e interpretava o arquivo a cada cartão). O
+/// quarto diz se o [`install_with`] ainda está criando os forms do início: o `on_create` de um
+/// DataModule criado ali não dispara, porque os handlers do app ainda não foram registrados (o
+/// `generated::register` vem depois); quem instalou dispara com [`fire_created`].
+pub struct ProjectForms(pub Project, pub Files, pub HashMap<String, CachedForm>, std::rc::Rc<std::cell::Cell<bool>>);
 
 /// O JSON já lido de um form (pela entrada do projeto: `forms/x.json`). Do pacote embutido o
 /// arquivo não muda. Da pasta (a feature `dev`, a IDE) vale enquanto a marca do arquivo
@@ -1799,7 +1844,10 @@ impl ProjectForms {
             return Err(format!("o layout de '{name}' tem outro nome na raiz"));
         }
         if ui.class_name(form) == Some("DataModule") {
-            ui.fire(form, "on_create", &aylis_core::EventArgs::None);
+            // No início, espera o app registrar os handlers ([`fire_created`]).
+            if !self.3.get() {
+                ui.fire(form, "on_create", &aylis_core::EventArgs::None);
+            }
         }
         loading.push(name.to_string());
         let embedded = self.embed_frames(ui, form, loading);
@@ -1874,8 +1922,11 @@ impl ProjectForms {
             if loading.iter().any(|l| l.eq_ignore_ascii_case(&name)) {
                 return Err(format!("o frame '{name}' entra nele mesmo ({} → {name})", loading.join(" → ")));
             }
-            if ui.find_path(&name).is_some() {
-                return Err(format!("o form '{name}' já está em outro frame (cada form entra uma vez só)"));
+            // Uma vez só em cada form (o nome dele é o caminho para os componentes); a segunda
+            // instância do form de fora (`create_form_instance`, uma aba que vira janela) ganha
+            // a sua cópia, e por isso a busca é só no form que está sendo montado.
+            if ui.find_in(root, &name).is_some() {
+                return Err(format!("o form '{name}' já está em outro frame deste form (cada form entra uma vez só)"));
             }
             let form = self.load_form(ui, &name, loading).map_err(|e| format!("frame {name}: {e}"))?;
             ui.set_parent(form, Some(frame)).map_err(|e| e.to_string())?;
@@ -1963,6 +2014,9 @@ pub fn install_assets(ui: &mut Ui, files: &Files) {
     }
 }
 
+/// Como [`install`], com os arquivos vindos de `files`. O `on_create` dos DataModules criados
+/// aqui não dispara: o app registra os handlers depois e chama [`fire_created`] (o
+/// `aylis::Application::run` faz).
 pub fn install_with(ui: &mut Ui, project: &Project, files: Files) -> Result<ComponentId, Error> {
     install_assets(ui, &files);
     let theme = resolve_theme(project, &files)?;
@@ -1988,6 +2042,9 @@ pub fn install_with(ui: &mut Ui, project: &Project, files: Files) -> Result<Comp
     // A orientação do app no celular (cada form pode ter a sua).
     ui.set_app_orientation(project.orientation());
     ui.set_theme(theme);
+    // A fonte do projeto vale também nos temas postos depois (`ui.set_theme` de um embutido).
+    ui.set_project_font(&project.font);
+    ui.set_allow_screen_capture(project.allow_screen_capture);
     // O idioma: `AYLIS_LANG` (para testar) ou o do projeto.
     let language = std::env::var("AYLIS_LANG").unwrap_or_else(|_| project.locale.clone());
     ui.services_mut().locale = Some(Box::new(i18n::locale_info(&language)));
@@ -1996,17 +2053,34 @@ pub fn install_with(ui: &mut Ui, project: &Project, files: Files) -> Result<Comp
         ui.set_translations(i18n::parse(&String::from_utf8_lossy(&text)));
     }
     ui.services_mut().resources = Some(Box::new(files.clone()));
-    ui.services_mut().forms = Some(Box::new(ProjectForms(project.clone(), files.clone(), HashMap::new())));
+    let installing = std::rc::Rc::new(std::cell::Cell::new(true));
+    ui.services_mut().forms = Some(Box::new(ProjectForms(project.clone(), files.clone(), HashMap::new(), installing.clone())));
     // Os DataModules primeiro (os forms usam os componentes deles).
     let (modules, forms): (Vec<&FormEntry>, Vec<&FormEntry>) = project.forms.iter().filter(|f| f.auto_create).partition(|f| {
         files.read_text(&f.file).ok().and_then(|t| serde_json::from_str::<serde_json::Value>(&t).ok()).is_some_and(|v| v["root"]["class"] == "DataModule")
     });
-    for entry in modules.into_iter().chain(forms) {
-        ui.create_form(&entry.name).map_err(|e| e.to_string())?;
-    }
-    let main = ui.create_form(&project.main_form).map_err(|e| e.to_string())?;
+    let created = modules.into_iter().chain(forms).try_for_each(|entry| ui.create_form(&entry.name).map(|_| ())).and_then(|_| ui.create_form(&project.main_form));
+    installing.set(false);
+    let main = created.map_err(|e| e.to_string())?;
     ui.set_main_form(main);
     Ok(main)
+}
+
+/// Os DataModules que existem agora: logo depois do [`install_with`], os criados no início
+/// (os "criar no início" e os do `uses` dos forms).
+pub fn data_modules(ui: &Ui) -> Vec<ComponentId> {
+    ui.roots().iter().copied().filter(|&r| ui.class_name(r) == Some("DataModule")).collect()
+}
+
+/// Dispara o `on_create` dos DataModules `modules` (os de [`data_modules`] guardados logo depois
+/// do [`install_with`]), já com os handlers do app registrados. Os que foram liberados ficam de
+/// fora.
+pub fn fire_created(ui: &mut Ui, modules: &[ComponentId]) {
+    for &module in modules {
+        if ui.contains(module) {
+            ui.fire(module, "on_create", &aylis_core::EventArgs::None);
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------

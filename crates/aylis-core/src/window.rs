@@ -45,6 +45,12 @@ pub enum WindowCommand {
     /// Põe o canto da janela (com a moldura) neste ponto da tela, em pixels físicos (a janela
     /// arrastada pela aba que vai para outro lugar).
     MoveTo(i32, i32),
+    /// Põe a janela (com a moldura) no lugar e no tamanho dados em pixels físicos, com a
+    /// origem no canto do monitor `monitor` (índice em [`Ui::monitors`](crate::Ui::monitors);
+    /// fora da lista, a área de trabalho inteira). Maximizada ou em tela cheia, volta ao normal
+    /// antes. `activate`: traz a janela para a frente com o foco; sem ele, nem o foco nem a
+    /// ordem mudam (o painel de avisos no canto, sempre por cima).
+    Place { monitor: usize, x: i32, y: i32, width: u32, height: u32, activate: bool },
     /// A propriedade `gpu` do form mudou: a janela confere em que placa de vídeo desenha
     /// (veja [`crate::gpu`]).
     UpdateGpu,
@@ -102,6 +108,13 @@ impl Ui {
     pub fn forces_foreground(&self, form: ComponentId) -> bool {
         let form = self.root_of(form);
         !self.design_mode() && matches!(self.get_prop(form, "force_foreground"), Ok(crate::PropValue::Bool(true)))
+    }
+
+    /// O form (a janela) com que o usuário falou por último: o ativado, clicado ou que
+    /// recebeu uma tecla (sempre o form raiz, nunca um popup dele); `None` antes da primeira
+    /// vez ou depois de ele fechar.
+    pub fn active_form(&self) -> Option<ComponentId> {
+        self.active_form.filter(|&f| self.is_open(f))
     }
 
     /// Os pedidos à janela desde a última vez (a plataforma chama a cada volta do laço).
@@ -176,6 +189,55 @@ impl crate::prop::PropEnum for WindowBackdrop {
     }
 }
 
+/// A cor da borda da janela (o `border_color` do `WindowSettings`; Windows 11): a do sistema,
+/// nenhuma (sem a linha de 1 px, também em volta da tela cheia) ou uma cor. No form, vazio, o
+/// texto `none` ou a cor.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum BorderColor {
+    /// A do sistema (a cor de destaque, se o usuário ligou; senão, cinza).
+    #[default]
+    System,
+    /// Sem borda (o `DWMWA_COLOR_NONE` do Windows).
+    None,
+    Color(crate::Color),
+}
+
+impl crate::prop::PropType for BorderColor {
+    const KIND: crate::prop::PropKind = crate::prop::PropKind::Color;
+    fn to_value(&self) -> crate::PropValue {
+        match self {
+            BorderColor::System => crate::PropValue::Null,
+            BorderColor::None => crate::PropValue::String("none".into()),
+            BorderColor::Color(c) => crate::PropValue::Color(*c),
+        }
+    }
+    fn from_value(value: crate::PropValue) -> crate::error::Result<Self> {
+        match value {
+            crate::PropValue::Null => Ok(BorderColor::System),
+            crate::PropValue::String(s) if s.trim().is_empty() || s.trim().eq_ignore_ascii_case("system") => Ok(BorderColor::System),
+            crate::PropValue::String(s) if s.trim().eq_ignore_ascii_case("none") => Ok(BorderColor::None),
+            v => v.to_color().map(BorderColor::Color),
+        }
+    }
+}
+
+impl From<crate::Color> for BorderColor {
+    fn from(c: crate::Color) -> Self {
+        BorderColor::Color(c)
+    }
+}
+
+/// No acesso tipado (`set_border_color(ui, BorderColor::None)`).
+impl From<BorderColor> for crate::handles::ColorRef {
+    fn from(b: BorderColor) -> Self {
+        match b {
+            BorderColor::System => crate::handles::ColorRef::token(""),
+            BorderColor::None => crate::handles::ColorRef::token("none"),
+            BorderColor::Color(c) => c.into(),
+        }
+    }
+}
+
 /// O nome da classe do componente que configura a janela ([`WindowOptions`]).
 pub const WINDOW_SETTINGS_CLASS: &str = "WindowSettings";
 
@@ -199,7 +261,7 @@ pub struct WindowOptions {
     /// as do sistema).
     pub title_color: Option<crate::Color>,
     pub title_text_color: Option<crate::Color>,
-    pub border_color: Option<crate::Color>,
+    pub border_color: BorderColor,
     /// A sombra do sistema na janela sem borda (Windows).
     pub shadow: bool,
     /// O que está atrás da janela sai desfocado (Windows, macOS e Linux com KDE). Com o form
@@ -223,7 +285,7 @@ impl Default for WindowOptions {
             backdrop: WindowBackdrop::System,
             title_color: None,
             title_text_color: None,
-            border_color: None,
+            border_color: BorderColor::System,
             shadow: false,
             blur: false,
             no_activate: false,
@@ -272,7 +334,10 @@ impl Ui {
             backdrop,
             title_color: color("title_color"),
             title_text_color: color("title_text_color"),
-            border_color: color("border_color"),
+            border_color: match self.get_prop(id, "border_color") {
+                Ok(v) => <BorderColor as crate::prop::PropType>::from_value(v).unwrap_or_default(),
+                Err(_) => BorderColor::System,
+            },
             shadow: flag("shadow", d.shadow),
             blur: flag("blur", d.blur),
             no_activate: flag("no_activate", d.no_activate),

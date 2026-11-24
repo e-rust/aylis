@@ -60,6 +60,14 @@ export type Handler = (event: AylisEvent) => void | Promise<void>;
 
 export class AylisError extends Error {}
 
+/** Os campos opcionais `icon` e `icon_color` do `message_dlg` e do `prompt` (só os que vieram). */
+function dialogIcon(icon: string, iconColor: string): { [key: string]: Json } {
+  const fields: { [key: string]: Json } = {};
+  if (icon) fields.icon = icon;
+  if (iconColor) fields.icon_color = iconColor;
+  return fields;
+}
+
 /** Um componente da lista que a tela manda ao montar a instância de um form. */
 export interface ComponentInfo {
   name: string;
@@ -478,15 +486,35 @@ export class Aylis {
     return value === null ? null : String(value);
   }
 
-  /** Caixa de mensagem que espera: devolve o botão (`"yes"`, `"no"`, `"ok"`...). Enquanto espera, os eventos continuam rodando. */
-  async messageDlg(text: string, kind: "information" | "warning" | "error" | "confirmation" = "information", buttons: string[] = ["ok"]): Promise<string> {
-    return String(await this.waitFor("message_dlg", { text, kind, buttons }));
+  /**
+   * Caixa de mensagem que espera: devolve o botão (`"yes"`, `"no"`, `"ok"`...). Enquanto espera, os eventos continuam rodando.
+   * `icon` (nome de ícone) e `iconColor` (token do tema, como `"danger"`, ou `"#rrggbb"`) trocam o ícone do tipo.
+   */
+  async messageDlg(text: string, kind: "information" | "warning" | "error" | "confirmation" = "information", buttons: string[] = ["ok"], icon = "", iconColor = ""): Promise<string> {
+    return String(await this.waitFor("message_dlg", { text, kind, buttons, ...dialogIcon(icon, iconColor) }));
   }
 
-  /** Abre o form como modal e espera ele fechar: devolve o resultado (`"ok"`, `"cancel"`...). */
-  async showModal(form: string | number | AylisForm): Promise<string> {
+  /**
+   * A pergunta com um campo de texto (OK e Cancelar), que espera: devolve o texto digitado, ou
+   * `null` no Cancelar. `required` não deixa confirmar vazio. Enquanto espera, os eventos continuam rodando.
+   */
+  async prompt(title: string, label: string, value = "", required = false, icon = "", iconColor = ""): Promise<string | null> {
+    const fields: { [key: string]: Json } = { title, label, value, ...dialogIcon(icon, iconColor) };
+    if (required) fields.required = true;
+    const result = await this.waitFor("prompt", fields);
+    return result === null || result === undefined ? null : String(result);
+  }
+
+  /**
+   * Abre o form como modal e espera ele fechar: devolve o resultado (`"ok"`, `"cancel"`...).
+   * Com `container` (um componente de outro form, como a página de uma aba), o modal fica só
+   * nele e o resto da tela continua respondendo.
+   */
+  async showModal(form: string | number | AylisForm, container?: string | number | AylisComponent): Promise<string> {
     const target = form instanceof AylisForm ? form.id : form;
-    return String(await this.waitFor("show_modal", { target }));
+    const fields: { [key: string]: Json } = { target };
+    if (container !== undefined && container !== "") fields.container = container instanceof AylisComponent ? container.id : container;
+    return String(await this.waitFor("show_modal", fields));
   }
 
   private async waitFor(cmd: string, fields: { [key: string]: Json }): Promise<Json> {

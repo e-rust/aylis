@@ -28,6 +28,8 @@ struct Rows {
     area: Cell<RectF>,
     /// Arrastando a barra: onde ela foi pega (distância do topo dela).
     drag: Option<f32>,
+    /// O mouse sobre o polegar (o `hover` do estilo `ScrollBar`).
+    hover: Cell<bool>,
 }
 
 /// Largura da faixa da barra que aceita o clique (a barra pintada é mais fina).
@@ -66,6 +68,14 @@ impl Rows {
         true
     }
 
+    /// O mouse passando: guarda se está sobre o polegar. `true` se mudou (repintar).
+    fn bar_hover(&self, at: Option<PointF>) -> bool {
+        let over = at.is_some_and(|at| {
+            at.x >= self.area.get().right() - BAR_HIT && self.bar().is_some_and(|(top, h)| at.y >= top && at.y <= top + h)
+        });
+        self.hover.replace(over) != over
+    }
+
     fn bar_up(&mut self) -> bool {
         self.drag.take().is_some()
     }
@@ -74,9 +84,19 @@ impl Rows {
     fn paint_bar(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, area: RectF) {
         self.area.set(area);
         let Some((y, h)) = self.bar() else { return };
-        let bar = RectF::new(area.right() - 5.0, y + 2.0, 3.0, h - 4.0);
-        let alpha = if self.drag.is_some() { 0.7 } else { 0.45 };
-        canvas.fill_rect(bar, 1.5, &Brush::Solid(ctx.theme.color("text_muted").with_opacity(alpha)));
+        // A barra pelo tema (`ScrollBar` e o `scroll_bar` do estilo); sem ele, a barrinha fina
+        // de antes (3 px, a 2 px da borda).
+        let muted = ctx.theme.color("text_muted");
+        let look = crate::scroll_bar::resolve(ctx, self.drag.is_some() || self.hover.get(), crate::scroll_bar::Defaults {
+            width: 3.0,
+            track: None,
+            thumb: muted.with_opacity(if self.drag.is_some() { 0.7 } else { 0.45 }),
+        });
+        let w = look.width.clamp(0.0, BAR_HIT);
+        let right = area.right() - 2.0;
+        let track = RectF::new(right - w, area.y, w, area.height);
+        let bar = RectF::new(right - w, y + 2.0, w, h - 4.0);
+        look.paint(canvas, Some(track), bar, w / 2.0);
     }
 
     fn scroll(&mut self, event: &WheelEvent, row: f32) -> bool {
@@ -412,6 +432,9 @@ impl Component for ListBox {
             ctx.repaint();
             return;
         }
+        if self.rows.bar_hover(Some(event.position)) {
+            ctx.repaint();
+        }
         let h = self.index_at(event.position.y);
         if h != self.hovered {
             self.hovered = h;
@@ -421,6 +444,7 @@ impl Component for ListBox {
 
     fn pointer_leave(&mut self, ctx: &mut EventCtx<'_>) {
         self.hovered = None;
+        self.rows.bar_hover(None);
         ctx.repaint();
     }
 
@@ -889,6 +913,9 @@ impl Component for ListView {
             ctx.repaint();
             return;
         }
+        if self.rows.bar_hover(Some(event.position)) {
+            ctx.repaint();
+        }
         let h = self.index_at(event.position.y);
         if h != self.hovered {
             self.hovered = h;
@@ -898,6 +925,7 @@ impl Component for ListView {
 
     fn pointer_leave(&mut self, ctx: &mut EventCtx<'_>) {
         self.hovered = None;
+        self.rows.bar_hover(None);
         ctx.repaint();
     }
 
@@ -1094,6 +1122,10 @@ pub struct TreeView {
     /// Algum nó tem ícone (a coluna do ícone em todos), guardado a cada troca dos nós: a
     /// pintura não percorre a árvore inteira.
     icons: bool,
+    /// Algum nó com filhos tem ícone: no `icon_in_arrow`, só ele reserva a coluna do ícone (o
+    /// da folha vai no lugar da seta; antes, marcar uma folha com um ícone empurrava o texto da
+    /// árvore inteira).
+    branch_icons: bool,
     /// Onde ficam o ícone e o texto dos nós sem filhos (que não têm seta): `aligned` (o padrão:
     /// o texto na coluna dos irmãos com filhos), `icon_in_arrow` (o ícone no lugar da seta, o
     /// texto na coluna dos irmãos) ou `compact` (sem o espaço da seta: o ícone e o texto
@@ -1148,11 +1180,16 @@ fn any_icon(nodes: &[TreeNode]) -> bool {
     nodes.iter().any(|n| !n.icon.is_empty() || any_icon(&n.children))
 }
 
+/// Algum nó com filhos tem ícone.
+fn any_branch_icon(nodes: &[TreeNode]) -> bool {
+    nodes.iter().any(|n| !n.children.is_empty() && (!n.icon.is_empty() || any_branch_icon(&n.children)))
+}
+
 impl Default for TreeView {
     fn default() -> Self {
         let mut base = ControlBase::new(240.0, 300.0);
         base.set_can_focus(true).set_cursor(CursorShape::Pointer);
-        Self { overscroll: aylis_core::Overscroll::Auto, base, items: String::new(), item_height: 26.0, nodes: Vec::new(), selected: None, rows: Rows::default(), hovered: None, toggled: None, context: None, icons: false, leaf_layout: TreeLeafLayout::Aligned, indent: 18.0, icon_size: 16.0, icon_gap: 5.0 }
+        Self { overscroll: aylis_core::Overscroll::Auto, base, items: String::new(), item_height: 26.0, nodes: Vec::new(), selected: None, rows: Rows::default(), hovered: None, toggled: None, context: None, icons: false, branch_icons: false, leaf_layout: TreeLeafLayout::Aligned, indent: 18.0, icon_size: 16.0, icon_gap: 5.0 }
     }
 }
 
@@ -1167,6 +1204,7 @@ impl TreeView {
         self.nodes = nodes;
         self.selected = None;
         self.icons = any_icon(&self.nodes);
+        self.branch_icons = any_branch_icon(&self.nodes);
         self.items = to_json(&self.nodes);
     }
 
@@ -1207,6 +1245,7 @@ impl TreeView {
         let Some(n) = self.node_mut(path) else { return false };
         n.children = children;
         self.icons = any_icon(&self.nodes);
+        self.branch_icons = any_branch_icon(&self.nodes);
         true
     }
 
@@ -1245,7 +1284,8 @@ impl TreeView {
         let arrow_x = x + 6.0 + depth as f32 * indent;
         let arrow = RectF::new(arrow_x, y, indent, row);
         let column = arrow_x + indent + 2.0;
-        let step = if self.icons { size + self.icon_gap.max(0.0) } else { 0.0 };
+        let column_icons = if self.leaf_layout == TreeLeafLayout::IconInArrow { self.branch_icons } else { self.icons };
+        let step = if column_icons { size + self.icon_gap.max(0.0) } else { 0.0 };
         let icon_at = |ix: f32| RectF::new(ix, y + (row - size) / 2.0, size, size);
         let (icon_x, text_x) = match (leaf, self.leaf_layout) {
             (true, TreeLeafLayout::IconInArrow) => (arrow_x + (indent - size) / 2.0, column + step),
@@ -1313,6 +1353,7 @@ impl TreeView {
         self.nodes = parse_list(&self.items);
         self.selected = None;
         self.icons = any_icon(&self.nodes);
+        self.branch_icons = any_branch_icon(&self.nodes);
     }
 
     fn visible(&self) -> Vec<Visible> {
@@ -1506,6 +1547,9 @@ impl Component for TreeView {
             ctx.repaint();
             return;
         }
+        if self.rows.bar_hover(Some(event.position)) {
+            ctx.repaint();
+        }
         let index = ((event.position.y - 1.0 + self.rows.offset.get()) / self.row()) as usize;
         let h = (event.position.y >= 0.0 && index < self.visible().len()).then_some(index);
         if h != self.hovered {
@@ -1516,6 +1560,7 @@ impl Component for TreeView {
 
     fn pointer_leave(&mut self, ctx: &mut EventCtx<'_>) {
         self.hovered = None;
+        self.rows.bar_hover(None);
         ctx.repaint();
     }
 

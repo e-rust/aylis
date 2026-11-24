@@ -262,6 +262,26 @@ em que aparecem (`"yes,no,cancel"`); `MessageDialog::execute(ui, id)` abre e `on
 recebe o botão (`"yes"`, `"no"`...). `execute_then` também entrega a resposta a uma
 closure. As confirmações da própria IDE usam esse componente.
 
+A pergunta com um campo de texto (o `InputQuery`): `prompt(ui, "Novo perfil", "Nome:", "",
+|ui, nome| ...)` recebe o texto no OK e `None` no Cancelar (ou no Esc); o Enter no campo
+confirma, e `set_prompt_required(ui, caixa, true)` não deixa confirmar vazio. Um campo só: mais
+que isso é um form do app. No componente, `input`, `value` e `required` fazem o mesmo.
+
+O ícone e a cor do círculo são os do tipo; o app troca nos que já abriu (`message_dlg`,
+`confirm`, `show_message`, `prompt`) com `set_dialog_icon(ui, caixa, "delete",
+Some(ColorRef::Token("danger".into())))`: o ícone por nome (vazio: o do tipo) e a cor como
+token do tema ou cor (`None`: a do tipo). No componente, `icon` e `icon_color`; no protocolo,
+`icon` e `icon_color` no `message_dlg` e no `prompt`.
+
+### Avisos empilhados (`notify`)
+
+`notify(ui, "Salvo", "O cadastro foi gravado.", ToastKind::Success, 4000)` mostra o aviso na
+pilha do form da frente. A pilha é o `ToastStack` (paleta "Additional"), que pode ir no form
+pelo designer, no lugar que o app quiser (abaixo de uma barra própria, num canto). Sem ele, o
+`notify` cria uma no canto de cima à direita, abaixo da `TitleBar` quando o form tem uma. Pelo
+nome, nas outras linguagens: `show(título, mensagem, tipo, prazo_ms)`, `dismiss`, `count` e
+`clear`; o clique num aviso fecha e dispara `on_dismiss`.
+
 ### Correção e sugestão de texto
 
 **Propriedades do `Edit` e do `Memo`:**
@@ -948,7 +968,8 @@ Para apps de gravação (o NoOBS usa todos):
   de 14 com halo sob o mouse e a onda discreta embaixo); `paused` pinta trilho e polegar
   na cor do texto em vez do destaque.
 - **`confirm(ui, título, texto, "Excluir", true, |ui, sim| ...)`**: a pergunta com os
-  textos do app; o último argumento antes da função pinta o botão de vermelho.
+  textos do app; o último argumento antes da função pinta o botão de vermelho. O ícone e a
+  cor, com `set_dialog_icon` (veja "Caixas de mensagem").
 
 - **`FrameView`** (Media): o palco de um player que decodifica por conta própria: fundo
   preto e o último quadro entregue com `set_frame(Some((imagem, retângulo)))`, no lugar
@@ -977,11 +998,27 @@ na cor `danger_text` (ou `danger`) e, sob o mouse, em fundo `danger`.
 
 **Texto com marcas e contorno.** O `Label` com `markup` interpreta `<b>`, `<code>` e
 `<br>` no texto; `outline` + `outline_width` desenham o contorno das letras (a legenda
-sobre vídeo).
+sobre vídeo). A etiqueta `<tag=fundo,borda>termo</tag>` põe o trecho numa caixinha com
+fundo e borda (cada cor um token do tema ou `#RRGGBB`; a borda é opcional, e sem cor o fundo
+é `surface_2`), com o raio `sm` e o espaçamento `xs` do tema; a etiqueta não quebra no meio
+(a que não cabe desce inteira).
 
 **Degradês.** O `Rectangle` (e o `Panel`) faz degradê de `fill` até `fill2`, com uma cor
 do meio opcional (`fill_mid` em `fill_mid_at`, de 0 a 1) e `gradient_radial` (do centro
 para a borda).
+
+**Borda tracejada.** O `Rectangle` tem `stroke_dash`: traço e vão em pontos (`"6;4"`; um
+número só é traço e vão iguais; `"0"` é contínua), ao lado de `stroke` e `stroke_width`.
+Vazio, vale o `border_style` do tema. Para um tipo de painel tracejado, use uma variante do
+estilo `Panel` com `"border_style": "dashed"`.
+
+**Realce de código sem tema.** O `Memo` com `syntax` e o `CodeEditor` conhecem também o
+`sql` (o comum aos dialetos). A cor de cada tipo de trecho troca no próprio controle
+(`keyword_color`, `type_color`, `string_color`, `number_color`, `comment_color`,
+`function_color`), e `syntax_tokens` soma palavras à linguagem sem escrever gramática: uma
+lista de `{ "name", "words": [...] }` ou `{ "name", "prefix": "@" }` com a `color` (o `@` das
+variáveis do T-SQL, os `NOLOCK` de um dialeto). Valem fora dos textos e dos comentários; no
+minimapa, as cores do tema.
 
 **Títulos espaçados.** O `Label` tem `letter_spacing` (pixels a mais entre as letras) e
 `text_case` (`upper`, `lower`): os títulos de seção em caixa-alta espaçada, sem mudar o
@@ -1218,6 +1255,27 @@ cliente e o arquivo de eventos de cada form ganha o `import`/`uses` da instânci
   (`if let Some(f) = FrmPedido::components(ui) { f.lblTotal.set_text(ui, "…") }`), que vale
   até enquanto um handler do próprio form roda — quando o `FrmX::get(ui)`, que traz também o
   estado (`data`), dá `None` porque a instância está emprestada ao handler.
+- **Dentro de um handler do próprio form, nada de `FrmX::get`:** a instância é o `self` do
+  handler (`self.data`, `self.btnSalvar`). Uma função do app que o handler chama e que precisa
+  dos componentes recebe o `self` ou usa o `FrmX::components(ui)`; o estado (`data`) passa por
+  parâmetro. O `FrmX::get(ui)` é para outro form, um timer ou a bandeja chegarem a este, fora
+  dos handlers dele. Em debug, o `get` que dá `None` por a instância estar emprestada avisa no
+  stderr (uma vez por form), com o caminho certo.
+
+  ```rust
+  // No frmTabelas: o handler do próprio form usa o self; o código que ele chama, o components.
+  pub fn atualizar_click(&mut self, ui: &mut Ui, sender: Button) {
+      let _ = sender;
+      atualizar_status(ui); // FrmTabelas::get(ui) daria None aqui dentro
+      self.data.atualizadas += 1; // o estado, pelo self
+  }
+
+  fn atualizar_status(ui: &mut Ui) {
+      if let Some(f) = FrmTabelas::components(ui) {
+          f.lblStatus.set_text(ui, "Atualizado");
+      }
+  }
+  ```
 - Peça repetida (uma linha de lista, um cartão) é um frame no JSON, não código que monta
   componentes: `let linha = FraLinha::create_in(ui, lyLista)?;` cria mais uma instância dentro
   do pai, com nome livre (`fraLinha`, `fraLinha2`...) e os handlers do `fraLinha`, e devolve os

@@ -345,6 +345,8 @@ fn erase_background(hwnd: HWND, hdc: usize, colorref: u32) {
 
 unsafe extern "system" fn subclass(hwnd: HWND, message: u32, wparam: WPARAM, lparam: LPARAM, _id: usize, form: usize) -> LRESULT {
     let form_id = ComponentId::from_u64(form as u64);
+    keep_ex_styles(hwnd, message, wparam.0, lparam.0);
+    packet_text(form as u64, message, wparam.0);
     // Apagar o fundo: na cor do form (sem isso, a janela aparece branca até o primeiro quadro).
     if message == windows::Win32::UI::WindowsAndMessaging::WM_ERASEBKGND {
         if let Some(color) = BACKGROUNDS.with(|b| b.borrow().get(&(form as u64)).copied()) {
@@ -366,6 +368,12 @@ unsafe extern "system" fn subclass(hwnd: HWND, message: u32, wparam: WPARAM, lpa
         SIZE_MOVE.with(|s| s.borrow_mut().remove(&(form as u64)));
         GPU_CHECKS.with(|g| g.borrow_mut().push((form as u64, message == msg::WM_DISPLAYCHANGE)));
         wake();
+    } else if composition_message(message, lparam.0) {
+        COMPOSITION_CHANGED.set(true);
+        wake();
+    } else if message == WM_CAPTURECHANGED && capture_taken(hwnd, lparam.0) {
+        CAPTURE_LOSSES.with(|c| c.borrow_mut().push(form as u64));
+        wake();
     } else if message == WM_COMMAND && (wparam.0 >> 16) as u32 == THBN_CLICKED {
         if let Ok(mut q) = THUMB_CLICKS.lock() {
             q.push((form as u64, wparam.0 & 0xFFFF));
@@ -385,8 +393,16 @@ unsafe extern "system" fn subclass(hwnd: HWND, message: u32, wparam: WPARAM, lpa
     if let Some(result) = caption_button(hwnd, form as u64, m.message, m.wparam, m.lparam) {
         return result;
     }
+    // O soltar de um botão: o winit solta a captura dentro dele (`capture_taken` sabe que não
+    // foi tomada).
+    let button_up = matches!(m.message, 0x0202 | 0x0205 | 0x0208 | 0x020C);
+    let before = button_up.then(|| IN_BUTTON_UP.replace(true));
     // SAFETY: segue para o processamento normal (o do winit).
-    unsafe { DefSubclassProc(hwnd, m.message, WPARAM(m.wparam), LPARAM(m.lparam)) }
+    let result = unsafe { DefSubclassProc(hwnd, m.message, WPARAM(m.wparam), LPARAM(m.lparam)) };
+    if let Some(before) = before {
+        IN_BUTTON_UP.set(before);
+    }
+    result
 }
 
 /// Uma janela do Windows pelo HWND, para dar de dona a um diálogo do sistema (o `rfd`).
@@ -408,6 +424,75 @@ impl winit::raw_window_handle::HasDisplayHandle for ParentWindow {
 }
 
 static DIALOG_CLOSED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+const WM_CAPTURECHANGED: u32 = 0x0215;
+
+thread_local! {
+    /// O texto que chega por `VK_PACKET` (teclado virtual, gerenciador de senha, `SendInput`
+    /// com `KEYEVENTF_UNICODE`): se a última tecla foi um `VK_PACKET`, a metade alta de um par
+    /// UTF-16 à espera da baixa, e o caractere inteiro pronto para o form.
+    static PACKET: RefCell<(bool, Option<u16>, Option<(u64, String)>)> = const { RefCell::new((false, None, None)) };
+}
+
+/// Junta o par UTF-16 (um emoji) que chega em dois `VK_PACKET`: cada um vem com o seu
+/// `WM_CHAR`, e o winit monta o texto de cada tecla sozinho, então as duas metades se perdiam
+/// (o texto comum por `VK_PACKET` já chegava ao `Edit`; conferido em 23/11).
+fn packet_text(form: u64, message: u32, wparam: usize) {
+    const WM_KEYDOWN: u32 = 0x0100;
+    const WM_CHAR: u32 = 0x0102;
+    const VK_PACKET: usize = 0xE7;
+    PACKET.with(|p| {
+        let mut p = p.borrow_mut();
+        match message {
+            WM_KEYDOWN => p.0 = wparam == VK_PACKET,
+            WM_CHAR if p.0 => {
+                let unit = wparam as u16;
+                match (unit, p.1.take()) {
+                    (0xD800..=0xDBFF, _) => p.1 = Some(unit),
+                    (0xDC00..=0xDFFF, Some(high)) => p.2 = String::from_utf16(&[high, unit]).ok().map(|t| (form, t)),
+                    _ => {}
+                }
+            }
+            _ => {}
+        }
+    });
+}
+
+/// O caractere de fora do plano básico (um emoji) que acabou de chegar por `VK_PACKET` no form
+/// (veja [`packet_text`]): quem trata a tecla o entrega como texto.
+pub(crate) fn take_packet_text(form: ComponentId) -> Option<String> {
+    PACKET.with(|p| {
+        let mut p = p.borrow_mut();
+        if p.2.as_ref().is_some_and(|(f, _)| *f == form.to_u64()) { p.2.take().map(|(_, t)| t) } else { None }
+    })
+}
+
+thread_local! {
+    /// As janelas que perderam o mouse com um botão ainda apertado (`WM_CAPTURECHANGED`).
+    static CAPTURE_LOSSES: RefCell<Vec<u64>> = const { RefCell::new(Vec::new()) };
+    /// Dentro do soltar de um botão (o winit solta a captura ali).
+    static IN_BUTTON_UP: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// No `WM_CAPTURECHANGED` da janela `hwnd` (`new_owner`: quem fica com o mouse): foi tomado
+/// no meio de um gesto. O winit solta a captura ele mesmo no último botão solto (o dono novo é
+/// nulo e nenhum botão está apertado); outro programa que captura, ou a troca de janela com o
+/// botão apertado, deixam o soltar sem chegar ao app (o arrasto ficava preso).
+fn capture_taken(hwnd: HWND, new_owner: isize) -> bool {
+    new_owner != hwnd.0 as isize && !IN_BUTTON_UP.get() && (new_owner != 0 || mouse_buttons_down())
+}
+
+/// Algum botão do mouse está apertado agora (o estado do aparelho, não o da fila de mensagens).
+pub(crate) fn mouse_buttons_down() -> bool {
+    use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_LBUTTON, VK_MBUTTON, VK_RBUTTON, VK_XBUTTON1, VK_XBUTTON2};
+    // SAFETY: só lê o estado das teclas.
+    [VK_LBUTTON, VK_RBUTTON, VK_MBUTTON, VK_XBUTTON1, VK_XBUTTON2].iter().any(|&vk| unsafe { GetAsyncKeyState(vk.0 as i32) } < 0)
+}
+
+/// Os forms cujas janelas perderam o mouse no meio de um gesto desde a última vez.
+pub(crate) fn take_capture_losses() -> Vec<ComponentId> {
+    CAPTURE_LOSSES.with(|c| std::mem::take(&mut *c.borrow_mut())).into_iter().map(ComponentId::from_u64).collect()
+}
 
 /// Um diálogo do sistema com dona fechou (a thread dele avisa).
 pub(crate) fn dialog_closed() {
@@ -624,11 +709,66 @@ pub(crate) fn set_window_ex_styles(window: &winit::window::Window, no_activate: 
         if tool_window {
             style = (style | WS_EX_TOOLWINDOW.0) & !WS_EX_APPWINDOW.0;
         }
+        // O winit regrava o estilo estendido inteiro ao mexer na moldura (tela cheia,
+        // decoração, maximizar), e os bits sumiam: a subclass os repõe em cada
+        // `WM_STYLECHANGING` (`kept_ex_style`).
+        let set = if no_activate { WS_EX_NOACTIVATE.0 } else { 0 } | if tool_window { WS_EX_TOOLWINDOW.0 } else { 0 };
+        let cleared = if tool_window { WS_EX_APPWINDOW.0 } else { 0 };
+        KEPT_EX_STYLES.with(|k| {
+            let mut k = k.borrow_mut();
+            if set == 0 && cleared == 0 {
+                k.remove(&(hwnd.0 as isize));
+            } else {
+                k.insert(hwnd.0 as isize, (set, cleared));
+            }
+        });
         if style != before {
             SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style as isize);
             let _ = SetWindowPos(hwnd, None, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
         }
     }
+}
+
+thread_local! {
+    /// Os bits do estilo estendido que o `WindowSettings` pede em cada janela (`HWND`): os
+    /// ligados e os desligados à força.
+    static KEPT_EX_STYLES: RefCell<HashMap<isize, (u32, u32)>> = RefCell::new(HashMap::new());
+}
+
+/// O estilo estendido `new` que alguém (o winit) vai gravar, com os bits do `WindowSettings`
+/// de volta: `set` ligados e `cleared` desligados.
+fn kept_ex_style(new: u32, set: u32, cleared: u32) -> u32 {
+    (new | set) & !cleared
+}
+
+/// Repõe os bits do `WindowSettings` no estilo estendido que vai ser gravado (o
+/// `WM_STYLECHANGING` do `GWL_EXSTYLE`, que deixa mudar o estilo novo).
+fn keep_ex_styles(hwnd: HWND, message: u32, wparam: usize, lparam: isize) {
+    use windows::Win32::UI::WindowsAndMessaging::{GWL_EXSTYLE, STYLESTRUCT, WM_NCDESTROY, WM_STYLECHANGING};
+    if message == WM_NCDESTROY {
+        KEPT_EX_STYLES.with(|k| k.borrow_mut().remove(&(hwnd.0 as isize)));
+        return;
+    }
+    if message != WM_STYLECHANGING || wparam as i32 != GWL_EXSTYLE.0 || lparam == 0 {
+        return;
+    }
+    let Some((set, cleared)) = KEPT_EX_STYLES.with(|k| k.borrow().get(&(hwnd.0 as isize)).copied()) else { return };
+    // SAFETY: no `WM_STYLECHANGING`, o `lparam` aponta para o `STYLESTRUCT` que o sistema vai
+    // gravar, válido e mutável durante a mensagem (a documentação do Windows permite mudar o
+    // `styleNew`).
+    unsafe {
+        let st = &mut *(lparam as *mut STYLESTRUCT);
+        st.styleNew = kept_ex_style(st.styleNew, set, cleared);
+    }
+}
+
+/// Põe a janela de novo por cima das outras sempre por cima (`HWND_TOPMOST`), sem ativar, mover
+/// nem mudar o tamanho: a que outra janela sempre por cima cobriu volta à frente.
+pub(crate) fn reassert_topmost(window: &winit::window::Window) {
+    use windows::Win32::UI::WindowsAndMessaging::{HWND_TOPMOST, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SetWindowPos};
+    let Some(hwnd) = hwnd_of(window) else { return };
+    // SAFETY: `hwnd` é a janela viva do form; só a ordem dela muda.
+    let _ = unsafe { SetWindowPos(hwnd, Some(HWND_TOPMOST), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE) };
 }
 
 /// A janela de nível de cima que está à vista no ponto da tela (em pixels), pela ordem real
@@ -1041,6 +1181,34 @@ mod caption_tests {
             let _ = DestroyWindow(hwnd);
         }
     }
+
+    /// O winit regrava o estilo estendido ao entrar na tela cheia, e o `WS_EX_TOOLWINDOW` do
+    /// `alt_tab = false` sumia. Com a subclass, quem regrava o estilo
+    /// inteiro (como o winit) não tira mais os bits do `WindowSettings`.
+    #[test]
+    fn the_window_settings_styles_survive_a_rewrite_of_the_extended_style() {
+        use windows::Win32::UI::Shell::SetWindowSubclass;
+        use windows::Win32::UI::WindowsAndMessaging::{
+            CreateWindowExW, DestroyWindow, GWL_EXSTYLE, GetWindowLongPtrW, SetWindowLongPtrW, WINDOW_EX_STYLE, WS_EX_APPWINDOW, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_POPUP,
+        };
+        use windows::core::w;
+        assert_eq!(kept_ex_style(WS_EX_APPWINDOW.0, WS_EX_TOOLWINDOW.0, WS_EX_APPWINDOW.0), WS_EX_TOOLWINDOW.0);
+        // SAFETY: uma janela escondida da classe pronta "STATIC", com a subclass do Aylis, e
+        // destruída no fim (o `WM_NCDESTROY` limpa a anotação).
+        unsafe {
+            let hwnd = CreateWindowExW(WINDOW_EX_STYLE(0), w!("STATIC"), w!(""), WS_POPUP, 0, 0, 200, 100, None, None, None, None).expect("janela");
+            assert!(SetWindowSubclass(hwnd, Some(subclass), 1, 0).as_bool());
+            KEPT_EX_STYLES.with(|k| k.borrow_mut().insert(hwnd.0 as isize, (WS_EX_TOOLWINDOW.0 | WS_EX_NOACTIVATE.0, WS_EX_APPWINDOW.0)));
+            // O que o winit faz: grava o estilo dele, sem os bits de fora.
+            SetWindowLongPtrW(hwnd, GWL_EXSTYLE, WS_EX_APPWINDOW.0 as isize);
+            let style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE) as u32;
+            assert_ne!(style & WS_EX_TOOLWINDOW.0, 0, "continua fora do Alt+Tab");
+            assert_ne!(style & WS_EX_NOACTIVATE.0, 0, "continua sem tomar o foco");
+            assert_eq!(style & WS_EX_APPWINDOW.0, 0, "não volta à barra de tarefas");
+            let _ = DestroyWindow(hwnd);
+            assert!(KEPT_EX_STYLES.with(|k| !k.borrow().contains_key(&(hwnd.0 as isize))), "a anotação sai com a janela");
+        }
+    }
 }
 
 /// A forma da janela (`window_shape`) como a região do Windows (`SetWindowRgn`): fora dela, os
@@ -1166,6 +1334,11 @@ pub(crate) fn set_window_blur(window: &winit::window::Window, blur: bool, shape:
             set_host_backdrop(hwnd, false);
         }
         set_accent_blur(hwnd, false);
+        // Sem camadas, o compositor sai: religar cria outro. O que nasceu quebrado (a
+        // composição ainda subindo no logon) não ficava para sempre.
+        if HOST_BLURS.with(|b| b.borrow().is_empty()) {
+            COMPOSITOR.with(|c| *c.borrow_mut() = None);
+        }
         return;
     }
     let size = window.inner_size();
@@ -1177,37 +1350,103 @@ pub(crate) fn set_window_blur(window: &winit::window::Window, blur: bool, shape:
 /// A camada de desfoque de uma janela: o alvo da composição (por baixo do quadro), a camada e o
 /// compositor que a criou.
 struct HostBlur {
-    _target: windows::UI::Composition::Desktop::DesktopWindowTarget,
+    target: windows::UI::Composition::Desktop::DesktopWindowTarget,
     visual: windows::UI::Composition::SpriteVisual,
     compositor: windows::UI::Composition::Compositor,
 }
 
-type CompositorSlot = Option<(Option<windows::System::DispatcherQueueController>, windows::UI::Composition::Compositor)>;
+impl Drop for HostBlur {
+    /// Fecha o alvo e a camada na hora: só soltar a referência deixava o alvo preso à janela, e
+    /// o de um compositor novo não aparecia (o vidro ficava preto ao religar o `blur`).
+    fn drop(&mut self) {
+        let _ = self.visual.Close();
+        let _ = self.target.Close();
+    }
+}
 
 thread_local! {
     /// As camadas de desfoque pelas janelas (`HWND`).
     static HOST_BLURS: std::cell::RefCell<std::collections::HashMap<isize, HostBlur>> = Default::default();
-    /// O compositor da thread da interface e a fila de mensagens que ele exige.
-    static COMPOSITOR: std::cell::RefCell<CompositorSlot> = const { std::cell::RefCell::new(None) };
+    /// O compositor da thread da interface (recriado quando a composição muda).
+    static COMPOSITOR: std::cell::RefCell<Option<windows::UI::Composition::Compositor>> = const { std::cell::RefCell::new(None) };
+    /// A fila de mensagens que o compositor exige (a nossa, se a thread não tinha), guardada até
+    /// o fim da thread: o compositor recriado usa a mesma.
+    static DISPATCHER: std::cell::RefCell<Option<windows::System::DispatcherQueueController>> = const { std::cell::RefCell::new(None) };
+    /// A composição do sistema mudou desde a última vez (o DWM reiniciou, a transparência foi
+    /// ligada ou desligada, a sessão voltou).
+    static COMPOSITION_CHANGED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
 }
 
 fn compositor() -> Option<windows::UI::Composition::Compositor> {
     use windows::Win32::System::WinRT::{CreateDispatcherQueueController, DQTAT_COM_NONE, DQTYPE_THREAD_CURRENT, DispatcherQueueOptions};
-    COMPOSITOR.with(|c| {
-        let mut c = c.borrow_mut();
-        if c.is_none() {
-            // O compositor precisa de uma fila na thread; o winit não cria.
-            let queue = if windows::System::DispatcherQueue::GetForCurrentThread().is_ok() {
-                None
-            } else {
-                let options = DispatcherQueueOptions { dwSize: size_of::<DispatcherQueueOptions>() as u32, threadType: DQTYPE_THREAD_CURRENT, apartmentType: DQTAT_COM_NONE };
-                // SAFETY: as opções são válidas e a fila fica guardada nesta thread até o fim.
-                Some(unsafe { CreateDispatcherQueueController(options) }.ok()?)
-            };
-            *c = Some((queue, windows::UI::Composition::Compositor::new().ok()?));
+    if let Some(c) = COMPOSITOR.with(|c| c.borrow().clone()) {
+        return Some(c);
+    }
+    // O compositor precisa de uma fila na thread; o winit não cria.
+    if windows::System::DispatcherQueue::GetForCurrentThread().is_err() {
+        let options = DispatcherQueueOptions { dwSize: size_of::<DispatcherQueueOptions>() as u32, threadType: DQTYPE_THREAD_CURRENT, apartmentType: DQTAT_COM_NONE };
+        // SAFETY: as opções são válidas e a fila fica guardada nesta thread até o fim.
+        let queue = unsafe { CreateDispatcherQueueController(options) }.ok()?;
+        DISPATCHER.with(|d| *d.borrow_mut() = Some(queue));
+    }
+    let compositor = windows::UI::Composition::Compositor::new().ok()?;
+    COMPOSITOR.with(|c| *c.borrow_mut() = Some(compositor.clone()));
+    Some(compositor)
+}
+
+/// A composição do sistema mudou (o DWM reiniciou, os "Efeitos de transparência" mudaram, a
+/// sessão voltou): as camadas de desfoque e o compositor saem, e quem chama aplica o `blur`
+/// de novo em cada janela (`true` se havia alguma). Um desfoque que nasceu preto no logon ou que
+/// ficou na cor sólida volta sem reabrir o app.
+pub(crate) fn reset_blurs() -> bool {
+    let had = HOST_BLURS.with(|b| {
+        let mut b = b.borrow_mut();
+        let had = !b.is_empty();
+        b.clear();
+        had
+    });
+    COMPOSITOR.with(|c| *c.borrow_mut() = None);
+    had
+}
+
+/// Houve mudança na composição desde a última vez (veja [`reset_blurs`]).
+pub(crate) fn take_composition_changed() -> bool {
+    COMPOSITION_CHANGED.replace(false)
+}
+
+/// A mensagem diz que a composição mudou: o `WM_DWMCOMPOSITIONCHANGED`, o
+/// `WM_SETTINGCHANGE` do `ImmersiveColorSet` (a transparência e as cores do sistema) e o
+/// `WM_WTSSESSION_CHANGE` (o logon, o desbloqueio, a volta de uma sessão remota).
+fn composition_message(message: u32, lparam: isize) -> bool {
+    const WM_DWMCOMPOSITIONCHANGED: u32 = 0x031E;
+    const WM_WTSSESSION_CHANGE: u32 = 0x02B1;
+    match message {
+        WM_DWMCOMPOSITIONCHANGED | WM_WTSSESSION_CHANGE => true,
+        msg::WM_SETTINGCHANGE if lparam != 0 => {
+            // SAFETY: no `WM_SETTINGCHANGE`, um `lparam` não nulo é o nome da área (texto UTF-16
+            // terminado em zero) válido durante a mensagem.
+            let area = unsafe { PCWSTR(lparam as *const u16).to_string() }.unwrap_or_default();
+            area == "ImmersiveColorSet"
         }
-        c.as_ref().map(|(_, compositor)| compositor.clone())
-    })
+        _ => false,
+    }
+}
+
+/// Pede ao Windows o `WM_WTSSESSION_CHANGE` da janela (o logon, o desbloqueio): pela
+/// `wtsapi32.dll`, carregada na hora (sem mais uma parte do crate `windows`).
+fn watch_session(hwnd: HWND) {
+    use windows::Win32::System::LibraryLoader::{GetProcAddress, LoadLibraryW};
+    use windows::core::{s, w};
+    type Register = unsafe extern "system" fn(HWND, u32) -> i32;
+    const NOTIFY_FOR_THIS_SESSION: u32 = 0;
+    // SAFETY: a `wtsapi32.dll` é do sistema; a função achada tem a assinatura de
+    // `WTSRegisterSessionNotification`, e `hwnd` é a janela viva (o registro sai com ela).
+    unsafe {
+        let Ok(module) = LoadLibraryW(w!("wtsapi32.dll")) else { return };
+        let Some(proc) = GetProcAddress(module, s!("WTSRegisterSessionNotification")) else { return };
+        let register: Register = std::mem::transmute::<unsafe extern "system" fn() -> isize, Register>(proc);
+        register(hwnd, NOTIFY_FOR_THIS_SESSION);
+    }
 }
 
 /// O `DWMWA_USE_HOSTBACKDROPBRUSH`: o DWM entrega à janela o que está atrás dela, desfocado.
@@ -1232,6 +1471,7 @@ fn host_blur(hwnd: HWND, (width, height): (f32, f32), shape: Option<aylis_core::
         blurs.retain(|h, _| unsafe { IsWindow(Some(HWND(*h as *mut _))) }.as_bool());
         if !blurs.contains_key(&key) {
             let compositor = compositor()?;
+            watch_session(hwnd);
             if !set_host_backdrop(hwnd, true) {
                 return None;
             }
@@ -1242,7 +1482,7 @@ fn host_blur(hwnd: HWND, (width, height): (f32, f32), shape: Option<aylis_core::
             let visual = compositor.CreateSpriteVisual().ok()?;
             visual.SetBrush(&compositor.CreateHostBackdropBrush().ok()?).ok()?;
             target.SetRoot(&visual).ok()?;
-            blurs.insert(key, HostBlur { _target: target, visual, compositor });
+            blurs.insert(key, HostBlur { target, visual, compositor });
         }
         let blur = blurs.get(&key)?;
         let size = Vector2 { X: width, Y: height };
@@ -1315,4 +1555,247 @@ fn set_accent_blur(hwnd: HWND, blur: bool) {
         let mut data = CompositionData { attribute: ACCENT_POLICY, data: (&raw mut accent).cast(), size: size_of::<AccentPolicy>() };
         set(hwnd, &mut data);
     }
+}
+
+// ---------------------------------------------------------------------------
+// A área de trabalho (o `desktop.rs`).
+
+/// O form do app à vista no ponto da tela (pixels físicos), pela ordem real das janelas: a
+/// janela de cima ali, se é de um form e não está minimizada.
+pub(crate) fn form_at(x: i32, y: i32) -> Option<ComponentId> {
+    use windows::Win32::UI::WindowsAndMessaging::IsIconic;
+    let top = top_level_at(x, y)?;
+    let form = HWNDS.with(|h| h.borrow().iter().find(|(_, hwnd)| **hwnd == top).map(|(form, _)| *form))?;
+    // SAFETY: só lê o estado da janela; um HWND que deixou de existir dá `false`.
+    (!unsafe { IsIconic(HWND(top as *mut _)) }.as_bool()).then_some(form)
+}
+
+/// Os "Efeitos de transparência" (Personalização → Cores): o `EnableTransparency` do tema do
+/// usuário. `None` sem o valor (Windows antigo: a transparência não se desliga).
+pub(crate) fn transparency_effects() -> Option<bool> {
+    use windows::Win32::System::Registry::{HKEY_CURRENT_USER, RRF_RT_REG_DWORD, RegGetValueW};
+    use windows::core::w;
+    let mut value = 0u32;
+    let mut size = std::mem::size_of::<u32>() as u32;
+    // SAFETY: lê um DWORD para `value`, do tamanho informado em `size`.
+    let read = unsafe {
+        RegGetValueW(
+            HKEY_CURRENT_USER,
+            w!(r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"),
+            w!("EnableTransparency"),
+            RRF_RT_REG_DWORD,
+            None,
+            Some((&raw mut value).cast()),
+            Some(&mut size),
+        )
+    };
+    read.is_ok().then_some(value != 0)
+}
+
+/// O Caps Lock e o Num Lock ligados (o bit de baixo do `GetKeyState`).
+pub(crate) fn lock_keys() -> (bool, bool) {
+    use windows::Win32::UI::Input::KeyboardAndMouse::{GetKeyState, VK_CAPITAL, VK_NUMLOCK};
+    // SAFETY: só lê o estado das duas teclas nesta thread.
+    unsafe { (GetKeyState(VK_CAPITAL.0 as i32) & 1 != 0, GetKeyState(VK_NUMLOCK.0 as i32) & 1 != 0) }
+}
+
+/// A imagem de uma área da tela (pixels físicos `x, y, largura, altura`), reduzida para no
+/// máximo `max_width` de largura pelo `StretchBlt` com `HALFTONE` (a média dos pontos, sem o
+/// serrilhado). Pega também as janelas em camadas (`CAPTUREBLT`).
+pub(crate) fn capture_screen(area: (i32, i32, u32, u32), max_width: u32) -> Result<aylis_core::Image, String> {
+    use windows::Win32::Graphics::Gdi::{
+        BI_RGB, BITMAPINFO, BITMAPINFOHEADER, CAPTUREBLT, CreateCompatibleDC, CreateDIBSection, DIB_RGB_COLORS, DeleteDC, DeleteObject, GetDC, HALFTONE, ReleaseDC,
+        SRCCOPY, SelectObject, SetBrushOrgEx, SetStretchBltMode, StretchBlt,
+    };
+    let failed = || aylis_core::messages::t("A captura da tela não deu certo.");
+    let (x, y, width, height) = area;
+    if width == 0 || height == 0 {
+        return Err(failed());
+    }
+    let (w, h) = crate::desktop::scaled(width, height, max_width);
+    // SAFETY: os objetos do GDI criados aqui são soltos no fim; os pixels são lidos do DIB, do
+    // tamanho pedido (w × h × 4), enquanto ele existe.
+    unsafe {
+        let screen = GetDC(None);
+        if screen.is_invalid() {
+            return Err(failed());
+        }
+        let memory = CreateCompatibleDC(Some(screen));
+        let info = BITMAPINFO {
+            bmiHeader: BITMAPINFOHEADER {
+                biSize: std::mem::size_of::<BITMAPINFOHEADER>() as u32,
+                biWidth: w as i32,
+                // Negativa: as linhas de cima para baixo.
+                biHeight: -(h as i32),
+                biPlanes: 1,
+                biBitCount: 32,
+                biCompression: BI_RGB.0,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let mut bits: *mut std::ffi::c_void = std::ptr::null_mut();
+        let result = match CreateDIBSection(Some(memory), &info, DIB_RGB_COLORS, &mut bits, None, 0) {
+            Ok(bitmap) if !bits.is_null() => {
+                let old = SelectObject(memory, bitmap.into());
+                SetStretchBltMode(memory, HALFTONE);
+                let _ = SetBrushOrgEx(memory, 0, 0, None);
+                let copied = StretchBlt(memory, 0, 0, w as i32, h as i32, Some(screen), x, y, width as i32, height as i32, SRCCOPY | CAPTUREBLT).as_bool();
+                let pixels = std::slice::from_raw_parts(bits as *const u8, w as usize * h as usize * 4);
+                let mut rgba = Vec::with_capacity(pixels.len());
+                for px in pixels.chunks_exact(4) {
+                    rgba.extend_from_slice(&[px[2], px[1], px[0], 255]);
+                }
+                SelectObject(memory, old);
+                let _ = DeleteObject(bitmap.into());
+                if copied { Ok(aylis_core::Image::rgba(w, h, rgba)) } else { Err(failed()) }
+            }
+            _ => Err(failed()),
+        };
+        let _ = DeleteDC(memory);
+        ReleaseDC(None, screen);
+        result
+    }
+}
+
+/// Põe a janela no lugar e no tamanho dados (pixels físicos, com a moldura), sem mudar a ordem
+/// nem o foco (`activate` desligado) ou trazendo para a frente com o foco.
+pub(crate) fn place(window: &winit::window::Window, x: i32, y: i32, width: u32, height: u32, activate: bool) {
+    use windows::Win32::UI::WindowsAndMessaging::{SWP_NOACTIVATE, SWP_NOOWNERZORDER, SWP_NOZORDER, SetWindowPos};
+    let Some(hwnd) = hwnd_of(window) else { return };
+    let flags = if activate { SWP_NOOWNERZORDER } else { SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER };
+    // SAFETY: `hwnd` é a janela viva do form; só o lugar e o tamanho mudam.
+    let _ = unsafe { SetWindowPos(hwnd, None, x, y, width.min(i32::MAX as u32) as i32, height.min(i32::MAX as u32) as i32, flags) };
+}
+
+thread_local! {
+    /// Os forms que pedem estar sempre por cima (`topmost`), e se já foram dados como cobertos
+    /// (o `on_topmost_lost` sai uma vez por vez que perdem o topo).
+    static TOPMOST: RefCell<HashMap<ComponentId, bool>> = RefCell::new(HashMap::new());
+    /// Os forms que perderam o topo desde a última vez (o `App` dispara o evento).
+    static TOPMOST_LOST: RefCell<Vec<ComponentId>> = const { RefCell::new(Vec::new()) };
+    /// Os ganchos de eventos do sistema (a janela em primeiro plano mudou; uma janela apareceu,
+    /// mudou de ordem ou de lugar), enquanto há algum form por cima.
+    static TOPMOST_HOOKS: std::cell::Cell<(isize, isize)> = const { std::cell::Cell::new((0, 0)) };
+}
+
+/// O form pede (ou deixa de pedir) estar sempre por cima: enquanto há algum, ganchos do sistema
+/// conferem, a cada troca da janela em primeiro plano e a cada janela que aparece, muda de ordem
+/// ou de lugar, se outra janela sempre por cima passou à frente dele. Parado,
+/// nada roda.
+pub(crate) fn watch_topmost(form: ComponentId, on: bool) {
+    use windows::Win32::UI::Accessibility::{HWINEVENTHOOK, SetWinEventHook, UnhookWinEvent};
+    use windows::Win32::UI::WindowsAndMessaging::{EVENT_OBJECT_LOCATIONCHANGE, EVENT_OBJECT_SHOW, EVENT_SYSTEM_FOREGROUND, WINEVENT_OUTOFCONTEXT, WINEVENT_SKIPOWNPROCESS};
+    let any = TOPMOST.with(|t| {
+        let mut t = t.borrow_mut();
+        if on {
+            t.entry(form).or_insert(false);
+        } else {
+            t.remove(&form);
+        }
+        !t.is_empty()
+    });
+    let hooks = TOPMOST_HOOKS.get();
+    if any && hooks.0 == 0 {
+        // SAFETY: os ganchos fora do processo chamam `windows_changed` nesta thread, pelo laço de
+        // mensagens dela (só as janelas dos outros processos); são soltos quando não há mais
+        // form por cima.
+        let (a, b) = unsafe {
+            (
+                SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, None, Some(windows_changed), 0, 0, WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS),
+                SetWinEventHook(EVENT_OBJECT_SHOW, EVENT_OBJECT_LOCATIONCHANGE, None, Some(windows_changed), 0, 0, WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS),
+            )
+        };
+        TOPMOST_HOOKS.set((a.0 as isize, b.0 as isize));
+    } else if !any && hooks.0 != 0 {
+        // SAFETY: os ganchos foram criados acima e ainda não foram soltos.
+        unsafe {
+            let _ = UnhookWinEvent(HWINEVENTHOOK(hooks.0 as *mut _));
+            let _ = UnhookWinEvent(HWINEVENTHOOK(hooks.1 as *mut _));
+        }
+        TOPMOST_HOOKS.set((0, 0));
+    }
+}
+
+unsafe extern "system" fn windows_changed(_hook: windows::Win32::UI::Accessibility::HWINEVENTHOOK, event: u32, hwnd: HWND, object: i32, child: i32, _thread: u32, _time: u32) {
+    use windows::Win32::UI::WindowsAndMessaging::{EVENT_OBJECT_LOCATIONCHANGE, EVENT_OBJECT_SHOW, EVENT_SYSTEM_FOREGROUND, GA_ROOT, GetAncestor, OBJID_WINDOW};
+    // Só as janelas inteiras de nível de cima (o cursor, o cursor de texto e os controles de
+    // dentro mudam de lugar o tempo todo).
+    let whole = object == OBJID_WINDOW.0 && child == 0;
+    // SAFETY: só compara o HWND com a raiz dele.
+    let top = whole && unsafe { GetAncestor(hwnd, GA_ROOT) } == hwnd;
+    let interesting = event == EVENT_SYSTEM_FOREGROUND || ((event == EVENT_OBJECT_SHOW || event == EVENT_OBJECT_LOCATIONCHANGE || event == 0x8004) && top);
+    if interesting {
+        check_topmost();
+    }
+}
+
+/// Confere cada form que pede o topo: coberto por uma janela sempre por cima de outro processo
+/// (ou sem o próprio `WS_EX_TOPMOST`), entra na fila do `on_topmost_lost`; de volta à frente,
+/// pode avisar de novo na próxima vez.
+pub(crate) fn check_topmost() {
+    let forms: Vec<(ComponentId, bool)> = TOPMOST.with(|t| t.borrow().iter().map(|(f, c)| (*f, *c)).collect());
+    let mut lost = Vec::new();
+    for (form, was_covered) in forms {
+        let Some(handle) = hwnd(form) else { continue };
+        let covered = topmost_covered(HWND(handle as *mut _));
+        if covered && !was_covered {
+            lost.push(form);
+        }
+        TOPMOST.with(|t| {
+            if let Some(c) = t.borrow_mut().get_mut(&form) {
+                *c = covered;
+            }
+        });
+    }
+    if !lost.is_empty() {
+        TOPMOST_LOST.with(|l| l.borrow_mut().extend(lost));
+        wake();
+    }
+}
+
+/// A janela perdeu o topo: sem o `WS_EX_TOPMOST`, ou com uma janela sempre por cima, visível,
+/// de outro processo, acima dela e por cima de parte dela.
+fn topmost_covered(hwnd: HWND) -> bool {
+    use windows::Win32::Foundation::RECT;
+    use windows::Win32::UI::WindowsAndMessaging::{
+        GW_HWNDPREV, GWL_EXSTYLE, GetWindow, GetWindowLongW, GetWindowRect, GetWindowThreadProcessId, IsIconic, IsWindowVisible, WS_EX_TOPMOST,
+    };
+    // SAFETY: só lê o estado e a ordem das janelas; os HWND são só comparados.
+    unsafe {
+        if !IsWindowVisible(hwnd).as_bool() || IsIconic(hwnd).as_bool() {
+            return false;
+        }
+        if GetWindowLongW(hwnd, GWL_EXSTYLE) as u32 & WS_EX_TOPMOST.0 == 0 {
+            return true;
+        }
+        let mut mine = RECT::default();
+        if GetWindowRect(hwnd, &mut mine).is_err() {
+            return false;
+        }
+        let pid = std::process::id();
+        let mut cur = hwnd;
+        for _ in 0..4096 {
+            let Ok(above) = GetWindow(cur, GW_HWNDPREV) else { return false };
+            cur = above;
+            if !IsWindowVisible(cur).as_bool() || IsIconic(cur).as_bool() || GetWindowLongW(cur, GWL_EXSTYLE) as u32 & WS_EX_TOPMOST.0 == 0 {
+                continue;
+            }
+            let mut owner = 0u32;
+            GetWindowThreadProcessId(cur, Some(&mut owner));
+            if owner == pid {
+                continue;
+            }
+            let mut r = RECT::default();
+            if GetWindowRect(cur, &mut r).is_ok() && r.left < mine.right && r.right > mine.left && r.top < mine.bottom && r.bottom > mine.top {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+/// Os forms que perderam o topo desde a última vez.
+pub(crate) fn take_topmost_lost() -> Vec<ComponentId> {
+    TOPMOST_LOST.with(|l| std::mem::take(&mut *l.borrow_mut()))
 }

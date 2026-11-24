@@ -9,6 +9,10 @@
 //! O `ShowModal` do aylis **não bloqueia**: o resultado chega numa função quando o form
 //! fecha. Um loop modal dentro de um evento deixaria a interface sem se redesenhar.
 //!
+//! [`Ui::show_modal_in`] é o modal de uma parte da tela (a página de uma aba): o form fica
+//! por cima do contêiner, com o fundo escurecido, e só ele bloqueia; as outras abas e janelas
+//! continuam respondendo.
+//!
 //! ```
 //! # use aylis_core::*;
 //! # #[derive(Default)] struct F { base: ControlBase }
@@ -207,6 +211,165 @@ impl Ui {
         self.open(form, false, None)
     }
 
+    /// Abre o form como modal dentro de `container` (a página de uma aba, um painel): por cima
+    /// dele, centrado, com o fundo escurecido (o estilo `ModalVeil` do tema; sem ele, a
+    /// sombra de sempre), e só o contêiner fica bloqueado. O mouse no resto do contêiner não
+    /// passa, o teclado fica no form (o Tab dá a volta nele) e o Esc cancela (o botão com
+    /// `cancel_button`, ou `Cancel`). O resto da janela, as outras abas e as outras janelas
+    /// continuam respondendo.
+    ///
+    /// O retorno é o do [`show_modal`](Self::show_modal): `on_close` recebe o
+    /// [`ModalResult`] quando o form fecha ([`set_modal_result`](Self::set_modal_result), um
+    /// botão com `modal_result`, [`close`](Self::close)). O modal vai junto com o contêiner (a
+    /// aba arrancada para outra janela leva ele) e fecha como `Cancel` quando o form de fora
+    /// fecha. Fechado, o form volta a ser um form solto (não é liberado).
+    pub fn show_modal_in(
+        &mut self,
+        form: ComponentId,
+        container: ComponentId,
+        on_close: impl FnOnce(&mut Ui, ModalResult) + 'static,
+    ) -> Result<()> {
+        if !self.contains(form) || !self.contains(container) {
+            return Err(Error::InvalidId);
+        }
+        if self.parent(form).is_some() || self.is_open(form) || self.inner_modal(form).is_some() || form == container || self.is_ancestor(form, container) {
+            return Err(Error::invalid("o form do show_modal_in tem de ser um form solto e fechado, fora do contêiner"));
+        }
+        let size = self.bounds(container).map_or((0.0, 0.0), |b| (b.width, b.height));
+        let mut veil = ModalVeil::default();
+        veil.base.set_rect(0.0, 0.0, size.0, size.1).set_anchors(crate::Anchors::LEFT.union(crate::Anchors::TOP).union(crate::Anchors::RIGHT).union(crate::Anchors::BOTTOM));
+        let veil = self.add(veil, container);
+        let _ = self.set_child_index(veil, usize::MAX);
+        if let Err(e) = self.set_parent(form, Some(veil)) {
+            self.free(veil);
+            return Err(e);
+        }
+        if let Some(cb) = self.control_mut(form) {
+            cb.set_align(crate::Align::Center).set_visible(true);
+        }
+        let root = self.root_of(container);
+        let focus_before = self.focused(root);
+        self.extension::<InnerModals>().0.push(InnerModal { form, veil, container, result: ModalResult::None, on_close: Some(Box::new(on_close)), focus_before });
+        self.report(&crate::activity::Activity::FormShown { form, modal: true });
+        // O primeiro foco: o `active_control` do form ou o primeiro da ordem do Tab nele.
+        let first = match self.get_prop(form, "active_control") {
+            Ok(PropValue::Component(Some(first))) => Some(first),
+            _ => self.tab_order(root).into_iter().find(|&c| self.is_ancestor(form, c)),
+        };
+        match first {
+            Some(first) => {
+                self.set_focus(first);
+            }
+            None => {
+                if focus_before.is_some_and(|f| !self.is_ancestor(form, f)) {
+                    self.clear_focus(root);
+                }
+            }
+        }
+        self.fire(form, "on_show", &EventArgs::None);
+        for inner in self.embedded_forms(form) {
+            self.fire(inner, "on_show", &EventArgs::None);
+        }
+        self.invalidate();
+        Ok(())
+    }
+
+    /// O form aberto pelo [`show_modal_in`](Self::show_modal_in) que tem `id` dentro (o próprio
+    /// form também), o mais de dentro.
+    pub fn inner_modal_of(&self, id: ComponentId) -> Option<ComponentId> {
+        let modals = self.extension_ref::<InnerModals>()?;
+        modals.0.iter().rev().find(|m| m.form == id || self.is_ancestor(m.form, id)).map(|m| m.form)
+    }
+
+    /// `id` fica atrás de um modal de contêiner ([`show_modal_in`](Self::show_modal_in)): está
+    /// no contêiner e fora do form do modal (não recebe o foco).
+    pub fn blocked_by_inner_modal(&self, id: ComponentId) -> bool {
+        let Some(modals) = self.extension_ref::<InnerModals>() else { return false };
+        modals.0.iter().any(|m| (m.container == id || self.is_ancestor(m.container, id)) && m.form != id && !self.is_ancestor(m.form, id))
+    }
+
+    fn inner_modal(&self, form: ComponentId) -> Option<usize> {
+        self.extension_ref::<InnerModals>()?.0.iter().position(|m| m.form == form)
+    }
+
+    /// O modal de contêiner fecha: o form volta a ser solto (escondido), o véu sai, o foco
+    /// volta para onde estava, e o `on_close` e a função do `show_modal_in` recebem o resultado.
+    fn finish_inner_modal(&mut self, form: ComponentId, result: ModalResult) {
+        let Some(pos) = self.inner_modal(form) else { return };
+        let entry = self.extension::<InnerModals>().0.remove(pos);
+        self.report(&crate::activity::Activity::FormClosed { form });
+        if self.contains(form) {
+            if let Some(cb) = self.control_mut(form) {
+                cb.set_visible(false);
+                cb.set_align(crate::Align::None);
+            }
+            let _ = self.set_parent(form, None);
+        }
+        if self.contains(entry.veil) {
+            self.free(entry.veil);
+        }
+        if let Some(before) = entry.focus_before.filter(|&f| self.contains(f) && !self.blocked_by_inner_modal(f)) {
+            self.set_focus(before);
+        }
+        if self.contains(form) {
+            self.fire(form, "on_close", &EventArgs::Value(PropValue::Enum(result.name().to_string())));
+        }
+        if let Some(callback) = entry.on_close {
+            callback(self, result);
+        }
+        if self.contains(form) && matches!(self.get_prop(form, "close_action"), Ok(PropValue::Enum(ref a)) if a == "free") {
+            self.free_later(form);
+        }
+        self.invalidate();
+    }
+
+    /// Fecha o modal de contêiner (o `close` dele): pergunta ao `on_close_query` e fecha com o
+    /// resultado que estiver (`Cancel` sem nenhum).
+    fn close_inner_modal(&mut self, form: ComponentId) -> bool {
+        let result = move |ui: &Ui| ui.inner_modal(form).and_then(|i| ui.extension_ref::<InnerModals>().map(|m| m.0[i].result)).unwrap_or_default();
+        match self.ask(form, "on_close_query", &EventArgs::None) {
+            crate::question::Asked::Answered(answer) => {
+                if !self.close_answer(form, &answer) {
+                    if let Some(i) = self.inner_modal(form) {
+                        self.extension::<InnerModals>().0[i].result = ModalResult::None;
+                    }
+                    return false;
+                }
+            }
+            crate::question::Asked::Deferred(token) => {
+                self.on_answer(token, move |ui, answer| {
+                    if ui.close_answer(form, &answer) {
+                        let r = result(ui);
+                        ui.finish_inner_modal(form, if r == ModalResult::None { ModalResult::Cancel } else { r });
+                    } else if let Some(i) = ui.inner_modal(form) {
+                        ui.extension::<InnerModals>().0[i].result = ModalResult::None;
+                    }
+                });
+                return false;
+            }
+        }
+        let r = result(self);
+        self.finish_inner_modal(form, if r == ModalResult::None { ModalResult::Cancel } else { r });
+        true
+    }
+
+    /// O form de fora fechou: os modais de contêiner dentro dele fecham como `Cancel`.
+    fn cancel_inner_modals_of(&mut self, outer: ComponentId) {
+        let inside: Vec<ComponentId> = self
+            .extension_ref::<InnerModals>()
+            .map(|m| m.0.iter().filter(|m| !self.contains(m.container) || self.root_of(m.container) == outer).map(|m| m.form).collect())
+            .unwrap_or_default();
+        for form in inside.into_iter().rev() {
+            self.finish_inner_modal(form, ModalResult::Cancel);
+        }
+    }
+
+    /// O Esc ou o Enter que ninguém usou, com o foco num modal de contêiner: o form dele (para
+    /// achar o botão padrão e o de cancelar só lá dentro).
+    pub(crate) fn inner_modal_scope(&self, root: ComponentId) -> Option<ComponentId> {
+        self.focused(root).and_then(|f| self.inner_modal_of(f))
+    }
+
     /// Abre o form como modal (como `ShowModal`): os forms abertos antes dele não recebem
     /// mouse nem teclado até ele fechar. Quando fechar, `on_close` recebe o
     /// [`ModalResult`] (definido por [`set_modal_result`](Self::set_modal_result) ou por
@@ -235,6 +398,7 @@ impl Ui {
                 let entry = self.open_forms.remove(pos);
                 self.open_forms.push(entry);
                 self.activate = Some(form);
+                self.active_form = Some(form);
             }
             return Ok(());
         }
@@ -244,7 +408,10 @@ impl Ui {
         // O principal nunca tem dona: possuído por outro form (os abertos antes dele, um por
         // monitor), ele ficava preso por cima dela e herdava o `topmost` dela (testado em 20/11:
         // a paleta sempre por cima atrás da janela principal).
-        let owner = if self.main_form == Some(form) { None } else { self.open_forms.last().map(|f| f.form) };
+        // A dona é a janela ativa (a de onde o usuário pediu), e não a aberta por último: com
+        // duas janelas, o modal aberto pela outra ficava preso a esta.
+        let active = self.active_form.filter(|&a| a != form && self.open_forms.iter().any(|f| f.form == a));
+        let owner = if self.main_form == Some(form) { None } else { active.or_else(|| self.open_forms.last().map(|f| f.form)) };
         self.open_forms.push(OpenForm { form, modal, owner, result: ModalResult::None, on_close });
         if let Some(cb) = self.control_mut(form) {
             cb.set_visible(true);
@@ -252,6 +419,7 @@ impl Ui {
         // Mostrar sem ativar (`activate_on_show` desligado; o relatório do Tabernáculo, J05).
         if !matches!(self.get_prop(form, "activate_on_show"), Ok(PropValue::Bool(false))) {
             self.activate = Some(form);
+            self.active_form = Some(form);
         }
         // Empilhado sobre outro: entra com a transição dele.
         let kind = self.form_transition(form);
@@ -301,6 +469,7 @@ impl Ui {
             *state = Default::default();
         }
         self.activate = entry.owner.filter(|o| self.is_open(*o)).or_else(|| self.open_forms.last().map(|f| f.form));
+        self.active_form = self.activate;
         self.invalidate();
         true
     }
@@ -311,6 +480,9 @@ impl Ui {
     /// modal, chama a função passada ao [`show_modal`](Self::show_modal). Fechar o form
     /// principal encerra o aplicativo. O form não é liberado (use [`free`](Self::free)).
     pub fn close(&mut self, form: ComponentId) -> bool {
+        if self.inner_modal(form).is_some() {
+            return self.close_inner_modal(form);
+        }
         if !self.is_open(form) {
             // Embutido ou nunca aberto: só esconde.
             if let Some(cb) = self.control_mut(form) {
@@ -372,7 +544,9 @@ impl Ui {
             *state = Default::default();
         }
         self.activate = entry.owner.filter(|o| self.is_open(*o)).or_else(|| self.open_forms.last().map(|f| f.form));
+        self.active_form = self.activate;
         let result = entry.result;
+        self.cancel_inner_modals_of(form);
         self.fire(form, "on_close", &EventArgs::Value(PropValue::Enum(result.name().to_string())));
         if let Some(callback) = entry.on_close {
             callback(self, result);
@@ -458,6 +632,20 @@ impl Ui {
     /// `modal_result`, um handler), o form fecha quando o evento termina:
     /// até lá um handler ainda pode voltar o resultado para `None` e cancelar.
     pub fn set_modal_result(&mut self, form: ComponentId, result: ModalResult) {
+        if let Some(i) = self.inner_modal(form) {
+            self.extension::<InnerModals>().0[i].result = result;
+            if result == ModalResult::None {
+                return;
+            }
+            if self.call_depth > 0 {
+                if !self.pending_closes.contains(&form) {
+                    self.pending_closes.push(form);
+                }
+            } else {
+                self.close(form);
+            }
+            return;
+        }
         let Some(open) = self.open_forms.iter_mut().find(|f| f.form == form) else { return };
         open.result = result;
         if !open.modal || result == ModalResult::None {
@@ -482,6 +670,9 @@ impl Ui {
     }
 
     pub fn modal_result(&self, form: ComponentId) -> ModalResult {
+        if let Some(m) = self.extension_ref::<InnerModals>().and_then(|m| m.0.iter().find(|m| m.form == form)) {
+            return m.result;
+        }
         self.open_forms.iter().find(|f| f.form == form).map_or(ModalResult::None, |f| f.result)
     }
 
@@ -544,10 +735,78 @@ impl Ui {
     /// Esquece forms liberados (chamado por `free`).
     pub(crate) fn forget_forms(&mut self, freed: &[ComponentId]) {
         self.open_forms.retain(|f| !freed.contains(&f.form));
+        // Um modal de contêiner liberado junto (o form, o véu ou o contêiner): a função dele
+        // recebe `Cancel` depois do `free`.
+        let gone: Vec<InnerModal> = match self.extension_ref::<InnerModals>().is_some() {
+            true => {
+                let modals = &mut self.extension::<InnerModals>().0;
+                let (gone, kept): (Vec<_>, Vec<_>) = std::mem::take(modals).into_iter().partition(|m| freed.contains(&m.form) || freed.contains(&m.veil) || freed.contains(&m.container));
+                *modals = kept;
+                gone
+            }
+            false => Vec::new(),
+        };
+        for entry in gone {
+            if let Some(callback) = entry.on_close {
+                self.set_timeout(0, move |ui| callback(ui, ModalResult::Cancel));
+            }
+        }
         // Os pedaços de um form em vários monitores (o print aberto e liberado a cada vez).
         self.form_pieces.retain(|f, _| !freed.contains(f));
         if self.main_form.is_some_and(|m| freed.contains(&m)) {
             self.main_form = None;
         }
+    }
+}
+
+/// Os modais de contêiner abertos ([`Ui::show_modal_in`]), do mais velho ao mais novo.
+#[derive(Default)]
+pub(crate) struct InnerModals(Vec<InnerModal>);
+
+pub(crate) struct InnerModal {
+    form: ComponentId,
+    /// O fundo escurecido no contêiner, com o form dentro.
+    veil: ComponentId,
+    container: ComponentId,
+    result: ModalResult,
+    on_close: Option<ModalCallback>,
+    /// Onde estava o foco do form de fora (volta para lá quando o modal fecha).
+    focus_before: Option<ComponentId>,
+}
+
+/// O fundo escurecido de um modal de contêiner: cobre o contêiner e fica com o mouse que cai
+/// fora do form. A cor é a do estilo `ModalVeil` do tema; sem ele, a sombra de sempre (preto
+/// a 32%, a mesma da `ActionSheet`).
+pub struct ModalVeil {
+    base: crate::ControlBase,
+}
+
+impl Default for ModalVeil {
+    fn default() -> Self {
+        Self { base: crate::ControlBase::new(0.0, 0.0) }
+    }
+}
+
+impl crate::Component for ModalVeil {
+    fn class_name(&self) -> &'static str {
+        "ModalVeil"
+    }
+
+    fn control(&self) -> Option<&crate::ControlBase> {
+        Some(&self.base)
+    }
+
+    fn control_mut(&mut self) -> Option<&mut crate::ControlBase> {
+        Some(&mut self.base)
+    }
+
+    fn paint(&self, canvas: &mut dyn crate::Canvas, ctx: &crate::PaintCtx<'_>) {
+        let fill = if ctx.style.fill.is_transparent() { crate::Color::BLACK.with_opacity(0.32) } else { ctx.style.fill };
+        canvas.fill_rect(ctx.rect, ctx.style.radius, &crate::Brush::Solid(fill));
+    }
+
+    fn pointer_down(&mut self, ctx: &mut crate::EventCtx<'_>, _event: &crate::PointerEvent) {
+        // O clique no fundo não passa para o que está embaixo.
+        ctx.set_handled();
     }
 }

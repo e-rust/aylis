@@ -332,6 +332,12 @@ fn style_props(obj: &Map<String, Value>, allow_states: bool) -> Result<StyleProp
             "text_case" => p.text_case = Some(v.as_str().ok_or("\"text_case\" deve ser upper, lower ou none")?.to_string()),
             "letter_spacing" => p.letter_spacing = Some(v.as_f64().ok_or("\"letter_spacing\" deve ser número")? as f32),
             "gap" => p.gap = Some(v.as_f64().ok_or("\"gap\" deve ser número (0 cola as partes)")? as f32),
+            "icon_size" => p.icon_size = Some(v.as_f64().ok_or("\"icon_size\" deve ser número")? as f32),
+            "icon_color" => p.icon_color = Some(color_ref(v)?),
+            "icon_gap" => p.icon_gap = Some(v.as_f64().ok_or("\"icon_gap\" deve ser número")? as f32),
+            "width" => p.width = Some(v.as_f64().ok_or("\"width\" deve ser número (a largura da barra de rolagem)")? as f32),
+            "thumb" => p.thumb = Some(color_ref(v)?),
+            "scroll_bar" => p.scroll_bar = Some(Box::new(style(v).map_err(|m| format!("scroll_bar: {m}"))?)),
             "border_sides" => p.border_sides = Some(bounds(v)?),
             "border_style" => p.border_style = Some(v.as_str().ok_or("\"border_style\" deve ser solid, dashed ou dotted")?.to_string()),
             "line_height" => p.line_height = Some(v.as_f64().ok_or("\"line_height\" deve ser número (1.5 = uma vez e meia a fonte)")? as f32),
@@ -352,7 +358,7 @@ fn style_props(obj: &Map<String, Value>, allow_states: bool) -> Result<StyleProp
                 return Err(format!(
                     "chave desconhecida '{other}' (use fill, text, border, border_color, border_width, border_sides, \
                      border_style, radius, padding, font, font_weight, font_size, italic, line_height, opacity, transition, shadow, \
-                     material, text_case, letter_spacing, gap{})",
+                     material, text_case, letter_spacing, gap, icon_size, icon_color, icon_gap, width, thumb, scroll_bar{})",
                     if allow_states { " e os estados hover, pressed, focused, checked, disabled" } else { "" }
                 ));
             }
@@ -460,6 +466,24 @@ fn props_value(p: &StyleProps) -> Map<String, Value> {
     }
     if let Some(g) = p.gap {
         map.insert("gap".into(), number(g as f64));
+    }
+    if let Some(v) = p.icon_size {
+        map.insert("icon_size".into(), number(v as f64));
+    }
+    if let Some(c) = &p.icon_color {
+        map.insert("icon_color".into(), color(c));
+    }
+    if let Some(v) = p.icon_gap {
+        map.insert("icon_gap".into(), number(v as f64));
+    }
+    if let Some(v) = p.width {
+        map.insert("width".into(), number(v as f64));
+    }
+    if let Some(c) = &p.thumb {
+        map.insert("thumb".into(), color(c));
+    }
+    if let Some(bar) = &p.scroll_bar {
+        map.insert("scroll_bar".into(), style_value(bar));
     }
     if let Some(b) = p.border_sides {
         map.insert("border_sides".into(), bounds_value(b));

@@ -89,6 +89,10 @@
           "arquivo": "guias/push.md"
         },
         {
+          "titulo": "Rede: HTTP e WebSocket",
+          "arquivo": "guias/rede.md"
+        },
+        {
           "titulo": "Renderizadores no Windows: Skia x Direct2D",
           "arquivo": "guias/renderizadores.md"
         },
@@ -296,6 +300,10 @@
           "arquivo": "componentes/Chart.md"
         },
         {
+          "titulo": "ChartSync",
+          "arquivo": "componentes/ChartSync.md"
+        },
+        {
           "titulo": "ChatView",
           "arquivo": "componentes/ChatView.md"
         },
@@ -450,6 +458,10 @@
         {
           "titulo": "TitleBar",
           "arquivo": "componentes/TitleBar.md"
+        },
+        {
+          "titulo": "ToastStack",
+          "arquivo": "componentes/ToastStack.md"
         },
         {
           "titulo": "TreeView",
@@ -611,6 +623,18 @@
           "arquivo": "componentes/FrameTimer.md"
         },
         {
+          "titulo": "HttpClient",
+          "arquivo": "componentes/HttpClient.md"
+        },
+        {
+          "titulo": "McpPrompt",
+          "arquivo": "componentes/McpPrompt.md"
+        },
+        {
+          "titulo": "McpResource",
+          "arquivo": "componentes/McpResource.md"
+        },
+        {
           "titulo": "McpServer",
           "arquivo": "componentes/McpServer.md"
         },
@@ -661,6 +685,10 @@
         {
           "titulo": "UrlScheme",
           "arquivo": "componentes/UrlScheme.md"
+        },
+        {
+          "titulo": "WebSocketClient",
+          "arquivo": "componentes/WebSocketClient.md"
         },
         {
           "titulo": "WindowSettings",
@@ -1065,6 +1093,14 @@
         {
           "titulo": "AylisBarcodeProvider",
           "arquivo": "componentes/AylisBarcodeProvider.md"
+        },
+        {
+          "titulo": "AylisHttpProvider",
+          "arquivo": "componentes/AylisHttpProvider.md"
+        },
+        {
+          "titulo": "AylisWebSocketProvider",
+          "arquivo": "componentes/AylisWebSocketProvider.md"
         },
         {
           "titulo": "CsvProvider",

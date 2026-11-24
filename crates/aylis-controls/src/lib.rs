@@ -58,7 +58,7 @@
 
 pub use aylis_controls_base::*;
 pub use aylis_controls_charts::{
-    Chart, ChartKind, LegendPosition, TitleAlign, ValueFormat, GraphCable, GraphNode, GraphSelection, MapView, NodeGraph, PointStyle, Series, SeriesFill, SeriesKind, bi, parse_time, project, trader,
+    Chart, ChartKind, ChartSync, SyncEvent, SyncKind, LegendPosition, TitleAlign, ValueFormat, GraphCable, GraphNode, GraphSelection, MapView, NodeGraph, PointStyle, Series, SeriesFill, SeriesKind, bi, parse_time, project, trader,
     unproject,
 };
 pub use aylis_controls_device::{
@@ -164,6 +164,7 @@ pub fn register(ui: &mut Ui) {
     ui.register_class::<ListView>("Additional");
     ui.register_class::<TreeView>("Additional");
     ui.register_class::<Chart>("Additional");
+    ui.register_class::<ChartSync>("Additional");
     ui.register_class::<TabControl>("Layouts");
     ui.register_class::<TabStrip>("Layouts");
     ui.register_class::<TabItem>("Layouts");
@@ -246,6 +247,7 @@ pub fn register(ui: &mut Ui) {
     ui.register_class::<SkeletonLoader>("Additional");
     ui.register_class::<ProgressCircle>("Standard");
     ui.register_class::<EmptyState>("Additional");
+    ui.register_class::<ToastStack>("Additional");
     ui.register_class::<Pagination>("Additional");
     ui.register_class::<Stepper>("Additional");
     ui.register_class::<Timeline>("Additional");

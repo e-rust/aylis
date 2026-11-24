@@ -6,12 +6,8 @@ use winit::keyboard::{Key as WinitKey, ModifiersState, NamedKey};
 use winit::window::CursorIcon;
 
 pub(crate) fn modifiers(state: ModifiersState) -> Modifiers {
-    Modifiers {
-        shift: state.shift_key(),
-        ctrl: state.control_key(),
-        alt: state.alt_key(),
-        meta: state.super_key(),
-    }
+    let (caps_lock, num_lock) = crate::desktop::lock_keys();
+    Modifiers { shift: state.shift_key(), ctrl: state.control_key(), alt: state.alt_key(), meta: state.super_key(), caps_lock, num_lock }
 }
 
 pub(crate) fn button(button: MouseButton) -> Option<PointerButton> {
@@ -26,7 +22,10 @@ pub(crate) fn button(button: MouseButton) -> Option<PointerButton> {
 }
 
 pub(crate) fn key_event(event: &winit::event::KeyEvent, modifiers: Modifiers) -> KeyEvent {
-    KeyEvent { key: key(&event.logical_key), modifiers, repeat: event.repeat }
+    // O Caps Lock e o Num Lock de agora: a tecla que os troca não muda os modificadores do winit.
+    let (caps_lock, num_lock) = crate::desktop::lock_keys();
+    let modifiers = Modifiers { caps_lock, num_lock, ..modifiers };
+    KeyEvent { key: key(&event.logical_key), modifiers, repeat: event.repeat, form: None }
 }
 
 pub(crate) fn is_pressed(event: &winit::event::KeyEvent) -> bool {

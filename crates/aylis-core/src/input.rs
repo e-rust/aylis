@@ -766,6 +766,8 @@ impl Ui {
             self.window_command(modal, crate::WindowCommand::RequestAttention(false));
             return;
         }
+        // A janela clicada é a ativa (a dona do próximo form aberto).
+        self.active_form = Some(root);
         // O backend ainda roda um handler: o clique novo é recusado (o form continua pintando).
         if self.busy_blocks_input() {
             self.input_state(root).refused_press = true;
@@ -829,13 +831,21 @@ impl Ui {
 
         let e = PointerEvent { position: self.local_point(target, event.position), click_count, ..event };
         self.fire(target, "on_pointer_down", &EventArgs::Pointer(e));
-        if click_count == 2 && event.button == PointerButton::Primary {
+        // O controle que redeclara o `on_dbl_click` com outro argumento (a `TreeView`, com o
+        // caminho do nó) dispara ele mesmo: o daqui seria a segunda chamada.
+        if click_count == 2 && event.button == PointerButton::Primary && self.core_fires_dbl_click(target) {
             self.fire(target, "on_dbl_click", &EventArgs::Pointer(e));
         }
         self.deliver(target, |c, ctx| c.pointer_down(ctx, &e));
         if event.button == PointerButton::Primary {
             self.tell_ancestors(target, |c, ctx| c.child_pressed(ctx, target, &e));
         }
+    }
+
+    /// O núcleo dispara o `on_dbl_click` de `id`: o evento é o comum (com o ponteiro), e não
+    /// um que o próprio controle declara com outro argumento e dispara.
+    fn core_fires_dbl_click(&self, id: ComponentId) -> bool {
+        self.prop_info(id, "on_dbl_click").is_none_or(|info| matches!(info.event_arg, crate::EventArg::Pointer | crate::EventArg::Unknown))
     }
 
     /// Avisa os ancestrais de `target` que pedem ([`crate::ChildPointer`]), de dentro para fora.
@@ -1871,7 +1881,8 @@ impl Ui {
     // =====================================================================
 
     fn can_take_focus(&self, id: ComponentId) -> bool {
-        self.cb(id).is_some_and(|cb| cb.can_focus()) && self.is_effectively_enabled(id)
+        // Atrás de um modal de contêiner (`show_modal_in`), não: o teclado fica no form dele.
+        self.cb(id).is_some_and(|cb| cb.can_focus()) && self.is_effectively_enabled(id) && !self.blocked_by_inner_modal(id)
     }
 
     fn focusable_ancestor(&self, id: ComponentId) -> Option<ComponentId> {
@@ -1919,7 +1930,13 @@ impl Ui {
 
     /// Move o foco para o próximo (ou anterior) controle na ordem da árvore, como o Tab.
     pub fn focus_next(&mut self, root: ComponentId, forward: bool) -> bool {
-        let order = self.tab_order(root);
+        let mut order = self.tab_order(root);
+        // Num modal de contêiner (`show_modal_in`), o Tab dá a volta só nele; fora, pula o que
+        // está atrás de um.
+        match self.inner_modal_scope(root) {
+            Some(modal) => order.retain(|&c| self.is_ancestor(modal, c)),
+            None => order.retain(|&c| !self.blocked_by_inner_modal(c)),
+        }
         if order.is_empty() {
             return false;
         }
@@ -1971,11 +1988,14 @@ impl Ui {
 
     /// Tecla pressionada: vai para o controle com foco (ou o form) e sobe para os pais
     /// até alguém tratar. Tab / Shift+Tab sem tratamento movem o foco.
-    pub fn key_down(&mut self, root: ComponentId, event: KeyEvent) {
+    pub fn key_down(&mut self, root: ComponentId, mut event: KeyEvent) {
+        // A janela em que a tecla chegou (o form raiz).
+        event.form = Some(self.root_of(root));
         self.report(&crate::activity::Activity::KeyDown { form: root, event });
         if self.input_blocked(root) {
             return; // há um form modal aberto por cima
         }
+        self.active_form = Some(root);
         // Uma tecla anterior espera a resposta do backend: esta vai para a fila, em ordem.
         if self.hold_input(root, crate::keyflow::Held::Down(event)) {
             return;
@@ -2041,8 +2061,15 @@ impl Ui {
         let plain = !event.modifiers.ctrl && !event.modifiers.alt && !event.modifiers.shift && !event.modifiers.meta;
         if plain && !event.repeat && matches!(event.key, Key::Enter | Key::Escape) {
             let prop = if event.key == Key::Enter { "default_button" } else { "cancel_button" };
-            if let Some(button) = self.flagged_button(root, prop) {
+            // Com o foco num modal de contêiner (`show_modal_in`), os botões dele; sem botão de
+            // cancelar, o Esc cancela o modal.
+            let modal = self.inner_modal_scope(root);
+            if let Some(button) = self.flagged_button(modal.unwrap_or(root), prop) {
                 self.click(button);
+                return;
+            }
+            if let (Some(modal), Key::Escape) = (modal, event.key) {
+                self.set_modal_result(modal, crate::forms::ModalResult::Cancel);
                 return;
             }
         }
@@ -2064,6 +2091,10 @@ impl Ui {
         let mut stack = vec![root];
         while let Some(id) = stack.pop() {
             if id != root && self.cb(id).is_some_and(|cb| !cb.visible() || !cb.enabled()) {
+                continue;
+            }
+            // Os botões de um modal de contêiner só valem com o foco nele (veja acima).
+            if id != root && self.get::<crate::forms::ModalVeil>(id).is_some() {
                 continue;
             }
             if id != root && matches!(self.get_prop(id, prop), Ok(crate::prop::PropValue::Bool(true))) {
@@ -2148,8 +2179,8 @@ impl Ui {
         self.click(id);
     }
 
-    /// `ancestor` está acima de `id` na árvore?
-    fn is_ancestor(&self, ancestor: ComponentId, id: ComponentId) -> bool {
+    /// `ancestor` está acima de `id` na árvore (um controle não é ancestral de si mesmo)?
+    pub fn is_ancestor(&self, ancestor: ComponentId, id: ComponentId) -> bool {
         let mut current = self.parent(id);
         while let Some(p) = current {
             if p == ancestor {
@@ -2266,7 +2297,8 @@ impl Ui {
         false
     }
 
-    pub fn key_up(&mut self, root: ComponentId, event: KeyEvent) {
+    pub fn key_up(&mut self, root: ComponentId, mut event: KeyEvent) {
+        event.form = Some(self.root_of(root));
         self.report(&crate::activity::Activity::KeyUp { form: root, event });
         if self.input_blocked(root) {
             return; // há um form modal aberto por cima

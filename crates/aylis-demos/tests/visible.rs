@@ -19,8 +19,9 @@ fn ink(rgba: &[u8], width: u32, rect: RectF, background: Color) -> f32 {
     if total == 0 { 0.0 } else { inked as f32 / total as f32 }
 }
 
-/// Começam do zero e se desenham com o tempo (no primeiro quadro, ainda nada).
-const ANIMATED_FROM_ZERO: &[&str] = &["AjaxBar"];
+/// Começam do zero e se desenham com o tempo (no primeiro quadro, ainda nada): a barra e os
+/// avisos que entram com fade.
+const ANIMATED_FROM_ZERO: &[&str] = &["AjaxBar", "ToastStack"];
 
 #[test]
 fn every_live_demo_draws_something_and_fits() {

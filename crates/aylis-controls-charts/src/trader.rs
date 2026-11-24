@@ -531,7 +531,7 @@ impl Component for CandleChart {
         let y = |v: f64| plot.y + ((max - v) / (max - min)) as f32 * plot.height;
         let x = |i: usize| plot.x + slot * ((i - start) as f32 + 0.5);
         // Grade e eixo de preço à direita.
-        let grid = Stroke::new(ctx.theme.color("border").with_opacity(0.6), 1.0);
+        let grid = Stroke::new(crate::chart::grid_color(ctx).with_opacity(0.6), 1.0);
         let mut pl = s.clone();
         pl.h_align = TextAlign::Leading;
         for k in 0..=5 {
@@ -1205,7 +1205,7 @@ impl Component for Watchlist {
             let x0 = r.x + cols[..k].iter().sum::<f32>();
             canvas.draw_text(label, RectF::new(x0 + 10.0, r.y, cols[k] - 20.0, h), &s);
         }
-        let line = Stroke::new(ctx.theme.color("border"), 1.0);
+        let line = Stroke::new(crate::chart::grid_color(ctx), 1.0);
         let mut animating = false;
         for (i, q) in self.quotes.iter().enumerate() {
             let y = r.y + h * (i + 1) as f32;

@@ -57,6 +57,7 @@ pub mod publish;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod recording_test;
 pub mod resources;
+pub mod test_all;
 pub mod testdocs;
 pub mod emoji;
 pub mod handler_times;

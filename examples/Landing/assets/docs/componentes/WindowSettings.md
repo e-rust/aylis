@@ -13,7 +13,7 @@ Configura a janela do form em que está (ou, com `scope` = `app`, as de todos os
 | `backdrop` | Fundo do sistema | um de: `system`, `none`, `mica`, `acrylic`, `tabbed` | O fundo que o Windows 11 desenha por trás do conteúdo: `system`, `none`, `mica`, `acrylic` ou `tabbed` (aparece onde o form não pinta fundo). |
 | `title_color` | Cor da barra de título | cor | A cor da barra de título do sistema (Windows 11; vazio: a do sistema). |
 | `title_text_color` | Cor do texto do título | cor | A cor do texto da barra de título do sistema (Windows 11; vazio: a do sistema). |
-| `border_color` | Cor da borda | cor | A cor da borda da janela (Windows 11; vazio: a do sistema). |
+| `border_color` | Cor da borda | cor | A cor da borda da janela (Windows 11): vazio, a do sistema; `none`, sem borda (nem a linha de 1 px em volta da tela cheia); ou a cor. |
 | `shadow` | Sombra | lógico | A sombra do Windows na janela sem borda (`border_style` = `none`). |
 | `blur` | Desfoque | lógico | O que está atrás da janela sai desfocado (Windows, macOS e Linux com KDE). Com o form transparente (`transparent`, `window_shape`) e o `fill` com alfa, é o vidro fosco; no Windows, o desfoque segue a forma do form, com a borda suave. |
 

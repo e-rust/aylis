@@ -49,22 +49,9 @@ impl Default for AutoComplete {
     }
 }
 
-/// Minúsculas e sem acentos (para comparar "sao" com "São").
-pub fn fold(text: &str) -> String {
-    text.chars()
-        .flat_map(char::to_lowercase)
-        .map(|c| match c {
-            'á' | 'à' | 'â' | 'ã' | 'ä' => 'a',
-            'é' | 'è' | 'ê' | 'ë' => 'e',
-            'í' | 'ì' | 'î' | 'ï' => 'i',
-            'ó' | 'ò' | 'ô' | 'õ' | 'ö' => 'o',
-            'ú' | 'ù' | 'û' | 'ü' => 'u',
-            'ç' => 'c',
-            'ñ' => 'n',
-            c => c,
-        })
-        .collect()
-}
+/// O texto para comparar numa busca, sem acento e sem maiúscula (o [`aylis_core::text::fold`],
+/// que diz o que cobre).
+pub use aylis_core::text::fold;
 
 impl AutoComplete {
     pub fn new(items: &str) -> Self {

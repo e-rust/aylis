@@ -12,7 +12,16 @@ impl App {
         if SINGLE_SURFACE || w.span.is_some() || w.window.is_maximized() || w.window.fullscreen().is_some() || self.enum_prop(w.form, "border_style") != "custom" {
             return None;
         }
+        // Com o botão apertado (a aba arrastada para fora pela borda) ou com o mouse fora da
+        // janela (a captura do arrasto manda os pontos de fora), a borda não toma o mouse: o
+        // movimento é do app.
+        if self.pointer_down || self.ui.dragging(w.form) {
+            return None;
+        }
         let size = w.window.inner_size().to_logical::<f32>(self.system_scale(index) * self.ui.form_zoom(w.form) as f64);
+        if p.x < 0.0 || p.y < 0.0 || p.x >= size.width || p.y >= size.height {
+            return None;
+        }
         const EDGE: f32 = 6.0;
         let (left, right) = (p.x < EDGE, p.x > size.width - EDGE);
         let (top, bottom) = (p.y < EDGE, p.y > size.height - EDGE);
@@ -101,9 +110,26 @@ impl App {
                     });
                 }
                 WindowCommand::SetTopmost(on) => {
-                    window.set_window_level(if on { winit::window::WindowLevel::AlwaysOnTop } else { winit::window::WindowLevel::Normal })
+                    window.set_window_level(if on { winit::window::WindowLevel::AlwaysOnTop } else { winit::window::WindowLevel::Normal });
+                    #[cfg(windows)]
+                    win32::watch_topmost(form, on);
                 }
-                WindowCommand::UpdateLevel => window.set_window_level(self.window_level(form)),
+                WindowCommand::UpdateLevel => {
+                    let level = self.window_level(form);
+                    window.set_window_level(level);
+                    // O winit só chama o sistema quando o nível muda: outra janela sempre por cima
+                    // que passou à frente não perdia o lugar. Reafirmado sempre, sem ativar.
+                    #[cfg(windows)]
+                    if level == winit::window::WindowLevel::AlwaysOnTop {
+                        win32::reassert_topmost(window);
+                    }
+                    // De volta à frente: o próximo "perdeu o topo" avisa de novo.
+                    #[cfg(windows)]
+                    {
+                        win32::watch_topmost(form, level == winit::window::WindowLevel::AlwaysOnTop);
+                        win32::check_topmost();
+                    }
+                }
                 WindowCommand::RequestAttention(critical) => window.request_user_attention(Some(if critical {
                     winit::window::UserAttentionType::Critical
                 } else {
@@ -184,7 +210,40 @@ impl App {
                         window.set_maximized(false);
                     }
                     window.set_outer_position(PhysicalPosition::new(x, y));
-                    window.focus_window();
+                    // O form que não toma o foco (`no_activate`, `activate_on_show` desligado)
+                    // continua sem ele depois de mudar de lugar.
+                    if self.takes_focus(form) {
+                        window.focus_window();
+                    }
+                }
+                // Lugar e tamanho em pixels físicos, a partir do canto do monitor:
+                // sem a tela cheia nem o maximizar, e sem tomar o foco, salvo com `activate`.
+                WindowCommand::Place { monitor, x, y, width, height, activate } => {
+                    let origin = window.available_monitors().nth(monitor).filter(monitors::valid).map_or(PhysicalPosition::new(0, 0), |m| m.position());
+                    if window.fullscreen().is_some() {
+                        window.set_fullscreen(None);
+                    }
+                    if window.is_maximized() {
+                        window.set_maximized(false);
+                    }
+                    let (x, y) = (origin.x.saturating_add(x), origin.y.saturating_add(y));
+                    #[cfg(windows)]
+                    win32::place(window, x, y, width.max(1), height.max(1), activate);
+                    #[cfg(not(windows))]
+                    {
+                        window.set_outer_position(PhysicalPosition::new(x, y));
+                        // O winit pede o tamanho de dentro: tira a moldura que a janela tem agora.
+                        let (outer, inner) = (window.outer_size(), window.inner_size());
+                        let frame = (outer.width.saturating_sub(inner.width), outer.height.saturating_sub(inner.height));
+                        let _ = window.request_inner_size(winit::dpi::PhysicalSize::new(width.saturating_sub(frame.0).max(1), height.saturating_sub(frame.1).max(1)));
+                        if activate {
+                            window.focus_window();
+                        }
+                    }
+                    #[cfg(windows)]
+                    if activate {
+                        bring_to_front(&self.ui, form, window);
+                    }
                 }
                 // A área cliente do tamanho do form (J11): o tamanho pedido é o de dentro, e o
                 // `Resized` que vem depois confirma (ou o sistema limita, e o form fica com o que

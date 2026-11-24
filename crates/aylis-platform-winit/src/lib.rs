@@ -173,6 +173,11 @@ mod web_push;
 mod native;
 #[cfg(native_tray)]
 mod tray;
+mod desktop;
+#[cfg(not(any(web, mobile)))]
+mod single_instance;
+#[cfg(not(any(web, mobile)))]
+pub use single_instance::claim_single_instance;
 #[cfg(any(native_tray, windows))]
 mod badge;
 #[cfg(windows)]
@@ -189,6 +194,8 @@ mod window_monitors;
 mod system_bars;
 #[cfg(windows)]
 mod drag_window;
+#[cfg(windows)]
+mod hand_cursors;
 #[cfg(target_os = "windows")]
 mod textassist_win;
 #[cfg(target_os = "windows")]
@@ -616,6 +623,9 @@ fn run_on(
             let _ = p.send_event(());
         }
     }));
+    // Os argumentos das outras aberturas (o `single_instance` do projeto) chegam por aqui.
+    #[cfg(not(any(web, mobile)))]
+    single_instance::attach(ui.poster());
     // Diagnóstico: AYLIS_RENDERER=cpu, gpu ou d2d força o renderizador do modo automático.
     let mut options = options;
     if options.renderer == Renderer::Auto {
@@ -643,6 +653,15 @@ fn run_on(
     let renderer = Painters::new()?;
     #[cfg(not(web))]
     install_services(&mut ui, &renderer, options.renderer);
+    // A área de trabalho (o mouse fora das janelas, a janela sob um ponto, a transparência, a
+    // captura de um monitor) e os "Efeitos de transparência" de agora.
+    #[cfg(not(any(web, mobile)))]
+    if ui.services().desktop.is_none() {
+        ui.services_mut().desktop = Some(Box::new(desktop::Desktop));
+    }
+    if let Some(on) = ui.services().desktop.as_ref().and_then(|d| d.transparency()) {
+        ui.set_system_transparency(on);
+    }
     // Campos que já tinham texto antes do motor de texto existir (o form carregado do
     // JSON, o texto posto antes do `run`): conferem agora.
     if ui.services().text_assist.is_some() {
@@ -704,6 +723,10 @@ fn run_on(
         started_once: false,
         #[cfg(windows)]
         drag_window: Default::default(),
+        #[cfg(windows)]
+        label_window: Default::default(),
+        #[cfg(windows)]
+        hand_cursors: Vec::new(),
         watch_insets_until: None,
         #[cfg(any(native_webview, web_webview, android_webview))]
         native: Default::default(),
@@ -735,6 +758,8 @@ fn run_on(
         spans: Default::default(),
         span_checks: Vec::new(),
         deactivations: Vec::new(),
+        recorded_placements: Default::default(),
+        pointer_down: false,
     };
     #[cfg(web)]
     {
@@ -953,6 +978,14 @@ struct App {
     /// A imagem do arrasto numa janela própria (segue o mouse pela tela inteira).
     #[cfg(windows)]
     drag_window: drag_window::DragWindow,
+    /// O rótulo do arrasto numa janela própria, como a imagem (segue o mouse fora da janela de
+    /// origem também), e o texto e a escala que ela mostra.
+    #[cfg(windows)]
+    label_window: drag_window::DragWindow,
+    /// Os cursores de mão (`Grab`, `Grabbing`) desenhados, por escala inteira: o winit dá a seta
+    /// de mover no Windows, que não tem mão aberta nem fechada no sistema.
+    #[cfg(windows)]
+    hand_cursors: Vec<(u32, winit::window::CustomCursor, winit::window::CustomCursor)>,
     /// Até quando conferir a área segura (o sistema não avisa quando o teclado virtual
     /// termina de abrir ou fechar).
     watch_insets_until: Option<Instant>,
@@ -1001,6 +1034,13 @@ struct App {
     span_checks: Vec<ComponentId>,
     /// Os forms com um pedaço que perdeu o foco (o `on_deactivate` sai se nenhum ganhou).
     deactivations: Vec<ComponentId>,
+    /// O último lugar de cada janela que a própria plataforma anotou (ao mover, ao mudar de
+    /// tamanho): ao reabrir, só ele não vence o `position` do form, salvo com
+    /// `remember_placement`. O que o app pôs com `set_window_placement` vale sempre.
+    recorded_placements: std::collections::HashMap<ComponentId, aylis_core::WindowPlacement>,
+    /// Um botão do mouse está apertado numa janela do app (a borda de redimensionar não é
+    /// procurada no meio de um arrasto).
+    pointer_down: bool,
 }
 
 impl App {
@@ -1411,7 +1451,13 @@ pub(crate) fn apply_window_options(window: &Window, o: &aylis_core::WindowOption
         // Vazio é a cor do sistema: o `None` do winit tiraria a cor (a borda sumiria).
         window.set_title_background_color(Some(o.title_color.map_or(WinColor::SYSTEM_DEFAULT, color)));
         window.set_title_text_color(o.title_text_color.map_or(WinColor::SYSTEM_DEFAULT, color));
-        window.set_border_color(Some(o.border_color.map_or(WinColor::SYSTEM_DEFAULT, color)));
+        // A borda: a do sistema, nenhuma (o `None` do winit é o `DWMWA_COLOR_NONE`: some também a
+        // linha de 1 px em volta da tela cheia) ou a cor.
+        window.set_border_color(match o.border_color {
+            aylis_core::BorderColor::System => Some(WinColor::SYSTEM_DEFAULT),
+            aylis_core::BorderColor::None => None,
+            aylis_core::BorderColor::Color(c) => Some(color(c)),
+        });
         window.set_undecorated_shadow(o.shadow);
         win32::set_window_animation(window, o.animation);
         win32::set_window_ex_styles(window, o.no_activate, !o.alt_tab);
@@ -1498,6 +1544,10 @@ impl ApplicationHandler for App {
             // Primeiro layout no tamanho de design: é a referência das âncoras, mesmo
             // que o sistema abra a janela com outro tamanho.
             self.ui.layout();
+        }
+        #[cfg(windows)]
+        if self.hand_cursors.is_empty() {
+            self.hand_cursors = hand_cursors::create(event_loop);
         }
         self.sync_windows(event_loop);
         if self.windows.is_empty() {
@@ -1761,6 +1811,34 @@ impl ApplicationHandler for App {
         #[cfg(windows)]
         for form in win32::take_move_ends() {
             self.ui.window_drag_end(form);
+        }
+        // O mouse foi tomado no meio de um gesto (outro programa capturou, a troca de janela com
+        // o botão apertado): o soltar não vai chegar, e o arrasto acaba como no Esc.
+        #[cfg(windows)]
+        for form in win32::take_capture_losses() {
+            self.gesture_lost(form);
+        }
+        // A composição do sistema mudou: o desfoque (`WindowSettings.blur`) é refeito com um
+        // compositor novo.
+        #[cfg(windows)]
+        if win32::take_composition_changed() {
+            // Os "Efeitos de transparência" podem ter mudado (o `on_transparency_change` do `Screen`).
+            if let Some(on) = win32::transparency_effects() {
+                self.ui.set_system_transparency(on);
+            }
+            if win32::reset_blurs() {
+                for index in 0..self.windows.len() {
+                    self.apply_shape(index);
+                }
+            }
+        }
+        // Outra janela sempre por cima passou à frente de um form `topmost`.
+        #[cfg(windows)]
+        for form in win32::take_topmost_lost() {
+            if self.ui.contains(form) {
+                self.ui.fire(form, "on_topmost_lost", &aylis_core::EventArgs::None);
+                self.ui.process_events();
+            }
         }
         #[cfg(native_d2d)]
         for (form, force) in win32::take_gpu_checks() {

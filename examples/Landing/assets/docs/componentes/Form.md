@@ -92,6 +92,7 @@ Janela. Pinta o fundo com o estilo `Form` do tema.
 | `on_undock` | — | — |  |
 | `on_files_drop` | — | — |  |
 | `on_view_change` | — | — |  |
+| `on_topmost_lost` | — | — |  |
 
 ## Em código
 

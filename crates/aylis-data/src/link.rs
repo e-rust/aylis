@@ -27,7 +27,7 @@ impl FieldLink {
             return false;
         }
         match &message.event {
-            DataEvent::RecordChanged(Some(field)) => field.eq_ignore_ascii_case(&self.data_field),
+            DataEvent::RecordChanged(Some(field)) | DataEvent::FieldChanged(field) => field.eq_ignore_ascii_case(&self.data_field),
             _ => true,
         }
     }

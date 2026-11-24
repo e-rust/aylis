@@ -197,6 +197,11 @@ pub struct VirtualList {
     anchor: Option<usize>,
     /// Arrastando a barra: a distância do mouse ao começo do cursor dela.
     bar_drag: Option<f32>,
+    /// A largura da barra: a do tema (`ScrollBar`, ou o `scroll_bar` do estilo) ou [`BAR`].
+    /// Guardada porque entra na arrumação das linhas e no clique.
+    bar: f32,
+    /// O mouse sobre o cursor da barra (o `hover` do estilo `ScrollBar`).
+    bar_hover: bool,
     /// Algum modelo tem animação: só então a linha reciclada recomeça as animações.
     animated: bool,
     /// O item que cada linha mostrou por último com as animações dele (não muda no
@@ -205,6 +210,11 @@ pub struct VirtualList {
     /// Os itens cujo `appear` já rodou (decidido em 22/11: uma vez por item). Esquecidos no
     /// `refresh` e quando a quantidade muda.
     appeared_items: RefCell<std::collections::HashSet<usize>>,
+    /// O `refresh` pediu: todas as linhas à vista são preenchidas de novo no próximo `sync`,
+    /// cada item na linha em que já estava (desfazer as linhas e redistribuí-las mudava o item
+    /// de linha, e o segundo clique de um duplo clique, que compara a linha, contava como
+    /// primeiro).
+    rebind_all: std::cell::Cell<bool>,
 }
 
 /// A largura de cada ação revelada ao deslizar a linha.
@@ -214,7 +224,7 @@ impl Default for VirtualList {
     fn default() -> Self {
         let mut base = ControlBase::new(320.0, 400.0);
         base.set_clip_children(true);
-        Self { swipe_actions: String::new(), swiped: std::cell::Cell::new(None), row_drag: std::cell::Cell::new(false), overscroll: aylis_core::Overscroll::Auto,
+        Self { swipe_actions: String::new(), swiped: std::cell::Cell::new(None), row_drag: std::cell::Cell::new(false), overscroll: aylis_core::Overscroll::Auto, rebind_all: std::cell::Cell::new(false),
             base,
             item_count: 0,
             item_height: 64.0,
@@ -244,6 +254,8 @@ impl Default for VirtualList {
             row_kind: RefCell::default(),
             anchor: None,
             bar_drag: None,
+            bar: BAR,
+            bar_hover: false,
             animated: false,
             bound: RefCell::default(),
             appeared_items: RefCell::default(),
@@ -478,13 +490,24 @@ impl VirtualList {
     /// O trilho da barra e o cursor dela (nas coordenadas da lista).
     fn bar_rects(&self, count: usize, width: f32, height: f32) -> (RectF, RectF) {
         let total = self.line_start(self.lines(count), count).max(1.0);
-        let (track, view) = if self.horizontal() { (RectF::new(0.0, height - BAR, width, BAR), width) } else { (RectF::new(width - BAR, 0.0, BAR, height), height) };
+        let bar = self.bar;
+        let (track, view) = if self.horizontal() { (RectF::new(0.0, height - bar, width, bar), width) } else { (RectF::new(width - bar, 0.0, bar, height), height) };
         let length = if self.horizontal() { track.width } else { track.height };
         let thumb_len = (view / total * length).clamp(24.0_f32.min(length), length);
         let max = self.max_offset(count);
         let at = if max > 0.0 { self.offset / max * (length - thumb_len) } else { 0.0 };
-        let thumb = if self.horizontal() { RectF::new(track.x + at, track.y + 2.0, thumb_len, BAR - 4.0) } else { RectF::new(track.x + 2.0, track.y + at, BAR - 4.0, thumb_len) };
+        let side = (bar - 4.0).max(1.0);
+        let thumb = if self.horizontal() { RectF::new(track.x + at, track.y + 2.0, thumb_len, side) } else { RectF::new(track.x + 2.0, track.y + at, side, thumb_len) };
         (track, thumb)
+    }
+
+    /// Relê a largura da barra no tema; mudou: as linhas são arrumadas de novo.
+    fn refresh_bar(&mut self, ctx: &mut EventCtx<'_>) {
+        let width = crate::scroll_bar::look_of(ctx.ui, ctx.id, &*self, false).width.unwrap_or(BAR);
+        if width != self.bar {
+            self.bar = width;
+            ctx.invalidate();
+        }
     }
 
     /// O mouse na barra (a posição no sentido da lista): leva o cursor até lá.
@@ -518,9 +541,7 @@ impl VirtualList {
     /// Mostra de novo todos os itens à vista (os dados mudaram).
     pub fn refresh(ui: &mut Ui, list: ComponentId) {
         if let Some(l) = ui.get_mut::<VirtualList>(list) {
-            for (_, index) in l.pool.borrow_mut().iter_mut() {
-                *index = None;
-            }
+            l.rebind_all.set(true);
             l.forget_items();
         }
         ui.send_message(list, &Refresh);
@@ -576,9 +597,7 @@ impl VirtualList {
 
     /// Esquece o que cada linha mostra e preenche de novo (os dados mudaram).
     pub fn resync(&mut self, ctx: &mut EventCtx<'_>) {
-        for (_, index) in self.pool.borrow_mut().iter_mut() {
-            *index = None;
-        }
+        self.rebind_all.set(true);
         self.forget_items();
         self.sync(ctx);
     }
@@ -761,6 +780,10 @@ impl VirtualList {
                 }
             }
             let kept: Vec<usize> = pool.iter().filter_map(|(_, i)| *i).collect();
+            // Depois do `refresh`, as que ficam no lugar também são preenchidas de novo.
+            if self.rebind_all.take() {
+                fresh.extend(pool.iter().filter_map(|&(id, i)| Some((id, i?))));
+            }
             for (at, &item) in wanted.iter().enumerate().filter(|(_, i)| !kept.contains(i)) {
                 let kind = kinds[at];
                 match pool.iter_mut().find(|(id, i)| i.is_none() && row_kind.get(id).copied().unwrap_or(0) == kind) {
@@ -1031,6 +1054,8 @@ impl Component for VirtualList {
             }
             "item_index" | "selected" => self.mark_rows(ctx),
             "scroll_bar" => ctx.ui.invalidate(),
+            // Outro estilo ou tema: a barra pode ter outra largura.
+            "style" | "theme" => self.refresh_bar(ctx),
             "item_count" | "item_height" | "item_width" | "orientation" | "columns" | "sizes" | "kinds" | "kind_field" => {
                 // As posições somadas são refeitas.
                 self.starts.borrow_mut().0 = usize::MAX;
@@ -1053,6 +1078,7 @@ impl Component for VirtualList {
     }
 
     fn resized(&mut self, ctx: &mut EventCtx<'_>) {
+        self.refresh_bar(ctx);
         self.sync(ctx);
     }
 
@@ -1160,6 +1186,21 @@ impl Component for VirtualList {
         if let Some(grab) = self.bar_drag {
             let pos = if self.horizontal() { event.position.x } else { event.position.y };
             self.bar_to(ctx, pos, grab);
+            return;
+        }
+        // O mouse sobre o cursor da barra: o `hover` do estilo `ScrollBar`.
+        let count = self.known_count.get();
+        let b = self.base.bounds();
+        let over = self.shows_bar(count) && self.bar_rects(count, b.width, b.height).1.inflate(2.0).contains(event.position);
+        if over != self.bar_hover {
+            self.bar_hover = over;
+            ctx.repaint();
+        }
+    }
+
+    fn pointer_leave(&mut self, ctx: &mut EventCtx<'_>) {
+        if std::mem::take(&mut self.bar_hover) {
+            ctx.repaint();
         }
     }
 
@@ -1170,9 +1211,16 @@ impl Component for VirtualList {
         if self.shows_bar(count) {
             let (track, thumb) = self.bar_rects(count, ctx.rect.width, ctx.rect.height);
             let at = |r: RectF| r.offset(ctx.rect.x, ctx.rect.y);
-            canvas.fill_rect(at(track), 0.0, &aylis_core::Brush::Solid(ctx.theme.color("text_muted").with_opacity(0.08)));
-            let alpha = if self.bar_drag.is_some() { 0.7 } else { 0.45 };
-            canvas.fill_rect(at(thumb), (BAR - 4.0) / 2.0, &aylis_core::Brush::Solid(ctx.theme.color("text_muted").with_opacity(alpha)));
+            // Pelo tema (`ScrollBar` e o `scroll_bar` do estilo); sem ele, a de antes: 10 px, o
+            // trilho quase invisível, o cursor mais forte arrastando.
+            let muted = ctx.theme.color("text_muted");
+            let dragging = self.bar_drag.is_some();
+            let look = crate::scroll_bar::resolve(ctx, dragging || self.bar_hover, crate::scroll_bar::Defaults {
+                width: self.bar,
+                track: Some(muted.with_opacity(0.08)),
+                thumb: muted.with_opacity(if dragging { 0.7 } else { 0.45 }),
+            });
+            look.paint(canvas, Some(at(track)), at(thumb), (self.bar - 4.0).max(0.0) / 2.0);
         }
         let Some((index, x)) = self.swiped.get().filter(|(_, x)| *x < 0.0) else { return };
         let _ = x;
@@ -1241,7 +1289,7 @@ impl aylis_core::LayoutHooks for VirtualList {
         let lanes = self.lanes();
         let count = self.known_count.get();
         // A barra de rolagem fica fora das linhas (o mouse nela é da lista).
-        let bar = if self.shows_bar(count) { BAR } else { 0.0 };
+        let bar = if self.shows_bar(count) { self.bar } else { 0.0 };
         let cross_total = if self.horizontal() { area.height - bar } else { area.width - bar };
         let lane_size = cross_total / lanes as f32;
         Some(

@@ -766,7 +766,7 @@ fn has_fonts(project: &Project) -> bool {
 
 /// As features do crate `aylis` que o `.aylisproj` pode pedir (`features`).
 pub const APP_FEATURES: &[&str] =
-    &["data", "dbcontrols", "providers", "media", "media-tags", "markdown", "tray", "nfc", "bluetooth", "docview", "webview", "vector", "3d", "remote", "mcp", "time-zones", "text-shaping"];
+    &["data", "dbcontrols", "providers", "media", "media-tags", "markdown", "tray", "nfc", "bluetooth", "docview", "webview", "vector", "3d", "remote", "mcp", "http", "websocket", "time-zones", "text-shaping"];
 
 /// A linha `features = [...]` da dependência do aylis.
 fn features_list(features: &[&str]) -> String {

@@ -4,8 +4,8 @@
 use std::cell::RefCell;
 
 use aylis_core::{
-    Brush, Canvas, Color, Component, ControlBase, CursorShape, EventArgs, EventCtx, FontWeight, Key, KeyEvent, PaintCtx, PointF,
-    PointerButton, PointerEvent, RectF, Stroke, TextAlign, properties,
+    Brush, Canvas, Color, Component, ComponentId, ControlBase, CursorShape, EventArgs, EventCtx, FontWeight, Key, KeyEvent, PaintCtx, PointF,
+    PointerButton, PointerEvent, RectF, Stroke, TextAlign, Ui, properties,
 };
 
 use crate::dates::Day;
@@ -524,30 +524,104 @@ fn now_minutes() -> u32 {
 // CommandPalette
 // ===========================================================================
 
-/// Busca de comandos: digite e a lista filtra; setas escolhem, Enter executa
-/// (`on_select` com o nome do comando). `items` é a lista de registros [`PALETTE_COMMAND`]
-/// (`[{"name": "Salvar", "shortcut": "Ctrl+S", "icon": "download"}]`; atalho e ícone opcionais).
+/// Busca de comandos: digite e a lista filtra (sem acento e sem maiúscula, o
+/// [`fold`](crate::fold)); setas escolhem, Enter executa (`on_select` com o
+/// [`PaletteSelection`]: o `id` e o nome do comando). `items` é a lista de registros
+/// [`PALETTE_COMMAND`] (`[{"id": "save", "name": "Salvar", "category": "Arquivo",
+/// "description": "Grava o documento", "shortcut": "Ctrl+S", "icon": "download"}]`; só o nome é
+/// obrigatório, e o `id` vazio é o nome). Os comandos de mesma `category` ficam juntos, com o
+/// título dela em cima.
+///
+/// Recentes: os últimos escolhidos (até `max_recent`) aparecem primeiro com a busca vazia,
+/// só enquanto o app está aberto; o `on_recent_change` manda a lista (`recent`, os `id`
+/// separados por `;`) para o app gravar, se quiser, e devolver no `recent` da próxima vez.
+///
+/// Busca no servidor: o `on_query_change` chega com o texto quando a digitação para por
+/// `query_delay` ms (uma tecla nova antes disso cancela o aviso pendente); o app troca o
+/// `items` com o resultado (e confere se o `query` ainda é o mesmo). Com `filter` desligado, a
+/// lista mostra o `items` como veio, sem filtrar pelo texto.
+///
+/// [`CommandPalette::open`] (o `open` por nome) mostra a paleta por cima do form, com a busca
+/// limpa e o foco; aberta assim, ela some ao escolher, no Esc com a busca vazia e ao perder o
+/// foco.
 pub struct CommandPalette {
     pub base: ControlBase,
-    /// Os comandos, em JSON: `[{"name": "Salvar", "shortcut": "Ctrl+S", "icon": "download"}]`.
+    /// Os comandos, em JSON: `[{"id": "save", "name": "Salvar", "category": "Arquivo",
+    /// "description": "...", "shortcut": "Ctrl+S", "icon": "download"}]`.
     pub items: String,
-    /// O texto digitado na busca: a lista mostra só os comandos que o contêm. Vazio: todos.
+    /// O texto digitado na busca: a lista mostra só os comandos que o contêm (no nome, na
+    /// descrição ou na categoria). Vazio: todos.
     pub query: String,
     /// O texto apagado da busca vazia.
     pub placeholder: String,
+    /// Filtra o `items` pelo texto da busca (desligado: o app filtra, como na busca no
+    /// servidor pelo `on_query_change`).
+    pub filter: bool,
+    /// Quantos milissegundos a digitação parada espera antes do `on_query_change`.
+    pub query_delay: u32,
+    /// Quantos recentes a paleta guarda e mostra (0: nenhum).
+    pub max_recent: u32,
+    /// Os `id` dos recentes, do mais novo ao mais velho, separados por `;` (o app grava e
+    /// devolve; o `on_recent_change` avisa quando muda).
+    pub recent: String,
     /// Os comandos lidos do `items` (refeitos só quando ele muda).
     commands: Vec<PaletteCommandRecord>,
+    /// Os comandos que combinam com a busca, na ordem da tela (refeitos quando a busca, os
+    /// comandos ou os recentes mudam; a pintura e as teclas só leem).
+    shown: Vec<PaletteRow>,
     active: usize,
     rows: RefCell<Vec<(RectF, usize)>>,
+    /// A primeira linha à vista (a lista rola para mostrar a escolhida).
+    first_row: std::cell::Cell<usize>,
+    /// O aviso do `on_query_change` que espera a digitação parar.
+    pending_query: Option<u64>,
+    /// Aberta pelo [`CommandPalette::open`]: some ao escolher, no Esc e ao perder o foco.
+    opened: bool,
 }
 
 /// Um comando no JSON do `items` (o [`PALETTE_COMMAND`]).
 #[derive(serde::Deserialize, Default, Clone)]
 #[serde(default)]
 struct PaletteCommandRecord {
+    id: String,
     name: String,
+    category: String,
+    description: String,
     shortcut: String,
     icon: String,
+}
+
+impl PaletteCommandRecord {
+    /// O `id`, ou o nome quando o `id` não veio.
+    fn key(&self) -> &str {
+        if self.id.is_empty() { &self.name } else { &self.id }
+    }
+}
+
+/// Uma linha da lista: o título de um grupo ou um comando (o índice no `commands`).
+#[derive(Clone, Debug, PartialEq)]
+enum PaletteRow {
+    Header(String),
+    Command(usize),
+}
+
+/// O comando escolhido (o `on_select`): o `id` (o nome, quando o comando não tem) e o nome.
+#[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct PaletteSelection {
+    pub id: String,
+    pub name: String,
+}
+
+/// O registro do [`PaletteSelection`] no acesso tipado.
+pub const PALETTE_SELECTION: aylis_core::RecordInfo =
+    aylis_core::RecordInfo { name: "PaletteSelection", fields: &[("id", aylis_core::PropKind::String), ("name", aylis_core::PropKind::String)] };
+
+impl aylis_core::EventValue for PaletteSelection {
+    const ARG: aylis_core::EventArg = aylis_core::EventArg::Value(aylis_core::PropKind::Record(&PALETTE_SELECTION));
+    fn from_args(args: &EventArgs) -> Option<Self> {
+        from_event(args)
+    }
 }
 
 impl Default for CommandPalette {
@@ -559,9 +633,17 @@ impl Default for CommandPalette {
             items: r#"[{"name":"Abrir arquivo","shortcut":"Ctrl+O","icon":"folder"},{"name":"Salvar","shortcut":"Ctrl+S","icon":"download"},{"name":"Procurar","shortcut":"Ctrl+F","icon":"search"},{"name":"Configurações","shortcut":"Ctrl+,","icon":"settings"},{"name":"Sair","shortcut":"Alt+F4","icon":"logout"}]"#.into(),
             query: String::new(),
             placeholder: "Digite um comando…".into(),
+            filter: true,
+            query_delay: 200,
+            max_recent: 5,
+            recent: String::new(),
             commands: Vec::new(),
+            shown: Vec::new(),
             active: 0,
             rows: RefCell::new(Vec::new()),
+            first_row: std::cell::Cell::new(0),
+            pending_query: None,
+            opened: false,
         };
         p.sync("items");
         p
@@ -569,33 +651,187 @@ impl Default for CommandPalette {
 }
 
 const ROW: f32 = 36.0;
+/// A linha de um comando com descrição (o nome e a descrição embaixo).
+const ROW_TALL: f32 = 50.0;
+/// O título de um grupo (a categoria, os recentes).
+const ROW_HEADER: f32 = 26.0;
 
 impl CommandPalette {
-    /// Os comandos que combinam com a busca: (nome, atalho, ícone).
+    /// Os comandos que combinam com a busca, na ordem da tela: (nome, atalho, ícone).
     pub fn matches(&self) -> Vec<(String, String, String)> {
-        let q = crate::autocomplete::fold(self.query.trim());
-        self.commands
-            .iter()
-            .filter(|c| q.is_empty() || crate::autocomplete::fold(&c.name).contains(&q))
-            .map(|c| (c.name.clone(), c.shortcut.clone(), c.icon.clone()))
-            .collect()
+        self.commands_shown().map(|c| (c.name.clone(), c.shortcut.clone(), c.icon.clone())).collect()
+    }
+
+    /// Os `id` dos comandos à vista, na ordem da tela (os recentes primeiro, com a busca vazia).
+    pub fn shown_ids(&self) -> Vec<String> {
+        self.commands_shown().map(|c| c.key().to_string()).collect()
+    }
+
+    /// Os `id` dos recentes, do mais novo ao mais velho.
+    pub fn recent_ids(&self) -> Vec<String> {
+        self.recent.split(';').map(str::trim).filter(|t| !t.is_empty()).map(str::to_string).collect()
+    }
+
+    fn commands_shown(&self) -> impl Iterator<Item = &PaletteCommandRecord> {
+        self.shown.iter().filter_map(|r| match r {
+            PaletteRow::Command(i) => self.commands.get(*i),
+            PaletteRow::Header(_) => None,
+        })
+    }
+
+    /// Mostra a paleta por cima do form, com a busca limpa e o foco (o Ctrl+K do app). Aberta
+    /// assim, ela some ao escolher um comando, no Esc com a busca vazia e ao perder o foco.
+    pub fn open(ui: &mut Ui, id: ComponentId) -> bool {
+        ui.invoke(id, "open", &[]).is_ok()
+    }
+
+    /// Esconde a paleta aberta pelo [`open`](Self::open).
+    pub fn close(ui: &mut Ui, id: ComponentId) {
+        let _ = ui.invoke(id, "close", &[]);
+    }
+
+    fn show_opened(&mut self, ctx: &mut EventCtx<'_>) {
+        self.opened = true;
+        self.query.clear();
+        self.active = 0;
+        self.first_row.set(0);
+        self.refresh();
+        self.base.set_visible(true);
+        let _ = ctx.ui.set_child_index(ctx.id, usize::MAX);
+        ctx.request_focus(ctx.id);
+        ctx.ui.invalidate();
+        ctx.repaint();
+    }
+
+    /// Some (a aberta pelo `open`).
+    fn hide(&mut self, ctx: &mut EventCtx<'_>) {
+        self.opened = false;
+        self.base.set_visible(false);
+        ctx.ui.invalidate();
     }
 
     fn sync(&mut self, name: &str) {
-        if name == "items" {
-            self.commands = parse_list(&self.items);
+        match name {
+            "items" => self.commands = parse_list(&self.items),
+            "query" | "filter" | "recent" | "max_recent" => {}
+            _ => return,
         }
+        self.refresh();
+    }
+
+    /// Refaz a lista à vista: com a busca vazia, os recentes e depois todos (os recentes não
+    /// repetem embaixo); com texto, os que contêm a busca (sem acento e sem maiúscula). Os
+    /// comandos ficam agrupados pela categoria, na ordem em que ela aparece no `items`.
+    fn refresh(&mut self) {
+        let q = crate::autocomplete::fold(self.query.trim());
+        let filtering = self.filter && !q.is_empty();
+        let fits = |c: &PaletteCommandRecord| {
+            !filtering || [&c.name, &c.description, &c.category].iter().any(|t| crate::autocomplete::fold(t).contains(&q))
+        };
+        let mut rows = Vec::new();
+        let mut taken = vec![false; self.commands.len()];
+        if q.is_empty() && self.max_recent > 0 {
+            let recent: Vec<usize> = self
+                .recent_ids()
+                .iter()
+                .filter_map(|id| self.commands.iter().position(|c| c.key() == id))
+                .take(self.max_recent as usize)
+                .collect();
+            if !recent.is_empty() {
+                rows.push(PaletteRow::Header("Recentes".into()));
+                for i in recent {
+                    taken[i] = true;
+                    rows.push(PaletteRow::Command(i));
+                }
+            }
+        }
+        // As categorias na ordem em que aparecem; sem categoria, antes delas (sem título).
+        let mut categories: Vec<&str> = Vec::new();
+        for c in &self.commands {
+            if !categories.contains(&c.category.as_str()) {
+                categories.push(&c.category);
+            }
+        }
+        categories.sort_by_key(|c| !c.is_empty());
+        for category in categories {
+            let members: Vec<usize> = (0..self.commands.len()).filter(|&i| !taken[i] && self.commands[i].category == category && fits(&self.commands[i])).collect();
+            if members.is_empty() {
+                continue;
+            }
+            if !category.is_empty() || rows.iter().any(|r| matches!(r, PaletteRow::Header(_))) {
+                rows.push(PaletteRow::Header(category.to_string()));
+            }
+            rows.extend(members.into_iter().map(PaletteRow::Command));
+        }
+        self.shown = rows;
+        let n = self.commands_shown().count();
+        self.active = self.active.min(n.saturating_sub(1));
+    }
+
+    /// A busca mudou: a lista refaz e o `on_query_change` espera a digitação parar (a tecla
+    /// nova cancela o aviso que esperava).
+    fn query_changed(&mut self, ctx: &mut EventCtx<'_>) {
+        self.active = 0;
+        self.first_row.set(0);
+        self.refresh();
+        if let Some(pending) = self.pending_query.take() {
+            ctx.ui.clear_timeout(pending);
+        }
+        if !ctx.ui.listens(ctx.id, "on_query_change") {
+            return;
+        }
+        let (id, query) = (ctx.id, self.query.clone());
+        let timer = ctx.ui.set_timeout(self.query_delay as u64, move |ui| {
+            let current = ui.get_mut::<CommandPalette>(id).map(|p| {
+                p.pending_query = None;
+                p.query.clone()
+            });
+            // Só a busca que ainda está na tela (um `query` trocado pelo código no meio desiste).
+            if current.as_deref() == Some(query.as_str()) {
+                ui.fire(id, "on_query_change", &EventArgs::Text(query));
+            }
+        });
+        self.pending_query = Some(timer);
     }
 
     fn run(&mut self, ctx: &mut EventCtx<'_>, i: usize) {
-        if let Some((name, _, _)) = self.matches().get(i) {
-            ctx.fire("on_select", EventArgs::Text(name.clone()));
+        let Some(command) = self.commands_shown().nth(i).cloned() else { return };
+        let key = command.key().to_string();
+        if self.max_recent > 0 {
+            let mut recent = self.recent_ids();
+            recent.retain(|r| *r != key);
+            recent.insert(0, key.clone());
+            recent.truncate(self.max_recent as usize);
+            let joined = recent.join(";");
+            if joined != self.recent {
+                self.recent = joined.clone();
+                ctx.fire("on_recent_change", EventArgs::Text(joined));
+            }
         }
+        // Escolhido: a lista volta para a busca vazia com o recente em cima na próxima vez.
+        if self.opened {
+            self.query.clear();
+            self.hide(ctx);
+        }
+        self.refresh();
+        let selection = PaletteSelection { id: key, name: command.name };
+        ctx.fire("on_select", EventArgs::Text(to_json(&selection)));
     }
 }
 
-/// Um comando do `CommandPalette`: o nome, o atalho mostrado à direita e o ícone.
-pub const PALETTE_COMMAND: aylis_core::RecordInfo = aylis_core::RecordInfo { name: "PaletteCommand", fields: &[("name", aylis_core::PropKind::String), ("shortcut", aylis_core::PropKind::String), ("icon", aylis_core::PropKind::String)] };
+/// Um comando do `CommandPalette`: o `id` (vazio: o nome), o nome, a categoria (o grupo), a
+/// descrição (embaixo do nome), o atalho mostrado à direita e o ícone.
+pub const PALETTE_COMMAND: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "PaletteCommand",
+    fields: &[
+        ("id", aylis_core::PropKind::String),
+        ("name", aylis_core::PropKind::String),
+        ("category", aylis_core::PropKind::String),
+        ("description", aylis_core::PropKind::String),
+        ("shortcut", aylis_core::PropKind::String),
+        ("icon", aylis_core::PropKind::String),
+    ],
+};
 
 impl Component for CommandPalette {
     leaf_control!("CommandPalette");
@@ -603,9 +839,27 @@ impl Component for CommandPalette {
     properties! {
         items: String as RecordList(&PALETTE_COMMAND) => "Data",
         query: String => "Data",
-        placeholder: String => "Appearance";
-        events: on_select: String;
+        placeholder: String => "Appearance",
+        filter: bool => "Behavior",
+        query_delay: u32 => "Behavior",
+        max_recent: u32 => "Behavior",
+        recent: String as List => "Data";
+        events: on_select: PaletteSelection, on_query_change: String, on_recent_change: String;
         on_set: sync
+    }
+
+    fn methods(&self) -> &'static [aylis_core::MethodInfo] {
+        const METHODS: &[aylis_core::MethodInfo] = &[aylis_core::MethodInfo::new("open", &[], None), aylis_core::MethodInfo::new("close", &[], None)];
+        METHODS
+    }
+
+    fn invoke(&mut self, ctx: &mut EventCtx<'_>, method: &str, _args: &[aylis_core::PropValue]) -> Result<aylis_core::PropValue, String> {
+        match method {
+            "open" => self.show_opened(ctx),
+            "close" => self.hide(ctx),
+            _ => return Err(format!("CommandPalette não tem o método '{method}'")),
+        }
+        Ok(aylis_core::PropValue::Null)
     }
 
     fn accepts_text(&self) -> bool {
@@ -613,17 +867,28 @@ impl Component for CommandPalette {
     }
 
     fn text_input(&mut self, ctx: &mut EventCtx<'_>, text: &str) {
+        let before = self.query.len();
         self.query.extend(text.chars().filter(|c| !c.is_control()));
-        self.active = 0;
+        if self.query.len() != before {
+            self.query_changed(ctx);
+        }
         ctx.repaint();
     }
 
+    fn focus_exit(&mut self, ctx: &mut EventCtx<'_>) {
+        // Aberta pelo `open`: perder o foco fecha (como o clique fora de um menu).
+        if self.opened {
+            self.hide(ctx);
+        }
+    }
+
     fn key_down(&mut self, ctx: &mut EventCtx<'_>, event: &KeyEvent) {
-        let n = self.matches().len();
+        let n = self.commands_shown().count();
         match event.key {
             Key::Backspace => {
-                self.query.pop();
-                self.active = 0;
+                if self.query.pop().is_some() {
+                    self.query_changed(ctx);
+                }
             }
             Key::Down if n > 0 => self.active = (self.active + 1).min(n - 1),
             Key::Up => self.active = self.active.saturating_sub(1),
@@ -631,7 +896,11 @@ impl Component for CommandPalette {
                 let i = self.active;
                 self.run(ctx, i);
             }
-            Key::Escape => self.query.clear(),
+            Key::Escape if !self.query.is_empty() => {
+                self.query.clear();
+                self.query_changed(ctx);
+            }
+            Key::Escape if self.opened => self.hide(ctx),
             _ => return,
         }
         ctx.set_handled();
@@ -644,6 +913,17 @@ impl Component for CommandPalette {
         if let Some(i) = hit {
             self.active = i;
             self.run(ctx, i);
+        }
+    }
+
+    fn wheel(&mut self, ctx: &mut EventCtx<'_>, event: &aylis_core::WheelEvent) {
+        let rows = self.shown.len();
+        let first = self.first_row.get();
+        let next = if event.delta.y < 0.0 { (first + 1).min(rows.saturating_sub(1)) } else { first.saturating_sub(1) };
+        if next != first {
+            self.first_row.set(next);
+            ctx.set_handled();
+            ctx.repaint();
         }
     }
 
@@ -669,31 +949,81 @@ impl Component for CommandPalette {
             canvas.draw_line(PointF::new(x, search.y + 9.0), PointF::new(x, search.bottom() - 9.0), &Stroke::new(theme.color("text"), 1.5));
         }
         canvas.draw_line(PointF::new(r.x, search.bottom() + 6.0), PointF::new(r.right(), search.bottom() + 6.0), &Stroke::new(theme.color("border"), 1.0));
+        let top = search.bottom() + 12.0;
+        let bottom = r.bottom() - 6.0;
+        let height = |row: &PaletteRow| match row {
+            PaletteRow::Header(_) => ROW_HEADER,
+            PaletteRow::Command(i) if self.commands.get(*i).is_some_and(|c| !c.description.is_empty()) => ROW_TALL,
+            PaletteRow::Command(_) => ROW,
+        };
+        // A linha escolhida sempre à vista: a lista rola até ela (para cima ou para baixo).
+        let active_row = self.shown.iter().enumerate().filter(|(_, row)| matches!(row, PaletteRow::Command(_))).nth(self.active).map(|(i, _)| i);
+        let mut first = self.first_row.get().min(self.shown.len().saturating_sub(1));
+        if let Some(a) = active_row {
+            // O título do grupo vem junto quando a escolhida é a primeira dele.
+            let a_top = if a > 0 && matches!(self.shown[a - 1], PaletteRow::Header(_)) { a - 1 } else { a };
+            if a_top < first {
+                first = a_top;
+            }
+            while first < a && self.shown[first..=a].iter().map(height).sum::<f32>() > bottom - top {
+                first += 1;
+            }
+        }
+        self.first_row.set(first);
         let mut rows = Vec::new();
-        let mut y = search.bottom() + 12.0;
-        for (i, (name, shortcut, icon)) in self.matches().iter().enumerate() {
-            if y + ROW > r.bottom() - 6.0 {
+        let mut y = top;
+        let mut command_index = self.shown[..first].iter().filter(|row| matches!(row, PaletteRow::Command(_))).count();
+        canvas.save();
+        canvas.clip_rect(RectF::new(r.x, top, r.width, (bottom - top).max(0.0)));
+        for row in &self.shown[first..] {
+            if y >= bottom {
                 break;
             }
-            let row = RectF::new(r.x + 6.0, y, r.width - 12.0, ROW);
-            if i == self.active {
-                canvas.fill_rect(row, 6.0, &Brush::Solid(theme.color("primary").with_opacity(0.14)));
+            let h = height(row);
+            match row {
+                PaletteRow::Header(title) => {
+                    let mut ht = ctx.text_style();
+                    ht.color = theme.color("text_muted");
+                    ht.font.size = (ht.font.size - 1.0).max(9.0);
+                    ht.font.weight = FontWeight::SemiBold;
+                    canvas.draw_text(&ctx.ui.tr(title), RectF::new(r.x + 16.0, y, r.width - 32.0, h), &ht);
+                }
+                PaletteRow::Command(c) => {
+                    let Some(command) = self.commands.get(*c) else { continue };
+                    let i = command_index;
+                    command_index += 1;
+                    let row = RectF::new(r.x + 6.0, y, r.width - 12.0, h);
+                    if i == self.active {
+                        canvas.fill_rect(row, 6.0, &Brush::Solid(theme.color("primary").with_opacity(0.14)));
+                    }
+                    if !command.icon.is_empty() {
+                        ctx.draw_icon(canvas, &command.icon, RectF::new(row.x + 10.0, row.y + (h - 18.0) / 2.0, 18.0, 18.0), theme.color("text_muted"));
+                    }
+                    let mut nt = ctx.text_style();
+                    let text_w = row.width - 140.0;
+                    if command.description.is_empty() {
+                        canvas.draw_text(&command.name, RectF::new(row.x + 38.0, row.y, text_w, h), &nt);
+                    } else {
+                        canvas.draw_text(&command.name, RectF::new(row.x + 38.0, row.y + 4.0, text_w, h / 2.0), &nt);
+                        let mut dt = ctx.text_style();
+                        dt.color = theme.color("text_muted");
+                        dt.font.size = (dt.font.size - 1.0).max(9.0);
+                        dt.trimming = aylis_core::Trimming::Character;
+                        canvas.draw_text(&command.description, RectF::new(row.x + 38.0, row.y + h / 2.0 - 2.0, text_w, h / 2.0), &dt);
+                    }
+                    if !command.shortcut.is_empty() {
+                        nt.h_align = TextAlign::Trailing;
+                        nt.color = theme.color("text_muted");
+                        nt.font = ctx.monospace_font(nt.font.size);
+                        nt.font.size = (nt.font.size - 1.0).max(9.0);
+                        canvas.draw_text(&command.shortcut, RectF::new(row.x, row.y, row.width - 12.0, h), &nt);
+                    }
+                    rows.push((row, i));
+                }
             }
-            if !icon.is_empty() {
-                ctx.draw_icon(canvas, icon, RectF::new(row.x + 10.0, row.y + 9.0, 18.0, 18.0), theme.color("text_muted"));
-            }
-            let mut nt = ctx.text_style();
-            canvas.draw_text(name, RectF::new(row.x + 38.0, row.y, row.width - 140.0, row.height), &nt);
-            if !shortcut.is_empty() {
-                nt.h_align = TextAlign::Trailing;
-                nt.color = theme.color("text_muted");
-                nt.font = ctx.monospace_font(nt.font.size);
-                nt.font.size = (nt.font.size - 1.0).max(9.0);
-                canvas.draw_text(shortcut, RectF::new(row.x, row.y, row.width - 12.0, row.height), &nt);
-            }
-            rows.push((row, i));
-            y += ROW;
+            y += h;
         }
+        canvas.restore();
         *self.rows.borrow_mut() = rows;
     }
 }

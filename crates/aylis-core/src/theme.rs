@@ -115,6 +115,18 @@ pub struct StyleProps {
     /// marcação do `SegmentedControl` até a borda), em pixels: 0 cola (o relatório do
     /// Tabernáculo, C38). Sem ele, o de cada controle.
     pub gap: Option<f32>,
+    /// O ícone do controle (o `icon` do `Edit` e do `ComboBox`): o lado em pixels, a cor e o
+    /// espaço até o texto. Sem eles, os de cada controle.
+    pub icon_size: Option<f32>,
+    pub icon_color: Option<ColorRef>,
+    pub icon_gap: Option<f32>,
+    /// A largura da barra de rolagem, no estilo `ScrollBar` (ou no `scroll_bar` de um estilo).
+    pub width: Option<f32>,
+    /// A cor do polegar da barra de rolagem; no estado `hover`, a do polegar com o mouse em
+    /// cima (ou sendo arrastado). O trilho é o `fill`.
+    pub thumb: Option<ColorRef>,
+    /// A barra de rolagem só deste controle, por cima do estilo `ScrollBar` do tema (item 59).
+    pub scroll_bar: Option<Box<Style>>,
 }
 
 /// O material do fundo de um controle ([`StyleProps::material`]).
@@ -302,6 +314,27 @@ impl StyleProps {
         if other.italic.is_some() {
             self.italic = other.italic;
         }
+        if other.icon_size.is_some() {
+            self.icon_size = other.icon_size;
+        }
+        if other.icon_color.is_some() {
+            self.icon_color.clone_from(&other.icon_color);
+        }
+        if other.icon_gap.is_some() {
+            self.icon_gap = other.icon_gap;
+        }
+        if other.width.is_some() {
+            self.width = other.width;
+        }
+        if other.thumb.is_some() {
+            self.thumb.clone_from(&other.thumb);
+        }
+        if let Some(bar) = &other.scroll_bar {
+            match &mut self.scroll_bar {
+                Some(mine) => mine.merge(bar),
+                None => self.scroll_bar = Some(bar.clone()),
+            }
+        }
     }
 }
 
@@ -346,6 +379,16 @@ impl Style {
         self
     }
 
+    /// Junta `other` por cima, estado a estado (o `scroll_bar` de um estilo sobre o de outro).
+    pub fn merge(&mut self, other: &Style) {
+        self.base.merge(&other.base);
+        self.hover.merge(&other.hover);
+        self.pressed.merge(&other.pressed);
+        self.focused.merge(&other.focused);
+        self.checked.merge(&other.checked);
+        self.disabled.merge(&other.disabled);
+    }
+
     /// Estados na ordem de aplicação: hover, pressed, focused, checked, disabled.
     fn state(&self, index: usize) -> &StyleProps {
         match index {
@@ -388,6 +431,12 @@ pub struct ResolvedStyle {
     pub line_height: f32,
     /// O espaço entre as partes do controle (`None`: o dele; [`StyleProps::gap`]).
     pub gap: Option<f32>,
+    /// O ícone do controle: lado, cor e espaço até o texto (`None`: os do controle).
+    pub icon_size: Option<f32>,
+    pub icon_color: Option<Color>,
+    pub icon_gap: Option<f32>,
+    /// A barra de rolagem própria do estilo do controle ([`Theme::scroll_bar`] a resolve).
+    pub scroll_bar: Option<Box<Style>>,
 }
 
 impl ResolvedStyle {
@@ -419,6 +468,10 @@ impl Default for ResolvedStyle {
             border_dash: Vec::new(),
             line_height: 0.0,
             gap: None,
+            icon_size: None,
+            icon_color: None,
+            icon_gap: None,
+            scroll_bar: None,
         }
     }
 }
@@ -455,6 +508,13 @@ impl ResolvedStyle {
             border_dash: other.border_dash.clone(),
             line_height: mix(self.line_height, other.line_height),
             gap: other.gap,
+            icon_size: other.icon_size,
+            icon_color: match (self.icon_color, other.icon_color) {
+                (Some(a), Some(b)) => Some(a.lerp(b, t)),
+                _ => other.icon_color,
+            },
+            icon_gap: other.icon_gap,
+            scroll_bar: other.scroll_bar.clone(),
         }
     }
 }
@@ -551,6 +611,19 @@ pub struct Theme {
 }
 
 impl Theme {
+    /// Põe a fonte do projeto (`font` do `.aylisproj`) em todas as fontes do tema, menos as de
+    /// largura fixa (o código continua monoespaçado).
+    pub fn apply_font_family(&mut self, family: &str) {
+        if family.is_empty() {
+            return;
+        }
+        for font in self.fonts.values_mut() {
+            if font.family != "monospace" && !font.family.to_lowercase().contains("mono") {
+                font.family = family.to_string();
+            }
+        }
+    }
+
     pub fn new(name: impl Into<String>) -> Self {
         Self { name: name.into(), ..Default::default() }
     }
@@ -945,6 +1018,9 @@ impl Theme {
             Style::new(StyleProps::new().fill(Color::TRANSPARENT).border("border", 1.0).radius(4.0).padding((14.0, 4.0)))
                 .focused(StyleProps::new().border("primary", 2.0)),
         );
+        // O ComboBox com `style: outlined` como o Edit.
+        let outlined = self.styles["Edit.outlined"].clone();
+        self.set_style("ComboBox.outlined", outlined);
         self.set_style(
             "Edit.search",
             Style::new(StyleProps::new().fill("surface_2").border(Color::TRANSPARENT, 1.0).radius(999.0).padding((12.0, 4.0)))
@@ -1207,6 +1283,46 @@ impl Theme {
                 Some("dotted") => vec![1.5, 3.0],
                 _ => Vec::new(),
             },
+            icon_size: acc.icon_size,
+            icon_color: acc.icon_color.as_ref().map(|c| self.color_of(c)),
+            icon_gap: acc.icon_gap,
+            scroll_bar: acc.scroll_bar,
         }
     }
+
+    /// A barra de rolagem de um controle: o estilo `ScrollBar` do tema e, por cima, o
+    /// `scroll_bar` do estilo do controle (`own`, de [`ResolvedStyle::scroll_bar`]); `hover`
+    /// com o mouse no polegar ou arrastando. O que nenhum dos dois diz fica `None`, e o
+    /// controle usa o dele (os valores de antes da barra pelo tema).
+    pub fn scroll_bar(&self, own: Option<&Style>, hover: bool) -> ScrollBarLook {
+        let mut acc = StyleProps::default();
+        let layers = [self.styles.get("ScrollBar"), own];
+        for s in layers.iter().flatten() {
+            acc.merge(&s.base);
+        }
+        if hover {
+            for s in layers.iter().flatten() {
+                acc.merge(&s.hover);
+            }
+        }
+        ScrollBarLook {
+            width: acc.width.map(|w| w.max(0.0)),
+            track: acc.fill.as_ref().map(|c| self.color_of(c)),
+            thumb: acc.thumb.as_ref().map(|c| self.color_of(c)),
+            radius: acc.radius.as_ref().map(|m| Self::metric(&self.radius, m)),
+        }
+    }
+}
+
+/// A barra de rolagem resolvida ([`Theme::scroll_bar`]): `None` é o padrão do controle.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct ScrollBarLook {
+    /// A largura da barra (a faixa inteira; o polegar ocupa a faixa menos a margem do controle).
+    pub width: Option<f32>,
+    /// A cor do trilho.
+    pub track: Option<Color>,
+    /// A cor do polegar (com o mouse, se `hover`).
+    pub thumb: Option<Color>,
+    /// O raio do polegar.
+    pub radius: Option<f32>,
 }

@@ -1437,7 +1437,7 @@ fn send_ctrl_key(ui: &mut Ui, key: char) {
     ui.set_focus(memo);
     let modifiers = aylis_core::Modifiers { ctrl: true, ..Default::default() };
     let root = ui.root_of(memo);
-    ui.key_down(root, aylis_core::KeyEvent { key: aylis_core::Key::Char(key), modifiers, repeat: false });
+    ui.key_down(root, aylis_core::KeyEvent { key: aylis_core::Key::Char(key), modifiers, repeat: false, form: None });
     SENDING_KEY.with(|s| s.set(false));
     ui.request_repaint();
 }

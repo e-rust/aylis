@@ -10,9 +10,9 @@
 //! - `flatpak`: o pacote do Flathub, pelo `flatpak-builder`, só no Linux.
 //!
 //! As opções (o nome do pacote, as categorias, a descrição, o mantenedor, as dependências, os
-//! tipos de arquivo) vêm de `publish.linux` ([`aylis_project::LinuxOptions`]); o relatório de
-//! um player de música portado para o Aylis (21/11) pediu cada uma, e o `StartupWMClass` (o
-//! painel junta a janela aberta ao atalho) é o mesmo nome que a janela declara.
+//! tipos de arquivo) vêm de `publish.linux` ([`aylis_project::LinuxOptions`]), e o
+//! `StartupWMClass` (o painel junta a janela aberta ao atalho) é o mesmo nome que a janela
+//! declara.
 
 use std::path::{Path, PathBuf};
 
@@ -54,8 +54,10 @@ fn maintainer(project: &Project) -> String {
     [linux.maintainer.trim(), project.publish.publisher.trim()].into_iter().find(|m| !m.is_empty()).map_or_else(|| project.app_name().to_string(), str::to_string)
 }
 
+/// A do Linux (`publish.linux.description`); sem ela, a do projeto (`publish.description`, a
+/// mesma do `.exe`).
 fn description(project: &Project) -> String {
-    let d = project.publish.linux.description.trim();
+    let d = [project.publish.linux.description.trim(), project.publish.description.trim()].into_iter().find(|d| !d.is_empty()).unwrap_or("");
     if d.is_empty() { "Feito com o Aylis.".into() } else { d.to_string() }
 }
 

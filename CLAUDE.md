@@ -240,8 +240,13 @@ A base para decidir onde entra uma melhoria (aprovada em 15/11):
 
 Commit só quando o autor pedir; push também. Quem faz o commit roda, nesta ordem:
 
-1. `cargo test --workspace --exclude aylis-platform-winit` (alguns testes pulam sem a
-   ferramenta da linguagem).
+1. `aylis-tool test-all`: a bateria do workspace (sem o `aylis-platform-winit`), rodando só o
+   que mudou: o resultado de um alvo vem do cache quando o executável dele e o que ele lê
+   (`resources/test-inputs.json`) não mudaram. Grava `medicoes/testes.json`, que entra no
+   commit (duas rodadas boas dão o mesmo arquivo; o diff mostra o que quebrou). Teste novo que
+   lê arquivos do repositório em execução entra no `test-inputs.json` (sem declaração, roda
+   sempre). Antes de uma release, `aylis-tool test-all --all` (tudo, sem cache). Alguns testes
+   pulam sem a ferramenta da linguagem.
 2. `cargo test --release -p aylis-controls --test giant_screen` (os tempos contra a base).
 3. `cargo check -p <crate> --target wasm32-unknown-unknown` dos crates mexidos (a IDE lite:
    `-p aylis-ide --no-default-features`).
@@ -265,9 +270,9 @@ cargo run -p aylis-tools --bin aylis-tool -- <subcomando>  # as ferramentas
 **Onde ficam as compilações:** todo o Rust desta máquina, o repositório do Aylis inclusive,
 compila numa pasta só (o `config.toml` global do cargo, gravado pela IDE:
 `aylis_tools::cargo_config`), e não no `target/` do repositório. O padrão é
-`%USERPROFILE%\.aylis\target`; **nesta máquina, desde 22/11, é `E:\aylis\target`** (o C: enchia;
+`%USERPROFILE%\.aylis\target`; **nesta máquina, desde 22/11, é `F:\aylis\target`** (o C: enchia;
 `target_dir` no `%USERPROFILE%\.aylis\tools.json`, Opções da IDE → Rust e Python). Os executáveis
-(`aylis-tool.exe`, `aylis-ide.exe`) estão em `E:\aylis\target\debug`. Na dúvida, `cargo metadata`
+(`aylis-tool.exe`, `aylis-ide.exe`) estão em `F:\aylis\target\debug`. Na dúvida, `cargo metadata`
 diz a pasta (`target_directory`). Código que procura o que o repositório compilou usa
 `aylis_tools::cargo_target_dir` (testes: `CARGO_TARGET_TMPDIR`), nunca `<repositório>/target`.
 
@@ -327,6 +332,10 @@ verificação de ambiente guardada (`environment.json`) ficam em `%USERPROFILE%\
   serve.
 
 **Ferramentas do `aylis-tool`** (nada de scripts Python: ferramenta nova vira subcomando)
+- `test-all` roda a bateria do workspace só no que mudou (`--all`: tudo; `-p`: um pacote;
+  `--jobs`: quantos pacotes ao mesmo tempo); os alvos de um pacote rodam um depois do outro, e
+  os `always` do `resources/test-inputs.json` no fim, um por vez. Uma falha roda de novo uma vez
+  e, se passar, sai como instável.
 - `docs` regrava as ~275 páginas da documentação da Landing (componentes e guias).
 - `resources` baixa ícones, fontes e animações; `emoji` refaz o seletor de emoji; `bench`
   mede os exemplos; `test-docs` refaz os documentos de teste do `aylis-docview`.

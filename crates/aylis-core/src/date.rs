@@ -74,6 +74,51 @@ impl fmt::Display for Date {
     }
 }
 
+/// Como o texto ISO (`"2026-11-23"`), o mesmo do `Display` e do `parse_iso`: é o que as APIs em
+/// JSON mandam. O `null` vira `None` num `Option<Date>` (o próprio `serde` cuida).
+#[cfg(feature = "serde")]
+impl serde::Serialize for Date {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_str(self)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for Date {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct Iso;
+        impl serde::de::Visitor<'_> for Iso {
+            type Value = Date;
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("uma data ISO (\"aaaa-mm-dd\")")
+            }
+            fn visit_str<E: serde::de::Error>(self, text: &str) -> Result<Date, E> {
+                Date::parse_iso(text).ok_or_else(|| E::invalid_value(serde::de::Unexpected::Str(text), &self))
+            }
+        }
+        deserializer.deserialize_str(Iso)
+    }
+}
+
+/// `chrono::NaiveDate` → `Date`: toda data do `chrono` cabe no `Date`.
+#[cfg(feature = "chrono")]
+impl From<chrono::NaiveDate> for Date {
+    fn from(date: chrono::NaiveDate) -> Date {
+        use chrono::Datelike;
+        Date { year: date.year(), month: date.month() as u8, day: date.day() as u8 }
+    }
+}
+
+/// `Date` → `chrono::NaiveDate`. O `chrono` só vai de −262.143 a 262.142; um ano fora disso
+/// fica no limite dele (`NaiveDate::MIN`/`MAX`), em vez de pânico.
+#[cfg(feature = "chrono")]
+impl From<Date> for chrono::NaiveDate {
+    fn from(date: Date) -> chrono::NaiveDate {
+        chrono::NaiveDate::from_ymd_opt(date.year, u32::from(date.month), u32::from(date.day))
+            .unwrap_or(if date.year < 0 { chrono::NaiveDate::MIN } else { chrono::NaiveDate::MAX })
+    }
+}
+
 pub fn is_leap_year(year: i32) -> bool {
     (year % 4 == 0 && year % 100 != 0) || year % 400 == 0
 }

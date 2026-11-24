@@ -20,7 +20,7 @@ Uma imagem para desenhar com o mouse (o Paint).
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `tool` | Ferramenta | um de: `pencil`, `brush`, `eraser`, `line`, `rectangle`, `ellipse`, `fill`, `picker`, `select` | A ferramenta do mouse: `pencil`, `brush`, `eraser`, `line`, `rectangle`, `ellipse`, `fill` (balde), `picker` (conta-gotas) ou `select`. |
+| `tool` | Ferramenta | um de: `pencil`, `brush`, `eraser`, `line`, `rectangle`, `ellipse`, `fill`, `picker`, `select`, `arrow`, `text` | A ferramenta do mouse: `pencil`, `brush`, `eraser`, `line`, `rectangle`, `ellipse`, `fill` (balde), `picker` (conta-gotas), `select`, `arrow` (seta) ou `text` (o texto, que vira pixel ao confirmar). |
 | `brush_size` | Tamanho do pincel | inteiro | A espessura do traço, em pixels da imagem (1 a 64). |
 | `filled` | Preenchido | lógico | Retângulo e elipse preenchidos com `back_color`. |
 

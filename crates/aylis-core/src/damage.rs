@@ -409,6 +409,7 @@ impl Ui {
             return windows.to_vec();
         }
         let mut marked: std::collections::HashSet<ComponentId> = self.dirty_forms.iter().copied().collect();
+        marked.extend(self.dirty_parts.iter().filter(|&&p| self.contains(p)).map(|&p| self.root_of(p)));
         let ids = self.frame_ids.borrow();
         let placed = self.placed_ids.borrow();
         let parts = self.part_ids.borrow();

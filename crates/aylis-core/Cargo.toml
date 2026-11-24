@@ -14,6 +14,12 @@ rust-version.workspace = true
 # `assets/fonts` não leva o `harfrust` (~520 KB de wasm). A fachada `aylis` liga por padrão; a
 # IDE, no projeto que tem fontes.
 text-shaping = ["dep:harfrust"]
+# O `Date` com `serde`, como o texto ISO (`"2026-11-23"`; `Option<Date>` aceita `null`), para as
+# datas que vêm de uma API em JSON. Desligada por padrão; a fachada `aylis` repassa (`serde`).
+serde = ["dep:serde"]
+# O `Date` ↔ `chrono::NaiveDate` (`From` nos dois sentidos), com o `chrono` 0.4. Desligada por
+# padrão; a fachada `aylis` repassa (`chrono`).
+chrono = ["dep:chrono"]
 
 # O core não depende de nada do sistema operacional.
 [dependencies]
@@ -22,3 +28,12 @@ web-time = "1"
 # O motor de texto do núcleo (os modos `layout` e `core` do item 10): ler as fontes e montar as
 # letras (árabe, acentos combinados, kerning), em Rust puro, igual em todas as plataformas.
 harfrust = { version = "0.15", optional = true }
+serde = { version = "1", optional = true }
+chrono = { version = "0.4", optional = true, default-features = false }
+
+[dev-dependencies]
+# Os testes compilam com as features opcionais do `Date` ligadas (`tests/date_features.rs`).
+aylis-core = { path = ".", features = ["serde", "chrono"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", default-features = false }

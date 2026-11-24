@@ -50,6 +50,16 @@ import struct
 import sys
 
 
+def _dialog_icon(icon, icon_color):
+    """Os campos opcionais icon e icon_color do message_dlg e do prompt (só os que vieram)."""
+    fields = {}
+    if icon:
+        fields["icon"] = icon
+    if icon_color:
+        fields["icon_color"] = icon_color
+    return fields
+
+
 class AylisError(Exception):
     pass
 
@@ -678,12 +688,15 @@ class Aylis:
         """Abre o form numa janela, sem bloquear os outros (como Show)."""
         self.send("show", target=form)
 
-    def show_modal(self, form, on_close=None):
+    def show_modal(self, form, on_close=None, container=None):
         """Abre o form como modal. Sem on_close, espera ele fechar e devolve o resultado
         ("ok", "cancel"...), e os eventos continuam rodando. Com
-        on_close, não bloqueia: on_close(result) recebe o resultado."""
+        on_close, não bloqueia: on_close(result) recebe o resultado. Com container (um
+        componente de outro form, como a página de uma aba), o modal fica só nele e o resto
+        da tela continua respondendo."""
+        extra = {"container": container} if container else {}
         if on_close is None:
-            return self._wait_call("show_modal", target=form)
+            return self._wait_call("show_modal", target=form, **extra)
         handler = None
         if on_close is not None:
             handler = "__modal_%d" % next(self._ids)
@@ -693,7 +706,7 @@ class Aylis:
                 on_close(event.get("args"))
 
             self._handlers[handler] = done
-        self.send("show_modal", target=form, handler=handler)
+        self.send("show_modal", target=form, handler=handler, **extra)
 
     def close(self, form):
         """Fecha o form (o on_close_query pode impedir). Fechar o principal encerra."""
@@ -721,13 +734,15 @@ class Aylis:
         finally:
             self.send("profile_end")
 
-    def message_dlg(self, text, kind="information", buttons=("ok",), on_close=None):
+    def message_dlg(self, text, kind="information", buttons=("ok",), on_close=None, icon=None, icon_color=None):
         """Caixa de mensagem (como o MessageDlg). kind: information, warning, error,
         confirmation; buttons: "ok", "cancel", "yes", "no"... Sem on_close, espera e devolve o
         botão ("yes"), e os eventos continuam rodando. Com
-        on_close, não bloqueia: on_close(result) recebe o botão escolhido."""
+        on_close, não bloqueia: on_close(result) recebe o botão escolhido. icon (nome de
+        ícone) e icon_color (token do tema, como "danger", ou "#rrggbb") trocam o ícone do tipo."""
+        extra = _dialog_icon(icon, icon_color)
         if on_close is None:
-            return self._wait_call("message_dlg", text=text, kind=kind, buttons=list(buttons))
+            return self._wait_call("message_dlg", text=text, kind=kind, buttons=list(buttons), **extra)
         handler = None
         if on_close is not None:
             handler = "__msg_%d" % next(self._ids)
@@ -737,7 +752,25 @@ class Aylis:
                 on_close(event.get("args"))
 
             self._handlers[handler] = done
-        return self.call("message_dlg", text=text, kind=kind, buttons=list(buttons), handler=handler)
+        return self.call("message_dlg", text=text, kind=kind, buttons=list(buttons), handler=handler, **extra)
+
+    def prompt(self, title, label, value="", required=False, on_close=None, icon=None, icon_color=None):
+        """A pergunta com um campo de texto (OK e Cancelar). Sem on_close, espera e devolve o
+        texto digitado, ou None no Cancelar, e os eventos continuam rodando. Com on_close, não
+        bloqueia: on_close(texto ou None). required não deixa confirmar vazio."""
+        fields = {"title": title, "label": label, "value": value, **_dialog_icon(icon, icon_color)}
+        if required:
+            fields["required"] = True
+        if on_close is None:
+            return self._wait_call("prompt", **fields)
+        handler = "__prompt_%d" % next(self._ids)
+
+        def done(event):
+            del self._handlers[handler]
+            on_close(event.get("args"))
+
+        self._handlers[handler] = done
+        return self.call("prompt", handler=handler, **fields)
 
     def field_decimal(self, dataset, field):
         """O valor de um campo decimal (Currency, BCD) como Decimal, exato: o protocolo manda o

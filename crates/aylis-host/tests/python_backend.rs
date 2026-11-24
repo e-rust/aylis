@@ -50,3 +50,34 @@ fn a_python_backend_sends_from_other_threads_and_posts_to_the_main_one() {
     assert!(!stderr.contains("linha inválida"), "nenhuma mensagem misturada: {stderr}");
     let _ = std::fs::remove_file(png);
 }
+
+/// O `on_create` de um DataModule "criar no início" chega ao backend: o host o dispara depois
+/// do `run`, com os handlers do backend já registrados.
+#[test]
+fn the_on_create_of_a_startup_data_module_reaches_the_backend() {
+    if Command::new("python").arg("--version").output().is_err() {
+        eprintln!("python não encontrado: teste pulado");
+        return;
+    }
+    let base = std::env::temp_dir().join(format!("aylis_host_datamodule_{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&base);
+    std::fs::create_dir_all(&base).unwrap();
+    let mut project = aylis_project::create(&base, "Modulos", aylis_project::Language::Python).unwrap();
+    project.add_data_module("dmDados").unwrap();
+    project.forms.iter_mut().find(|f| f.name == "dmDados").unwrap().auto_create = true;
+    let file = project.file(&project.form("dmDados").unwrap().file);
+    std::fs::write(file, r#"{ "aylis": 1, "root": { "class": "DataModule", "name": "dmDados", "on_create": "dm_criado" } }"#).unwrap();
+    project.refresh_forms();
+    project.save().unwrap();
+    let script = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/data_module_backend.py");
+    let png = base.join("tela.png");
+    let output = Command::new(env!("CARGO_BIN_EXE_aylis-host"))
+        .args(["--project", project.path.to_str().unwrap(), "--png", png.to_str().unwrap(), "--", "python", script])
+        .env("PYTHONIOENCODING", "utf-8")
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "{stderr}");
+    assert!(stderr.contains("SELFTEST on_create do DataModule"), "{stderr}");
+    let _ = std::fs::remove_dir_all(&base);
+}

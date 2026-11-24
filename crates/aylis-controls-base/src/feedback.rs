@@ -232,6 +232,16 @@ pub enum ToastKind {
     Error,
 }
 
+impl aylis_core::PropEnum for ToastKind {
+    const NAMES: &'static [&'static str] = &["info", "success", "warning", "error"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::Info, Self::Success, Self::Warning, Self::Error].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
 struct ToastEntry {
     id: u64,
     title: String,
@@ -243,12 +253,20 @@ struct ToastEntry {
     leaving: Option<f64>,
 }
 
-/// Avisos que não bloqueiam, empilhados no canto de cima à direita do form (o "toast"):
-/// título, mensagem e a cor do tipo. Cada um some no prazo (ou no clique); um aviso com
-/// o mesmo título de um que está na tela só renova o prazo dele. Entra deslizando e
-/// esmaecendo. Normalmente não vai no form: [`notify`] cria a pilha na primeira vez.
+/// Avisos que não bloqueiam, empilhados de cima para baixo, encostados à direita da pilha (o
+/// "toast"): título, mensagem e a cor do tipo. Cada um some no prazo (ou no clique); um aviso
+/// com o mesmo título de um que está na tela só renova o prazo dele. Entra deslizando e
+/// esmaecendo.
+///
+/// Pode ir no form pelo designer, onde o app quiser (abaixo da barra própria, num canto): o
+/// [`notify`] usa a pilha que achar no form. Sem ela, o `notify` cria uma no canto de cima à
+/// direita, abaixo da `TitleBar` quando o form tem uma. Pelo nome, nas outras linguagens:
+/// `show(título, mensagem, tipo, prazo_ms)` devolve o número do aviso, `dismiss(número)`
+/// fecha, `count()` e `clear()`. `on_dismiss` avisa o aviso fechado pelo clique.
 pub struct ToastStack {
     pub base: ControlBase,
+    /// A largura máxima de um cartão (ele encolhe até o texto, e nunca passa da pilha).
+    pub card_width: f32,
     entries: RefCell<Vec<ToastEntry>>,
     /// Onde cada cartão foi desenhado (o clique só vale neles; fora, passa para baixo).
     cards: RefCell<Vec<(u64, RectF)>>,
@@ -259,7 +277,7 @@ impl Default for ToastStack {
     fn default() -> Self {
         let mut base = ControlBase::new(380.0, 600.0);
         base.set_cursor(CursorShape::Pointer);
-        Self { base, entries: RefCell::new(Vec::new()), cards: RefCell::new(Vec::new()), next_id: Cell::new(1) }
+        Self { base, card_width: TOAST_WIDTH, entries: RefCell::new(Vec::new()), cards: RefCell::new(Vec::new()), next_id: Cell::new(1) }
     }
 }
 
@@ -297,6 +315,13 @@ impl ToastStack {
         self.entries.borrow().iter().filter(|e| e.leaving.is_none()).count()
     }
 
+    /// Fecha todos os avisos (com a animação de saída).
+    pub fn clear(&self, now: f64) {
+        for e in self.entries.borrow_mut().iter_mut().filter(|e| e.leaving.is_none()) {
+            e.leaving = Some(now);
+        }
+    }
+
     fn colors(ctx: &PaintCtx<'_>, kind: ToastKind) -> (Color, Color, Color, Color) {
         let t = ctx.theme;
         let on = |token: &str, fallback: Color| t.colors.get(token).copied().unwrap_or(fallback);
@@ -315,6 +340,53 @@ impl ToastStack {
 impl Component for ToastStack {
     leaf_control!("ToastStack");
 
+    properties! {
+        card_width: f32 => "Appearance";
+        events: on_dismiss: i64
+    }
+
+    fn methods(&self) -> &'static [aylis_core::MethodInfo] {
+        use aylis_core::{MethodInfo, PropEnum, PropKind};
+        const METHODS: &[MethodInfo] = &[
+            MethodInfo::new("show", &[PropKind::String, PropKind::String, PropKind::Enum(ToastKind::NAMES), PropKind::Int], Some(PropKind::Int))
+                .params(&["title", "message", "kind", "ttl_ms"])
+                .types(&["", "", "ToastKind", ""], ""),
+            MethodInfo::new("dismiss", &[PropKind::Int], None).params(&["toast"]),
+            MethodInfo::new("count", &[], Some(PropKind::Int)),
+            MethodInfo::new("clear", &[], None),
+        ];
+        METHODS
+    }
+
+    fn invoke(&mut self, ctx: &mut EventCtx<'_>, method: &str, args: &[aylis_core::PropValue]) -> Result<aylis_core::PropValue, String> {
+        use aylis_core::{PropEnum, PropValue};
+        let text = |i: usize| args.get(i).and_then(|v| v.to_str().ok()).unwrap_or_default().to_string();
+        let int = |i: usize| args.get(i).and_then(|v| v.to_i64().ok());
+        let now = ctx.ui.time();
+        let result = match method {
+            "show" => {
+                let kind = match args.get(2).and_then(|v| v.to_str().ok()).filter(|n| !n.is_empty()) {
+                    Some(name) => ToastKind::from_name(name).ok_or_else(|| format!("tipo de aviso '{name}' inválido (use {})", ToastKind::NAMES.join(", ")))?,
+                    None => ToastKind::Info,
+                };
+                let ttl = int(3).unwrap_or(4000).clamp(0, u32::MAX as i64) as u32;
+                PropValue::Int(self.show(now, &text(0), &text(1), kind, ttl) as i64)
+            }
+            "dismiss" => {
+                self.dismiss(now, int(0).unwrap_or(0).max(0) as u64);
+                PropValue::Null
+            }
+            "count" => PropValue::Int(self.count() as i64),
+            "clear" => {
+                self.clear(now);
+                PropValue::Null
+            }
+            _ => return Err(format!("ToastStack não tem o método '{method}'")),
+        };
+        ctx.repaint();
+        Ok(result)
+    }
+
     fn contains_point(&self, local: PointF, _size: aylis_core::SizeF) -> bool {
         self.cards.borrow().iter().any(|(_, r)| r.contains(local))
     }
@@ -323,6 +395,7 @@ impl Component for ToastStack {
         let hit = self.cards.borrow().iter().find(|(_, r)| r.contains(event.position)).map(|(id, _)| *id);
         if let Some(id) = hit {
             self.dismiss(ctx.ui.time(), id);
+            ctx.fire("on_dismiss", EventArgs::Value((id as i64).into()));
             ctx.repaint();
         }
     }
@@ -353,7 +426,7 @@ impl Component for ToastStack {
             body.color = text2;
             body.wrap = true;
             // Largura: o texto mais largo (até o máximo); altura: as linhas que couberem.
-            let max_text = TOAST_WIDTH.min(r.width) - 28.0;
+            let max_text = self.card_width.max(48.0).min(r.width) - 28.0;
             let tw = if e.title.is_empty() { 0.0 } else { canvas.measure_text(&e.title, &title).width };
             let bw = if e.message.is_empty() { 0.0 } else { canvas.measure_text(&e.message, &body).width };
             let text_w = tw.max(bw).min(max_text);
@@ -397,30 +470,62 @@ impl Component for ToastStack {
     }
 }
 
-/// Mostra um aviso no canto de cima à direita do form da frente (cria a pilha na primeira
-/// vez): `title` em negrito, `message` embaixo, a cor de `kind`, por `ttl_ms`. Com outro
-/// aviso de mesmo título na tela, só renova o prazo dele. Clicar fecha.
+/// Mostra um aviso na pilha do form da frente: `title` em negrito, `message` embaixo, a cor
+/// de `kind`, por `ttl_ms`. Com outro aviso de mesmo título na tela, só renova o prazo dele.
+/// Clicar fecha.
+///
+/// A pilha é o `ToastStack` do form, onde quer que ele esteja (posto pelo designer, no lugar
+/// que o app quiser). Sem ele, o `notify` cria uma no canto de cima à direita, a 16 px da
+/// borda e abaixo da `TitleBar` à vista, quando o form tem uma (antes, ficava sobre os botões
+/// da barra).
 pub fn notify(ui: &mut Ui, title: &str, message: &str, kind: ToastKind, ttl_ms: u32) -> Option<aylis_core::ComponentId> {
     let form = ui.open_forms().last().copied().or_else(|| ui.roots().first().copied())?;
-    let id = match ui.children(form).iter().copied().find(|&c| ui.get::<ToastStack>(c).is_some()) {
+    let id = match find_in_form(ui, form, |ui, c| ui.get::<ToastStack>(c).is_some()) {
         Some(id) => id,
         None => {
             let (w, h) = ui.bounds(form).map_or((800.0, 600.0), |b| (b.width, b.height));
+            let top = toast_top(ui, form);
             let mut stack = ToastStack::default();
             let width = TOAST_WIDTH.min(w - 32.0).max(120.0);
-            stack.base.set_rect(w - width - 16.0, 16.0, width, (h - 32.0).max(48.0));
+            stack.base.set_rect(w - width - 16.0, top, width, (h - top - 16.0).max(48.0));
             stack.base.set_anchors(aylis_core::Anchors::TOP.union(aylis_core::Anchors::RIGHT).union(aylis_core::Anchors::BOTTOM));
-            ui.add(stack, form)
+            let id = ui.add(stack, form);
+            // Por cima do resto do form (a pilha criada aqui; a do designer fica onde o app pôs).
+            let _ = ui.set_child_index(id, usize::MAX);
+            id
         }
     };
-    // Por cima do resto do form.
-    let _ = ui.set_child_index(id, usize::MAX);
     let now = ui.time();
     if let Some(stack) = ui.get::<ToastStack>(id) {
         stack.show(now, title, message, kind, ttl_ms);
     }
     ui.request_repaint();
     Some(id)
+}
+
+/// O primeiro controle do form (de cima para baixo, sem entrar em forms embutidos) que passa em
+/// `pick`.
+fn find_in_form(ui: &Ui, form: aylis_core::ComponentId, pick: impl Fn(&Ui, aylis_core::ComponentId) -> bool) -> Option<aylis_core::ComponentId> {
+    let mut stack: Vec<_> = ui.children(form).iter().rev().copied().collect();
+    while let Some(id) = stack.pop() {
+        if pick(ui, id) {
+            return Some(id);
+        }
+        if ui.form_of(id) == form {
+            stack.extend(ui.children(id).iter().rev().copied());
+        }
+    }
+    None
+}
+
+/// Onde começa a pilha criada pelo `notify`: 16 px abaixo da `TitleBar` à vista do form, ou
+/// 16 px do topo.
+fn toast_top(ui: &mut Ui, form: aylis_core::ComponentId) -> f32 {
+    let bar = find_in_form(ui, form, |ui, c| ui.class_name(c) == Some("TitleBar") && ui.control(c).is_some_and(|cb| cb.visible()));
+    let Some(bar) = bar else { return 16.0 };
+    ui.layout();
+    let (form_rect, bar_rect) = (ui.absolute_rect(form).unwrap_or_default(), ui.absolute_rect(bar).unwrap_or_default());
+    (bar_rect.bottom() - form_rect.y).max(0.0) + 16.0
 }
 
 // ===========================================================================
@@ -638,7 +743,9 @@ impl Default for EmptyState {
             icon: "search".into(),
             title: "Nada por aqui".into(),
             text: "Nenhum item encontrado. Tente outra busca.".into(),
-            action: "Limpar filtros".into(),
+            // Sem botão por padrão: a maioria das telas vazias não tem ação; quem quer o botão
+            // põe o texto dele.
+            action: String::new(),
             action_rect: Cell::new(RectF::default()),
         }
     }

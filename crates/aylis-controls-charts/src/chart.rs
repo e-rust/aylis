@@ -17,11 +17,12 @@ mod more;
 use std::cell::{Cell, RefCell};
 
 use aylis_core::{
-    Brush, Canvas, Color, Component, ControlBase, CursorShape, EventArgs, EventCtx, FontWeight, PaintCtx, Path, PointF, PointerEvent, PropEnum, RectF,
-    Stroke, TextAlign, TextStyle, WheelEvent, properties,
+    Brush, Canvas, Color, Component, ComponentId, ControlBase, CursorShape, EventArgs, EventCtx, FontWeight, PaintCtx, Path, PointF, PointerEvent, PropEnum,
+    PropValue, RectF, Stroke, TextAlign, TextStyle, WheelEvent, properties,
 };
 
 use crate::leaf_control;
+use crate::sync::{ChartSync, SyncChanged, SyncKind, XKind};
 
 /// Onde fica a legenda.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -620,8 +621,7 @@ pub struct Chart {
     pub clicked_series: i64,
     /// O índice do último ponto clicado na série (-1 = nenhum).
     pub clicked_index: i64,
-    // As escolhas de aparência pedidas no relatório do InsightDB (11/11); os padrões são o
-    // desenho de antes.
+    // As escolhas de aparência; os padrões são o desenho de antes.
     /// Números dos eixos e das dicas: vazio ou `short` (60k, 1.2M), `full` (60.000, com o
     /// separador do idioma) ou `percent` (60%).
     pub value_format: ValueFormat,
@@ -645,6 +645,18 @@ pub struct Chart {
     /// Os rótulos das fatias: `percent` (dentro), `outside` (nome e percentual fora, com uma
     /// linha) ou `none`.
     pub slice_labels: String,
+    /// O [`ChartSync`] que liga este gráfico a outros pelo eixo X: o mouse aqui move o cursor
+    /// de todos, e o zoom e a seleção por faixa mudam a janela de todos.
+    pub sync: Option<ComponentId>,
+    /// Destaca o ponto (a coluna) deste índice pelo código, com a dica, como o mouse em cima
+    /// (-1: nenhum; o mouse no gráfico vale mais).
+    pub highlight_index: i64,
+    /// A largura da moldura (vazia: a do estilo do tema).
+    pub border_width: Option<f32>,
+    /// Arrastar no gráfico seleciona uma faixa do eixo X e aproxima nela (com o `sync`, muda a
+    /// janela dos ligados); duplo clique volta ao eixo todo. Sem ele, com o `zoom`, arrastar
+    /// anda.
+    pub select_range: bool,
     data_labels: Vec<String>,
     data: Vec<Series>,
     /// Itens escondidos pela legenda, nos tipos em que ela mostra os rótulos.
@@ -661,12 +673,27 @@ pub struct Chart {
     anim_from: RefCell<Vec<Vec<f64>>>,
     anim_start: Cell<Option<f64>>,
     painted: Cell<bool>,
+    /// O eixo X da última pintura (para traduzir o mouse e a janela em valores do X).
+    x_axis: Cell<Option<cartesian::XAxis>>,
+    /// O índice destacado sem o mouse: o cursor do `sync` ou o `highlight_index`.
+    lit: Cell<Option<usize>>,
+    /// A faixa sendo selecionada (`select_range`): o começo e o fim em x.
+    selecting: Cell<Option<(f32, f32)>>,
+    /// O último índice avisado no `on_hover`.
+    hover_index: Cell<Option<usize>>,
+    /// Já avisou (em debug) que o eixo X não é do tipo do `sync`.
+    warned: Cell<bool>,
+    /// A janela que este gráfico mandou ao `sync` (ao voltar, não a refaz pelos valores: no
+    /// eixo de categorias, arredondar travaria a roda).
+    published_range: RefCell<Option<(String, String)>>,
 }
 
 impl Default for Chart {
     fn default() -> Self {
         let mut base = ControlBase::new(420.0, 280.0);
         base.set_cursor(CursorShape::Default);
+        // O espaço de dentro de sempre, agora o `padding` do controle.
+        base.set_padding(aylis_core::Bounds::new(12.0, 12.0, 12.0, 10.0));
         let mut c = Self {
             base,
             kind: ChartKind::Line,
@@ -697,6 +724,10 @@ impl Default for Chart {
             colors: String::new(),
             center_text: String::new(),
             slice_labels: "percent".into(),
+            sync: None,
+            highlight_index: -1,
+            border_width: None,
+            select_range: false,
             data_labels: Vec::new(),
             data: Vec::new(),
             hidden_labels: Vec::new(),
@@ -710,6 +741,12 @@ impl Default for Chart {
             anim_from: RefCell::new(Vec::new()),
             anim_start: Cell::new(None),
             painted: Cell::new(false),
+            x_axis: Cell::new(None),
+            lit: Cell::new(None),
+            selecting: Cell::new(None),
+            hover_index: Cell::new(None),
+            warned: Cell::new(false),
+            published_range: RefCell::new(None),
         };
         c.sync("series");
         c
@@ -925,7 +962,7 @@ impl Chart {
         let rect = RectF::new(x.max(bounds.x + 4.0), y, width, height);
         canvas.fill_rect(rect.offset(0.0, 2.0), 6.0, &Brush::Solid(Color::BLACK.with_opacity(0.12)));
         canvas.fill_rect(rect, 6.0, &Brush::Solid(ctx.theme.color("surface")));
-        canvas.stroke_rect(rect, 6.0, &Stroke::new(ctx.theme.color("border"), 1.0));
+        canvas.stroke_rect(rect, 6.0, &Stroke::new(grid_color(ctx), 1.0));
         let mut row = 0;
         if !title.is_empty() {
             let mut bold = tip.clone();
@@ -1069,6 +1106,12 @@ pub(crate) fn short(v: f64) -> String {
     }
 }
 
+/// A cor das linhas de dentro (grade, divisões, a moldura da dica): `grid_line` do tema, ou a
+/// `border` quando o tema não a tem. O `border_color` do controle muda só a borda; a grade fica.
+pub(crate) fn grid_color(ctx: &PaintCtx<'_>) -> Color {
+    ctx.theme.colors.get("grid_line").copied().unwrap_or_else(|| ctx.theme.color("border"))
+}
+
 /// Texto pequeno e apagado (eixos, rótulos).
 pub(crate) fn small_text(ctx: &PaintCtx<'_>) -> TextStyle {
     let mut t = ctx.text_style();
@@ -1108,11 +1151,23 @@ impl Component for Chart {
         stacked: bool => "Appearance",
         colors: String => "Appearance",
         center_text: String => "Appearance",
-        slice_labels: String => "Appearance";
+        slice_labels: String => "Appearance",
+        sync: Option<ComponentId> => "Behavior",
+        highlight_index: i64 => "Data",
+        border_width: Option<f32> => "Appearance",
+        select_range: bool => "Behavior";
+        events: on_hover: i64;
         on_set: sync
     }
 
     fn pointer_move(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
+        if let Some((from, _)) = self.selecting.get() {
+            // Selecionando a faixa: o fim segue o mouse (dentro da área do gráfico).
+            let plot = self.plot.get();
+            self.selecting.set(Some((from, event.position.x.clamp(plot.x, plot.right()))));
+            ctx.repaint();
+            return;
+        }
         if let Some((start_x, (w0, w1))) = self.drag.get() {
             // Arrastar: o eixo X anda junto com o mouse.
             let plot = self.plot.get();
@@ -1120,6 +1175,7 @@ impl Component for Chart {
             let shift = -((event.position.x - start_x) / plot.width.max(1.0)) as f64 * span;
             let shift = shift.clamp(-w0, 1.0 - w1);
             self.window.set((w0 + shift, w1 + shift));
+            self.publish_window(ctx);
             ctx.repaint();
             return;
         }
@@ -1133,10 +1189,20 @@ impl Component for Chart {
             self.hovered.set(hit);
             ctx.repaint();
         }
+        self.announce_hover(ctx, hit.map(|h| h.index));
+        // Com o `sync`, o mouse move o cursor de todos os ligados.
+        if self.sync.is_some() {
+            let value = if self.plot.get().contains(event.position) { self.x_value_at(event.position.x, hit) } else { None };
+            self.publish(ctx, SyncKind::Cursor, value.map(|v| (v, None)));
+        }
     }
 
     fn pointer_leave(&mut self, ctx: &mut EventCtx<'_>) {
         self.hovered.set(None);
+        self.announce_hover(ctx, None);
+        if self.sync.is_some() {
+            self.publish(ctx, SyncKind::Cursor, None);
+        }
         ctx.repaint();
     }
 
@@ -1149,17 +1215,33 @@ impl Component for Chart {
             return;
         }
         self.pressed.set(self.hits.borrow().iter().rev().find(|h| h.contains(event.position)).copied());
-        if self.zoom && self.kind.is_cartesian() && self.plot.get().contains(event.position) {
+        if (self.zoom || self.select_range) && self.kind.is_cartesian() && self.plot.get().contains(event.position) {
             if event.click_count >= 2 {
                 self.window.set((0.0, 1.0));
+                self.publish(ctx, SyncKind::Range, None);
                 ctx.repaint();
+            } else if self.select_range {
+                self.selecting.set(Some((event.position.x, event.position.x)));
             } else {
                 self.drag.set(Some((event.position.x, self.window.get())));
             }
         }
     }
 
-    fn pointer_up(&mut self, _ctx: &mut EventCtx<'_>, event: &PointerEvent) {
+    fn pointer_up(&mut self, ctx: &mut EventCtx<'_>, event: &PointerEvent) {
+        if let Some((from, to)) = self.selecting.take() {
+            // Selecionou uma faixa: aproxima nela (um clique parado não muda nada).
+            if (to - from).abs() > 4.0 {
+                self.pressed.set(None);
+                let plot = self.plot.get();
+                let (w0, w1) = self.window.get();
+                let frac = |x: f32| w0 + ((x - plot.x) / plot.width.max(1.0)).clamp(0.0, 1.0) as f64 * (w1 - w0);
+                let (a, b) = (frac(from.min(to)), frac(from.max(to)));
+                self.window.set((a, b.max(a + 1e-4)));
+                self.publish_window(ctx);
+            }
+            ctx.repaint();
+        }
         if let Some((start_x, _)) = self.drag.take() {
             // Arrastou: não é um clique no ponto.
             if (event.position.x - start_x).abs() > 4.0 {
@@ -1195,8 +1277,22 @@ impl Component for Chart {
         let span = ((w1 - w0) * factor).clamp(0.02, 1.0);
         let start = (focus - span * at).clamp(0.0, 1.0 - span);
         self.window.set((start, start + span));
+        self.publish_window(ctx);
         ctx.set_handled();
         ctx.repaint();
+    }
+
+    /// O `sync` mudou (outro gráfico ou o app): repinta com o cursor e a janela novos.
+    fn message(&mut self, ctx: &mut EventCtx<'_>, message: &dyn std::any::Any) {
+        if message.downcast_ref::<SyncChanged>().is_some() {
+            ctx.repaint();
+        }
+    }
+
+    fn notification(&mut self, freed: ComponentId) {
+        if self.sync == Some(freed) {
+            self.sync = None;
+        }
     }
 
     fn paint(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>) {
@@ -1216,15 +1312,19 @@ impl Component for Chart {
             _ => {}
         }
         let s = ctx.style;
-        let r = ctx.rect;
+        let frame = ctx.rect;
         let theme = ctx.theme;
-        canvas.fill_rect(r, s.radius, &Brush::Solid(s.fill));
-        if s.border_width > 0.0 {
-            canvas.stroke_rect(r, s.radius, &Stroke::new(s.border_color, s.border_width));
+        canvas.fill_rect(frame, s.radius, &Brush::Solid(s.fill));
+        let border_width = self.border_width.unwrap_or(s.border_width);
+        if border_width > 0.0 {
+            canvas.stroke_rect(frame, s.radius, &Stroke::new(s.border_color, border_width));
         }
+        self.update_lit(ctx);
+        // O conteúdo dentro do `padding` (os padrões dão o desenho de antes).
+        let r = frame.deflate(self.base.padding());
         let small = small_text(ctx);
         set_format(self.value_format.name(), ctx);
-        let mut top = r.y + 12.0;
+        let mut top = r.y;
         if !self.title.is_empty() {
             let mut t = ctx.text_style();
             if self.title_bold {
@@ -1235,12 +1335,12 @@ impl Component for Chart {
                 TitleAlign::Right => TextAlign::Trailing,
                 TitleAlign::Left => TextAlign::Leading,
             };
-            canvas.draw_text(&self.title, RectF::new(r.x + 16.0, top, r.width - 32.0, 22.0), &t);
+            canvas.draw_text(&self.title, RectF::new(r.x + 4.0, top, r.width - 8.0, 22.0), &t);
             top += 26.0;
         }
         // Legenda (`legend_position`: no alto à direita, à esquerda, no meio, ou embaixo);
         // clicar esconde ou mostra o item. No Sankey, os nomes já estão nos nós.
-        let mut bottom = r.bottom() - 10.0;
+        let mut bottom = r.bottom();
         if self.legend && !data.is_empty() && self.kind != ChartKind::Sankey {
             let items: Vec<(usize, String, bool)> = if self.kind.legend_by_label() {
                 self.data_labels.iter().enumerate().map(|(i, l)| (i, l.clone(), self.label_hidden(i))).collect()
@@ -1250,11 +1350,11 @@ impl Component for Chart {
             let widths: Vec<f32> = items.iter().map(|(_, name, _)| canvas.measure_text(name, &small).width).collect();
             let total: f32 = widths.iter().map(|w| w + 30.0).sum::<f32>() - 14.0;
             let position = self.legend_position;
-            let y = if position == LegendPosition::Bottom { r.bottom() - 26.0 } else { top };
+            let y = if position == LegendPosition::Bottom { r.bottom() - 16.0 } else { top };
             let mut x = match position {
-                LegendPosition::TopLeft => r.x + 16.0,
+                LegendPosition::TopLeft => r.x + 4.0,
                 LegendPosition::Top | LegendPosition::Bottom => r.x + (r.width - total) / 2.0,
-                LegendPosition::TopRight => r.right() - 16.0 - total,
+                LegendPosition::TopRight => r.right() - 4.0 - total,
             };
             let mut hits = self.legend_hits.borrow_mut();
             for ((i, name, hidden), w) in items.iter().zip(widths) {
@@ -1278,7 +1378,7 @@ impl Component for Chart {
                 top += 26.0;
             }
         }
-        let area = RectF::new(r.x + 12.0, top, r.width - 24.0, bottom - top);
+        let area = RectF::new(r.x, top, r.width, bottom - top);
         if self.kind.is_cartesian() {
             cartesian::paint(self, canvas, ctx, area, &data);
         } else if self.kind.is_round() {
@@ -1288,8 +1388,181 @@ impl Component for Chart {
         }
         if let Some(h) = self.hovered.get() {
             self.paint_tooltip(canvas, ctx, &data, &h);
+        } else if let Some(h) = self.lit_hit() {
+            self.paint_tooltip(canvas, ctx, &data, &h);
         }
     }
+}
+
+/// O cursor e a janela do eixo X ligados pelo [`ChartSync`].
+impl Chart {
+    /// O tipo do eixo X deste gráfico (`None`: sem eixo X de valores, como a pizza e as barras
+    /// deitadas).
+    pub(crate) fn x_kind(&self) -> Option<XKind> {
+        if !self.kind.is_cartesian() || self.kind == ChartKind::HorizontalBar {
+            return None;
+        }
+        Some(if matches!(self.kind, ChartKind::Scatter | ChartKind::Bubble) {
+            XKind::Value
+        } else if self.time_axis {
+            XKind::Time
+        } else {
+            XKind::Category
+        })
+    }
+
+    /// O `ChartSync` ligado, se o eixo dele serve (o valor posto por outro tipo de eixo é
+    /// ignorado, com um aviso em debug).
+    fn sync_of<'a>(&self, ui: &'a aylis_core::Ui, axis: impl Fn(&ChartSync) -> Option<XKind>) -> Option<&'a ChartSync> {
+        let sync = ui.get::<ChartSync>(self.sync?)?;
+        let mine = self.x_kind()?;
+        match axis(sync) {
+            Some(other) if other != mine => {
+                if cfg!(debug_assertions) && !self.warned.replace(true) {
+                    aylis_core::stderr_line!("aylis: Chart com o eixo X {mine:?} ignora o ChartSync mudado por um eixo {other:?}");
+                }
+                None
+            }
+            _ => Some(sync),
+        }
+    }
+
+    /// O cursor do `sync` que vale para este gráfico.
+    pub(crate) fn sync_cursor(&self, ui: &aylis_core::Ui) -> Option<String> {
+        self.sync_of(ui, |s| s.cursor_axis)?.cursor().map(str::to_string)
+    }
+
+    /// A janela do `sync` que vale para este gráfico: `Some(None)` = o eixo todo; `None` = não
+    /// segue o `sync` (sem ele, ou de outro tipo de eixo, ou foi este que mandou).
+    pub(crate) fn sync_range(&self, ui: &aylis_core::Ui) -> Option<Option<(String, String)>> {
+        let range = self.sync_of(ui, |s| s.range_axis)?.range().map(|(a, b)| (a.to_string(), b.to_string()));
+        if range.is_some() && *self.published_range.borrow() == range {
+            return None;
+        }
+        Some(range)
+    }
+
+    /// O índice do ponto de um valor do X (o rótulo igual; no eixo de tempo, o mais perto).
+    pub(crate) fn index_of_x(&self, x: &str) -> Option<usize> {
+        match self.x_kind()? {
+            XKind::Category => self.data_labels.iter().position(|l| l == x.trim()),
+            XKind::Time => {
+                let t = parse_time(x)?;
+                self.data_labels
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(i, l)| Some((i, (parse_time(l)? - t).abs())))
+                    .min_by(|a, b| a.1.total_cmp(&b.1))
+                    .map(|(i, _)| i)
+            }
+            XKind::Value => None,
+        }
+    }
+
+    /// O valor do X na posição `x` do mouse: o rótulo do ponto (categorias e tempo) ou o
+    /// número (dispersão).
+    fn x_value_at(&self, x: f32, hit: Option<Hit>) -> Option<String> {
+        let kind = self.x_kind()?;
+        if let Some(h) = hit.filter(|h| h.is_column() && kind != XKind::Value) {
+            return self.data_labels.get(h.index).cloned();
+        }
+        let plot = self.plot.get();
+        let (w0, w1) = self.window.get();
+        let t = w0 + ((x - plot.x) / plot.width.max(1.0)).clamp(0.0, 1.0) as f64 * (w1 - w0);
+        match self.x_axis.get()? {
+            cartesian::XAxis::Category(n) if n > 0 => self.data_labels.get(((t * n as f64).floor() as usize).min(n - 1)).cloned(),
+            cartesian::XAxis::Category(_) => None,
+            cartesian::XAxis::Time(lo, hi) => self.index_of_x(&cartesian::format_days(lo + t * (hi - lo))).and_then(|i| self.data_labels.get(i).cloned()),
+            cartesian::XAxis::Value(lo, hi) => Some(number_text(lo + t * (hi - lo))),
+        }
+    }
+
+    /// A janela do zoom (de 0 a 1) como valores do X.
+    fn window_values(&self) -> Option<(String, String)> {
+        let (w0, w1) = self.window.get();
+        if w0 <= 1e-9 && w1 >= 1.0 - 1e-9 {
+            return None;
+        }
+        match self.x_axis.get()? {
+            cartesian::XAxis::Category(n) if n > 0 => {
+                let a = ((w0 * n as f64).floor() as usize).min(n - 1);
+                let b = (((w1 * n as f64).ceil() as usize).max(1) - 1).clamp(a, n - 1);
+                Some((self.data_labels.get(a)?.clone(), self.data_labels.get(b)?.clone()))
+            }
+            cartesian::XAxis::Category(_) => None,
+            cartesian::XAxis::Time(lo, hi) => Some((cartesian::format_days(lo + w0 * (hi - lo)), cartesian::format_days(lo + w1 * (hi - lo)))),
+            cartesian::XAxis::Value(lo, hi) => Some((number_text(lo + w0 * (hi - lo)), number_text(lo + w1 * (hi - lo)))),
+        }
+    }
+
+    /// A janela de um valor do `sync` neste eixo (de 0 a 1); `None` se os valores não estão
+    /// nele.
+    pub(crate) fn window_of(&self, axis: cartesian::XAxis, (from, to): (&str, &str)) -> Option<(f64, f64)> {
+        let (a, b) = match axis {
+            cartesian::XAxis::Category(n) => {
+                let n = n.max(1) as f64;
+                let (ia, ib) = (self.index_of_x(from)?, self.index_of_x(to)?);
+                (ia.min(ib) as f64 / n, (ia.max(ib) + 1) as f64 / n)
+            }
+            cartesian::XAxis::Time(lo, hi) => ((parse_time(from)? - lo) / (hi - lo), (parse_time(to)? - lo) / (hi - lo)),
+            cartesian::XAxis::Value(lo, hi) => ((from.trim().parse::<f64>().ok()? - lo) / (hi - lo), (to.trim().parse::<f64>().ok()? - lo) / (hi - lo)),
+        };
+        let (a, b) = (a.min(b).clamp(0.0, 1.0), a.max(b).clamp(0.0, 1.0));
+        (b - a > 1e-6).then_some((a, b))
+    }
+
+    /// Manda ao `sync` o cursor ou a janela (o `on_sync` sai dele).
+    fn publish(&self, ctx: &mut EventCtx<'_>, kind: SyncKind, value: Option<(String, Option<String>)>) {
+        let (Some(sync), Some(axis)) = (self.sync, self.x_kind()) else { return };
+        if kind == SyncKind::Range {
+            *self.published_range.borrow_mut() = value.clone().and_then(|(a, b)| Some((a, b?)));
+        }
+        ChartSync::publish(ctx.ui, sync, ctx.id, kind, axis, value);
+    }
+
+    /// A janela do zoom mudou pelo usuário: vai para o `sync`.
+    fn publish_window(&self, ctx: &mut EventCtx<'_>) {
+        if self.sync.is_some() {
+            let range = self.window_values();
+            self.publish(ctx, SyncKind::Range, range.map(|(a, b)| (a, Some(b))));
+        }
+    }
+
+    /// Avisa o `on_hover` quando o ponto sob o mouse muda (-1: nenhum).
+    fn announce_hover(&self, ctx: &mut EventCtx<'_>, index: Option<usize>) {
+        if self.hover_index.replace(index) != index {
+            ctx.fire("on_hover", EventArgs::Value(PropValue::Int(index.map_or(-1, |i| i as i64))));
+        }
+    }
+
+    /// O índice destacado sem o mouse neste quadro: o cursor do `sync` ou o `highlight_index`.
+    fn update_lit(&self, ctx: &PaintCtx<'_>) {
+        let from_sync = self.sync_cursor(ctx.ui).and_then(|x| self.index_of_x(&x));
+        let own = usize::try_from(self.highlight_index).ok().filter(|i| *i < self.points());
+        self.lit.set(if self.hovered.get().is_some() { None } else { from_sync.or(own) });
+    }
+
+    /// A coluna do índice destacado (para a dica), depois da pintura das séries.
+    fn lit_hit(&self) -> Option<Hit> {
+        let index = self.lit.get()?;
+        self.hits.borrow().iter().find(|h| h.is_column() && h.index == index).copied()
+    }
+
+    /// O índice destacado agora (o mouse ou, sem ele, o código e o `sync`).
+    pub(crate) fn lit_index(&self) -> Option<usize> {
+        self.hovered.get().filter(Hit::is_column).map(|h| h.index).or(self.lit.get())
+    }
+
+    /// A faixa sendo selecionada, em x.
+    pub(crate) fn selecting(&self) -> Option<(f32, f32)> {
+        self.selecting.get()
+    }
+}
+
+/// Um número do eixo X como texto curto (sem casas a mais).
+fn number_text(v: f64) -> String {
+    let rounded = (v * 1e6).round() / 1e6;
+    format!("{rounded}")
 }
 
 impl Chart {
@@ -1382,7 +1655,7 @@ impl Chart {
         if polar {
             // Grade radial: círculos com os valores.
             let (_, top, step) = nice_scale(0.0, max);
-            let grid = Stroke::new(ctx.theme.color("border"), 1.0);
+            let grid = Stroke::new(grid_color(ctx), 1.0);
             let mut l = small_text(ctx);
             l.h_align = TextAlign::Leading;
             let mut v = step;

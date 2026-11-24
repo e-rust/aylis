@@ -1,5 +1,6 @@
-//! O transporte do MCP ("streamable HTTP", só a parte de pedido e resposta): `POST /mcp` com
-//! JSON-RPC, resposta em `application/json`, só em `127.0.0.1`. Todo pedido precisa do token
+//! O transporte do MCP ("streamable HTTP"): `POST /mcp` com JSON-RPC, resposta em
+//! `application/json`, e o `GET /mcp` (`text/event-stream`), por onde vão os avisos do servidor
+//! (o `list_changed`), só em `127.0.0.1`. Todo pedido precisa do token
 //! (`Authorization: Bearer ...`) e de uma origem local (o `Origin` de uma página de outro site
 //! é recusado: sem isso, um site aberto no navegador falaria com o app pelo DNS rebinding).
 //!
@@ -8,7 +9,7 @@
 
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpListener, TcpStream};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::time::Duration;
 
@@ -25,13 +26,34 @@ const MAX_BODY: usize = 16 * 1024 * 1024;
 /// Responde uma mensagem JSON-RPC (`None` para notificações). Roda na thread da conexão.
 pub type Handler = Arc<dyn Fn(Value) -> Option<Value> + Send + Sync>;
 
+/// Quantos clientes podem ficar ouvindo os avisos do servidor (o `GET /mcp`) ao mesmo tempo.
+const MAX_LISTENERS: usize = 8;
+
+/// As conexões que ouvem os avisos do servidor (o fluxo de eventos do `GET /mcp`).
+type Listeners = Arc<Mutex<Vec<TcpStream>>>;
+
 /// O servidor ligado; parar (ou soltar) fecha o socket.
 pub struct HttpServer {
     port: u16,
     stop: Arc<AtomicBool>,
+    listeners: Listeners,
 }
 
 impl HttpServer {
+    /// Manda um aviso (uma notificação JSON-RPC, como `notifications/tools/list_changed`) a
+    /// quem está ouvindo pelo `GET /mcp`. Quem caiu sai da lista.
+    pub fn notify(&self, message: &Value) {
+        let event = format!("event: message\ndata: {message}\n\n");
+        if let Ok(mut list) = self.listeners.lock() {
+            list.retain_mut(|s| s.write_all(event.as_bytes()).and_then(|()| s.flush()).is_ok());
+        }
+    }
+
+    /// Quantos clientes ouvem os avisos.
+    pub fn listeners(&self) -> usize {
+        self.listeners.lock().map(|l| l.len()).unwrap_or(0)
+    }
+
     pub fn port(&self) -> u16 {
         self.port
     }
@@ -42,6 +64,11 @@ impl HttpServer {
     }
 
     pub fn stop(&self) {
+        if let Ok(mut list) = self.listeners.lock() {
+            for s in list.drain(..) {
+                let _ = s.shutdown(std::net::Shutdown::Both);
+            }
+        }
         if !self.stop.swap(true, Ordering::Relaxed) {
             // Acorda o `accept`.
             let _ = TcpStream::connect(("127.0.0.1", self.port));
@@ -67,6 +94,8 @@ pub fn start(port: u16, token: String, thread: &str, handler: Handler) -> Result
     let flag = stop.clone();
     let token = Arc::new(token);
     let open = Arc::new(AtomicUsize::new(0));
+    let listeners: Listeners = Arc::default();
+    let hearers = listeners.clone();
     let name = thread.to_string();
     std::thread::Builder::new()
         .name(name.clone())
@@ -80,11 +109,11 @@ pub fn start(port: u16, token: String, thread: &str, handler: Handler) -> Result
                     open.fetch_sub(1, Ordering::SeqCst);
                     continue;
                 }
-                let (token, open, handler) = (token.clone(), open.clone(), handler.clone());
+                let (token, open, handler, hearers) = (token.clone(), open.clone(), handler.clone(), hearers.clone());
                 let spawned = std::thread::Builder::new().name(format!("{name}-conexao")).spawn({
                     let open = open.clone();
                     move || {
-                        serve(stream, &token, &*handler);
+                        serve(stream, &token, &*handler, &hearers);
                         open.fetch_sub(1, Ordering::SeqCst);
                     }
                 });
@@ -95,7 +124,7 @@ pub fn start(port: u16, token: String, thread: &str, handler: Handler) -> Result
             }
         })
         .map_err(|e| e.to_string())?;
-    Ok(HttpServer { port, stop })
+    Ok(HttpServer { port, stop, listeners })
 }
 
 /// Uma requisição HTTP: método, caminho, cabeçalhos (minúsculos) e corpo.
@@ -195,7 +224,7 @@ fn close_gracefully(stream: &mut TcpStream) {
     while matches!(std::io::Read::read(stream, &mut sink), Ok(n) if n > 0) {}
 }
 
-fn serve(mut stream: TcpStream, token: &str, handler: &(dyn Fn(Value) -> Option<Value> + Send + Sync)) {
+fn serve(mut stream: TcpStream, token: &str, handler: &(dyn Fn(Value) -> Option<Value> + Send + Sync), listeners: &Listeners) {
     let _ = stream.set_read_timeout(Some(Duration::from_secs(30)));
     let Ok(clone) = stream.try_clone() else { return };
     let Some(req) = read_request(&mut BufReader::new(clone)) else {
@@ -210,7 +239,21 @@ fn serve(mut stream: TcpStream, token: &str, handler: &(dyn Fn(Value) -> Option<
     if req.path.split('?').next() != Some("/mcp") {
         return respond(&mut stream, "404 Not Found", None);
     }
-    // Sem fluxo de eventos do servidor (GET) nem sessões para encerrar (DELETE).
+    // O fluxo de eventos do servidor (GET, `text/event-stream`): a conexão fica aberta e recebe
+    // os avisos (`HttpServer::notify`), sem thread própria. Sem sessões para encerrar (DELETE).
+    if req.method == "GET" && req.header("accept").is_some_and(|a| a.contains("text/event-stream")) {
+        let Ok(mut list) = listeners.lock() else { return };
+        if list.len() >= MAX_LISTENERS {
+            drop(list);
+            return respond(&mut stream, "429 Too Many Requests", None);
+        }
+        let _ = stream.set_write_timeout(Some(Duration::from_secs(2)));
+        let head = "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nCache-Control: no-cache\r\nConnection: keep-alive\r\n\r\n";
+        if stream.write_all(head.as_bytes()).and_then(|()| stream.flush()).is_ok() {
+            list.push(stream);
+        }
+        return;
+    }
     if req.method != "POST" {
         return respond(&mut stream, "405 Method Not Allowed", None);
     }

@@ -110,8 +110,8 @@ impl Axis {
 }
 
 /// O eixo X.
-#[derive(Clone, Copy, Debug)]
-enum XAxis {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) enum XAxis {
     /// Um lugar por rótulo (`n` deles).
     Category(usize),
     /// Datas (dias desde 1970): de `lo` a `hi`.
@@ -230,6 +230,13 @@ pub(super) fn paint(chart: &Chart, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, 
     } else {
         XAxis::Category(n)
     };
+    chart.x_axis.set(Some(x_axis));
+    // Ligado a um `ChartSync`: a janela é a dele (a que veio de outro gráfico ou do app).
+    if let Some(range) = chart.sync_range(ctx.ui) {
+        let window = range.as_ref().and_then(|(a, b)| chart.window_of(x_axis, (a, b))).unwrap_or((0.0, 1.0));
+        chart.window.set(window);
+        *chart.published_range.borrow_mut() = None;
+    }
 
     // Margens dos rótulos.
     let small = small_text(ctx);
@@ -250,7 +257,7 @@ pub(super) fn paint(chart: &Chart, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, 
     let y_px = |a: &Axis, v: f64| plot.bottom() - a.frac(v) as f32 * plot.height;
 
     // Grade e rótulos do eixo Y (a grade só do da esquerda).
-    let grid = Stroke::new(ctx.theme.color("border").with_opacity(0.8), 1.0);
+    let grid = Stroke::new(super::grid_color(ctx).with_opacity(0.8), 1.0);
     let mut yl = small.clone();
     yl.h_align = TextAlign::Trailing;
     for t in left.ticks() {
@@ -339,13 +346,31 @@ pub(super) fn paint(chart: &Chart, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, 
     canvas.clip_rect(plot.inflate(1.0));
     let theme = ctx.theme;
     let hovered = chart.hovered.get();
-    let hovered_column = hovered.filter(Hit::is_column).map(|h| h.index);
+    // A coluna destacada: a do mouse ou, sem ele, a do cursor do `sync` e do `highlight_index`.
+    let hovered_column = chart.lit_index();
     if let Some(i) = hovered_column {
         let x = match x_axis {
             XAxis::Category(_) => x_px(i as f64),
             _ => series_pts.iter().find_map(|(_, _, p)| p.iter().find(|p| p.index == i)).map_or(-1e9, |p| x_px(p.x)),
         };
         canvas.fill_rect(RectF::new(x - slot / 2.0, plot.y, slot, plot.height), 0.0, &Brush::Solid(theme.color("hover_overlay")));
+    }
+    // O cursor do `sync`: uma linha no valor do X.
+    if let Some(cursor) = chart.sync_cursor(ctx.ui) {
+        let at = match x_axis {
+            XAxis::Category(_) => chart.index_of_x(&cursor).map(|i| i as f64),
+            XAxis::Time(..) => parse_time(&cursor),
+            XAxis::Value(..) => cursor.trim().parse::<f64>().ok(),
+        };
+        if let Some(x) = at.map(|v| x_px(v).round() + 0.5).filter(|x| *x >= plot.x && *x <= plot.right()) {
+            let line = Stroke::new(theme.color("text_muted").with_opacity(0.7), 1.0).dashed(vec![3.0, 3.0]);
+            canvas.draw_line(PointF::new(x, plot.y), PointF::new(x, plot.bottom()), &line);
+        }
+    }
+    // A faixa sendo selecionada (`select_range`).
+    if let Some((a, b)) = chart.selecting() {
+        let band = RectF::new(a.min(b), plot.y, (b - a).abs(), plot.height);
+        canvas.fill_rect(band, 0.0, &Brush::Solid(theme.color("primary").with_opacity(0.14)));
     }
     let axis_of = |si: usize| if data[si].right_axis { right.as_ref().unwrap_or(&left) } else { &left };
     let pixel = |si: usize, p: &Point| PointF::new(x_px(p.x), y_px(axis_of(si), p.y));
@@ -408,7 +433,9 @@ pub(super) fn paint(chart: &Chart, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, 
             let (y0, y1) = (y_px(axis, if stacked(kind) { p.base } else { axis.base() }), y_px(axis, p.y));
             let rect = RectF::from_points(PointF::new(x + 1.0, y1), PointF::new(x + bar_w - 1.0, y0));
             let lit = hovered_column == Some(p.index);
-            canvas.fill_rect(rect, 3.0_f32.min(bar_w / 3.0), &Brush::Solid(if lit { color.lerp(Color::WHITE, 0.15) } else { color }));
+            // Empilhada: sem raio, como a barra deitada, senão o fundo aparece entre os pedaços.
+            let radius = if stacked(kind) { 0.0 } else { 3.0_f32.min(bar_w / 3.0) };
+            canvas.fill_rect(rect, radius, &Brush::Solid(if lit { color.lerp(Color::WHITE, 0.15) } else { color }));
         }
     }
 
@@ -493,8 +520,7 @@ fn paint_horizontal(chart: &Chart, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, 
             }
         }
     }
-    // Empilhadas (`stacked`): a escala vai até a soma de cada linha (relatório do InsightDB,
-    // 11/11: não havia barra deitada empilhada).
+    // Empilhadas (`stacked`): a escala vai até a soma de cada linha.
     if chart.stacked {
         for i in 0..n {
             let (neg, pos) = visible.iter().filter_map(|&si| data[si].values.get(i)).fold((0.0, 0.0), |(a, b), v| if *v < 0.0 { (a + v, b) } else { (a, b + v) });
@@ -509,7 +535,7 @@ fn paint_horizontal(chart: &Chart, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, 
     let plot = RectF::new(area.x + label_w, area.y + 4.0, (area.width - label_w - 12.0).max(10.0), (area.height - 26.0).max(10.0));
     chart.plot.set(plot);
     let x_px = |v: f64| plot.x + axis.frac(v) as f32 * plot.width;
-    let grid = Stroke::new(ctx.theme.color("border").with_opacity(0.8), 1.0);
+    let grid = Stroke::new(super::grid_color(ctx).with_opacity(0.8), 1.0);
     let mut xl = small.clone();
     xl.h_align = TextAlign::Center;
     for t in axis.ticks() {
@@ -693,6 +719,19 @@ pub fn parse_time(text: &str) -> Option<f64> {
         days += (h * 3600 + mi * 60 + s) as f64 / 86400.0;
     }
     Some(days)
+}
+
+/// Dias desde 1970 como o texto que o `parse_time` lê: `2026-11-23`, ou com a hora
+/// (`2026-11-23 14:30`, com os segundos quando há).
+pub(crate) fn format_days(days: f64) -> String {
+    let whole = days.floor();
+    let (y, m, d) = civil_from_days(whole as i64);
+    let seconds = ((days - whole) * 86400.0).round() as i64;
+    match seconds {
+        0 => format!("{y:04}-{m:02}-{d:02}"),
+        s if s % 60 == 0 => format!("{y:04}-{m:02}-{d:02} {:02}:{:02}", s / 3600, s / 60 % 60),
+        s => format!("{y:04}-{m:02}-{d:02} {:02}:{:02}:{:02}", s / 3600, s / 60 % 60, s % 60),
+    }
 }
 
 /// As marcas do eixo de tempo entre `lo` e `hi` (dias), no máximo `max` delas: horas, dias,

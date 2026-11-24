@@ -171,6 +171,8 @@ pub struct Ui {
     themes: Vec<std::sync::Arc<Theme>>,
     /// A paleta do projeto: entra em todo tema usado (veja [`crate::palette`]).
     palette: crate::palette::Palette,
+    /// A fonte do projeto: entra em todo tema usado, como a paleta ([`Ui::set_project_font`]).
+    project_font: String,
     /// Como a roda rola (passo por dente, deslize).
     scroll_options: crate::ScrollOptions,
     /// O zoom do app inteiro (1 = normal); cada form ainda multiplica pelo `zoom` dele.
@@ -248,6 +250,9 @@ pub struct Ui {
     pub(crate) instances: crate::instances::Instances,
     /// Forms abertos como janelas, do fundo para o topo (ver `forms.rs`).
     pub(crate) open_forms: Vec<crate::forms::OpenForm>,
+    /// A janela com que o usuário falou por último (ativada, clicada ou com uma tecla): a dona
+    /// do próximo form aberto ([`Ui::show`]).
+    pub(crate) active_form: Option<ComponentId>,
     /// Onde está (ou deve abrir) a janela de cada form (ver `forms.rs`).
     pub(crate) placements: std::collections::HashMap<ComponentId, crate::forms::WindowPlacement>,
     /// Os monitores, quantas vezes a lista mudou e o monitor de cada form ([`crate::monitors`]).
@@ -325,6 +330,9 @@ pub struct Ui {
     pub(crate) layout_dirty: bool,
     /// Os forms com o layout a refazer ([`Ui::invalidate_form`]); `layout_dirty` vale para todos.
     pub(crate) dirty_forms: std::collections::HashSet<ComponentId>,
+    /// Os contêineres com o layout a refazer só por dentro ([`Ui::invalidate_part`]): a mudança
+    /// de uma propriedade não alcança o tamanho deles, e o resto do form fica como está.
+    pub(crate) dirty_parts: std::collections::HashSet<ComponentId>,
     pub(crate) repaint_requested: bool,
     /// Quantas vezes a janela inteira foi marcada para repintar ([`Ui::request_repaint`]) e,
     /// de cada form, até qual delas ele já pintou ([`Ui::take_damage`]).
@@ -423,6 +431,7 @@ impl Ui {
             theme: shared_theme(false),
             themes: vec![shared_theme(false), shared_theme(true)],
             palette: Vec::new(),
+            project_font: String::new(),
             scroll_options: crate::ScrollOptions::default(),
             zoom: 1.0,
             zoom_changed: false,
@@ -457,6 +466,7 @@ impl Ui {
             tasks: Default::default(),
             instances: Default::default(),
             open_forms: Vec::new(),
+            active_form: None,
             placements: std::collections::HashMap::new(),
             monitors: Vec::new(),
             monitors_version: 0,
@@ -497,6 +507,7 @@ impl Ui {
             time: 0.0,
             layout_dirty: false,
             dirty_forms: Default::default(),
+            dirty_parts: Default::default(),
             repaint_requested: false,
             damage_epoch: 0,
             painted_epoch: HashMap::new(),
@@ -586,6 +597,37 @@ impl Ui {
         self.damage(id);
     }
 
+    /// Como [`Ui::invalidate_form`], mas refazendo só o contêiner que a mudança de `id`
+    /// alcança: o pai dele, ou o primeiro acima que não mede o próprio tamanho pelo conteúdo
+    /// (`auto_size`). Uma propriedade posta num controle de um frame entre 64 refazia o form
+    /// inteiro a cada `ui.bounds` (~90 ms por volta de um timer).
+    /// Com vistas por largura no form, ou chegando ao form, é o form inteiro.
+    pub(crate) fn invalidate_part(&mut self, id: ComponentId) {
+        self.damage(id);
+        let root = self.root_of(id);
+        if self.layout_dirty || self.dirty_forms.contains(&root) {
+            return;
+        }
+        let part = if self.views.is_empty() { self.layout_part(id) } else { root };
+        if part == root {
+            self.dirty_forms.insert(root);
+        } else {
+            self.dirty_parts.insert(part);
+        }
+    }
+
+    /// O contêiner cujo layout uma mudança em `id` pede refazer (veja [`Ui::invalidate_part`]).
+    fn layout_part(&self, id: ComponentId) -> ComponentId {
+        let Some(mut part) = self.parent(id) else { return id };
+        while let Some(up) = self.parent(part) {
+            if self.cb(part).is_some_and(|cb| !cb.auto_size()) {
+                break;
+            }
+            part = up;
+        }
+        part
+    }
+
     /// Pede a repintura da janela inteira (sem saber o que mudou). Para só um controle,
     /// [`Ui::damage`].
     #[track_caller]
@@ -596,7 +638,7 @@ impl Ui {
 
     /// O layout está marcado para ser refeito na próxima pintura.
     pub fn needs_layout(&self) -> bool {
-        self.layout_dirty || !self.dirty_forms.is_empty()
+        self.layout_dirty || !self.dirty_forms.is_empty() || !self.dirty_parts.is_empty()
     }
 
     /// Há algo novo para pintar (mudança, layout pendente ou animação em andamento).
@@ -1383,10 +1425,36 @@ impl Ui {
         if !self.palette.is_empty() {
             std::sync::Arc::make_mut(&mut theme).apply_palette(&self.palette);
         }
+        // A fonte do projeto também vale no tema trocado em execução (antes, o tema embutido
+        // voltava à fonte dele).
+        if !self.project_font.is_empty() && theme.fonts.values().any(|f| f.family != self.project_font && f.family != "monospace" && !f.family.to_lowercase().contains("mono")) {
+            std::sync::Arc::make_mut(&mut theme).apply_font_family(&self.project_font);
+        }
         self.theme = theme;
         self.recolored.borrow_mut().clear();
         self.refresh_color_names();
         self.request_repaint();
+    }
+
+    /// A fonte do projeto (o `font` do `.aylisproj`; vazio: a de cada tema): entra no tema em
+    /// uso, nos da biblioteca e em todo tema posto depois com [`Ui::set_theme`].
+    pub fn set_project_font(&mut self, family: &str) {
+        self.project_font = family.to_string();
+        if family.is_empty() {
+            return;
+        }
+        std::sync::Arc::make_mut(&mut self.theme).apply_font_family(family);
+        for t in &mut self.themes {
+            std::sync::Arc::make_mut(t).apply_font_family(family);
+        }
+        self.recolored.borrow_mut().clear();
+        // Outra fonte mede outro tamanho de texto.
+        self.invalidate();
+    }
+
+    /// A fonte do projeto posta com [`Ui::set_project_font`] (vazia: nenhuma).
+    pub fn project_font(&self) -> &str {
+        &self.project_font
     }
 
     /// A paleta do projeto (as cores com nome do `.aylisproj`): entra no tema em uso, nos da
@@ -1597,8 +1665,26 @@ impl Ui {
         self.icons.keys().any(|k| k.starts_with(&start))
     }
 
+    /// O ícone pelo nome (`material:home`). Em debug, um ícone de pacote que o app não leva
+    /// (citado só no código, fora do subconjunto empacotado) avisa no stderr uma vez, em vez de
+    /// sair um quadrado vazio calado.
     pub fn icon(&self, name: &str) -> Option<&crate::icons::Icon> {
-        self.icons.get(name).or_else(|| crate::icons::builtin(name))
+        fn missing_icon_warning(name: &str) {
+            static WARNED: std::sync::Mutex<std::collections::BTreeSet<String>> = std::sync::Mutex::new(std::collections::BTreeSet::new());
+            let Some((pack, icon)) = name.split_once(':') else { return };
+            let word = |s: &str| !s.is_empty() && s.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_');
+            if !word(pack) || !word(icon) {
+                return;
+            }
+            if WARNED.lock().is_ok_and(|mut w| w.insert(name.to_string())) {
+                crate::stderr_line!("aylis: o ícone '{name}' não está no app (o pacote assets/icons/{pack}.txt não o tem; gere o código ou recompile para o build.rs incluí-lo)");
+            }
+        }
+        let icon = self.icons.get(name).or_else(|| crate::icons::builtin(name));
+        if cfg!(debug_assertions) && icon.is_none() {
+            missing_icon_warning(name);
+        }
+        icon
     }
 
     pub fn services(&self) -> &Services {
@@ -1895,7 +1981,9 @@ impl Ui {
         // fica guardado. Qualquer outro valor desfaz o nome.
         let mut color_name = None;
         let value = match (&info.kind, value) {
-            (PropKind::Color, PropValue::String(spec)) if crate::palette::is_named(&spec) => {
+            // `none` não é nome de cor: vai ao componente, que decide (o `border_color` do
+            // `WindowSettings`: sem borda).
+            (PropKind::Color, PropValue::String(spec)) if crate::palette::is_named(&spec) && !spec.trim().eq_ignore_ascii_case("none") => {
                 let color = self
                     .theme
                     .resolve_color(&spec)
@@ -1970,6 +2058,14 @@ impl Ui {
         } else {
             None
         };
+        // O mesmo valor de agora não muda nada: nem layout, nem repintura (um timer que confere o
+        // estado de 64 frames por segundo refazia o form a cada volta).
+        // (No designer, o `visible` já foi posto acima, com a marca de escondido.)
+        let unchanged = !(self.design_mode && name == "visible")
+            && match &old_value {
+                Some(old) => *old == value,
+                None => self.entry(id).and_then(|e| e.component.as_deref()).and_then(|c| crate::component::read_prop(c, name)).is_some_and(|old| old == value),
+            };
         let entry = self.entry_mut(id).expect("verificado acima");
         let component = entry.component.as_deref_mut().expect("ocupado já verificado acima");
         let result = match set_in_chain(component, name, value.clone()) {
@@ -1979,14 +2075,16 @@ impl Ui {
             },
             other => other,
         };
-        if paint_only && matches!(name, "opacity" | "translate_x" | "translate_y") {
+        if unchanged && result.is_ok() {
+            // Nada a refazer.
+        } else if paint_only && matches!(name, "opacity" | "translate_x" | "translate_y") {
             // Só o lugar ou a transparência: o desenho de dentro é o mesmo (a camada guardada
             // dele continua valendo, veja `cache_layer`).
             self.damage_placement(id);
         } else if paint_only {
             self.damage(id);
         } else {
-            self.invalidate_form(id);
+            self.invalidate_part(id);
         }
         if let Some(before) = before {
             self.sync_state_triggers(id, before);
@@ -2214,6 +2312,10 @@ impl Ui {
         // Um componente ligado a dados que o usuário mudou: grava de volta (antes do handler,
         // que já vê o campo novo).
         self.binding_changed(id, event);
+        // A plataforma avisa a janela que ganhou o foco pelo `on_activate` do form.
+        if event == "on_activate" && self.parent(id).is_none() {
+            self.active_form = Some(id);
+        }
         // Os `EventInterceptor` (item 18): antes do handler, num lugar só.
         if let Some(result) = self.intercept(id, event, args) {
             return result;

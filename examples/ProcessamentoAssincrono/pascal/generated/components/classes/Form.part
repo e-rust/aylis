@@ -121,6 +121,8 @@
     procedure SetOnFilesDrop(Value: string);
     function GetOnViewChange: string;
     procedure SetOnViewChange(Value: string);
+    function GetOnTopmostLost: string;
+    procedure SetOnTopmostLost(Value: string);
     function GetClientWidth: Double;
     procedure SetClientWidth(Value: Double);
     function GetClientHeight: Double;
@@ -296,6 +298,7 @@
   public
     procedure MoveToMonitor(AMonitor: Int64);
     procedure RequestAttention(ACritical: Boolean);
+    procedure Place(AMonitor: Int64; AX: Int64; AY: Int64; AWidth: Int64; AHeight: Int64; AActivate: Boolean);
     function GpuAdapter: string;
     function GpuAdapters: TStringArray;
     function DropX: Double;
@@ -364,6 +367,7 @@
     property OnUndock: string read GetOnUndock write SetOnUndock;
     property OnFilesDrop: string read GetOnFilesDrop write SetOnFilesDrop;
     property OnViewChange: string read GetOnViewChange write SetOnViewChange;
+    property OnTopmostLost: string read GetOnTopmostLost write SetOnTopmostLost;
     property ClientWidth: Double read GetClientWidth write SetClientWidth;
     property ClientHeight: Double read GetClientHeight write SetClientHeight;
     property Left: Double read GetLeft write SetLeft;
@@ -1051,6 +1055,16 @@ end;
 procedure TForm.SetOnViewChange(Value: string);
 begin
   SetProp('on_view_change', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnTopmostLost: string;
+begin
+  Result := AsText(GetProp('on_topmost_lost'));
+end;
+
+procedure TForm.SetOnTopmostLost(Value: string);
+begin
+  SetProp('on_topmost_lost', TJSONString.Create(Value));
 end;
 
 function TForm.GetClientWidth: Double;
@@ -1921,6 +1935,11 @@ end;
 procedure TForm.RequestAttention(ACritical: Boolean);
 begin
   Aylis.Send('invoke', TJSONObject.Create(['target', Id, 'method', 'request_attention', 'args', TJSONArray.Create([ACritical])]));
+end;
+
+procedure TForm.Place(AMonitor: Int64; AX: Int64; AY: Int64; AWidth: Int64; AHeight: Int64; AActivate: Boolean);
+begin
+  Aylis.Send('invoke', TJSONObject.Create(['target', Id, 'method', 'place', 'args', TJSONArray.Create([AMonitor, AX, AY, AWidth, AHeight, AActivate])]));
 end;
 
 function TForm.GpuAdapter: string;

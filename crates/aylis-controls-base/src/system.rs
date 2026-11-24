@@ -7,7 +7,7 @@ use aylis_core::{
     PaintCtx, PointF, RectF, Stroke, TextAlign, Ui, properties,
 };
 
-use crate::{Button, Form, Label, Layout, ScrollBox, leaf_control};
+use crate::{Button, Edit, Form, Label, Layout, ScrollBox, leaf_control};
 
 // ---------------------------------------------------------------------------
 // Timer
@@ -230,7 +230,10 @@ impl Component for DataModule {
 /// não visual de qualquer form: `on_key_down` e `on_key_press` recebem as teclas antes de todos
 /// (antes do form com `key_preview` e do controle com foco; engolir ou trocar a tecla vale
 /// como lá), e `on_exception` recebe todo erro de handler e de componente (o
-/// [`ExceptionEvent`]): com ele ligado, a caixa de erro padrão não aparece.
+/// [`ExceptionEvent`]): com ele ligado, a caixa de erro padrão não aparece. Com o
+/// `single_instance` do projeto, `on_second_instance` recebe os argumentos de outra abertura
+/// do app (que sai logo depois; a janela já veio para a frente). O form em que a tecla chegou
+/// está no `form` do `KeyEvent`.
 #[derive(Default)]
 pub struct ApplicationEvents {
     /// Um número livre para o código (não muda nada).
@@ -244,7 +247,7 @@ impl Component for ApplicationEvents {
 
     properties! {
         tag: i64 => "Misc";
-        events: on_key_down, on_key_press, on_exception: ExceptionEvent, on_terminate: ()
+        events: on_key_down, on_key_press, on_exception: ExceptionEvent, on_terminate: (), on_second_instance: Vec<String>
     }
 }
 
@@ -594,21 +597,46 @@ impl PropEnum for DlgKind {
 /// tipo e os botões definidos no Object Inspector, e abre com [`MessageDialog::execute`].
 /// Feita com o próprio aylis (igual no desktop, no celular e no navegador). Ao fechar,
 /// dispara `on_close` com o botão escolhido (`"yes"`, `"no"`, `"ok"`, `"cancel"`...).
+///
+/// Com `input`, é a pergunta com um campo de texto (o [`prompt`]): `text` é o rótulo, `value`
+/// o texto inicial e, depois do OK, o digitado; `required` não deixa confirmar vazio. `icon` e
+/// `icon_color` trocam o ícone e a cor do círculo (vazios: os do tipo).
 pub struct MessageDialog {
     /// Título da janela; vazio: o do tipo ("Confirmação", "Aviso"...).
     pub title: String,
-    /// A mensagem.
+    /// A mensagem (com `input`, o rótulo do campo).
     pub text: String,
     /// O tipo, que dá o ícone e o título padrão: `information`, `warning`, `error` ou
     /// `confirmation`.
     pub kind: DlgKind,
     /// Os botões, na ordem em que aparecem: `"yes,no"`, `"ok,cancel"`, `"yes,no,cancel"`...
     pub buttons: String,
+    /// O ícone no círculo (um nome de ícone, `"pacote:nome"`); vazio: o do tipo.
+    pub icon: String,
+    /// A cor do círculo do ícone (um token do tema ou uma cor); vazio: a do tipo.
+    pub icon_color: Option<Color>,
+    /// Um campo de texto embaixo da mensagem (a pergunta do [`prompt`]).
+    pub input: bool,
+    /// O texto do campo: o inicial e, depois do OK, o digitado (o Cancelar não muda).
+    pub value: String,
+    /// Com `input`, o OK fica desligado enquanto o campo está vazio (só espaços contam como
+    /// vazio).
+    pub required: bool,
 }
 
 impl Default for MessageDialog {
     fn default() -> Self {
-        Self { title: String::new(), text: String::new(), kind: DlgKind::Information, buttons: "ok".into() }
+        Self {
+            title: String::new(),
+            text: String::new(),
+            kind: DlgKind::Information,
+            buttons: "ok".into(),
+            icon: String::new(),
+            icon_color: None,
+            input: false,
+            value: String::new(),
+            required: false,
+        }
     }
 }
 
@@ -641,8 +669,23 @@ impl MessageDialog {
     /// quem prefere tratar a resposta no lugar em que abriu).
     pub fn execute_then(ui: &mut Ui, id: ComponentId, then: impl FnOnce(&mut Ui, ModalResult) + 'static) -> Option<ComponentId> {
         let d = ui.get::<MessageDialog>(id)?;
-        let (title, text, kind, buttons) = (d.title.clone(), d.text.clone(), d.kind, d.button_list());
-        Some(message_box(ui, &title, &text, kind, &buttons, &[], false, move |ui, result| {
+        let (title, text, kind) = (d.title.clone(), d.text.clone(), d.kind);
+        let mut buttons = d.button_list();
+        // A pergunta com campo sem botões escolhidos: OK e Cancelar.
+        if d.input && d.buttons.trim() == "ok" {
+            buttons = vec![ModalResult::Ok, ModalResult::Cancel];
+        }
+        let extras = BoxExtras {
+            icon: d.icon.clone(),
+            icon_color: d.icon_color.map(aylis_core::ColorRef::Value),
+            input: d.input.then(|| (d.value.clone(), d.required)),
+        };
+        Some(message_box(ui, &title, &text, kind, &buttons, &[], false, extras, move |ui, result, value| {
+            if let (Some(value), true) = (value, matches!(result, ModalResult::Ok | ModalResult::Yes)) {
+                if let Some(d) = ui.get_mut::<MessageDialog>(id) {
+                    d.value = value;
+                }
+            }
             ui.fire(id, "on_close", &EventArgs::Text(result.name().to_string()));
             then(ui, result);
         }))
@@ -658,7 +701,12 @@ impl Component for MessageDialog {
         title: String => "Appearance",
         text: String => "Appearance",
         kind: DlgKind => "Appearance",
-        buttons: String => "Behavior";
+        buttons: String => "Behavior",
+        icon: String => "Appearance",
+        icon_color: Option<Color> => "Appearance",
+        input: bool => "Behavior",
+        value: String => "Data",
+        required: bool => "Behavior";
         events: on_close: aylis_core::ModalResult
     }
 }
@@ -679,7 +727,73 @@ pub fn message_dlg(
     buttons: &[ModalResult],
     on_close: impl FnOnce(&mut Ui, ModalResult) + 'static,
 ) -> ComponentId {
-    message_box(ui, "", text, kind, buttons, &[], false, on_close)
+    message_box(ui, "", text, kind, buttons, &[], false, BoxExtras::default(), move |ui, r, _| on_close(ui, r))
+}
+
+/// A pergunta com um campo de texto (o `InputQuery`): `title`, o rótulo `label` e o texto
+/// inicial `value`, com OK e Cancelar. `on_close` recebe o texto no OK e `None` no Cancelar (ou
+/// no Esc). Feita sobre a mesma caixa do [`message_dlg`]; para não aceitar vazio, veja
+/// [`set_prompt_required`]; para o ícone, [`set_dialog_icon`]. Um campo só: mais que isso é
+/// um form do app.
+///
+/// ```ignore
+/// prompt(ui, "Novo perfil", "Nome do perfil:", "", |ui, nome| {
+///     if let Some(nome) = nome { criar_perfil(ui, &nome); }
+/// });
+/// ```
+pub fn prompt(ui: &mut Ui, title: &str, label: &str, value: &str, on_close: impl FnOnce(&mut Ui, Option<String>) + 'static) -> ComponentId {
+    let extras = BoxExtras { input: Some((value.to_string(), false)), ..Default::default() };
+    message_box(ui, title, label, DlgKind::Confirmation, &[ModalResult::Ok, ModalResult::Cancel], &[], false, extras, move |ui, r, value| {
+        on_close(ui, if r == ModalResult::Ok { value } else { None })
+    })
+}
+
+/// Liga ou desliga o "não aceita vazio" no campo de um [`prompt`] aberto: o OK só fica ligado
+/// com algum texto (só espaços contam como vazio). `dialog` é o que o `prompt` devolveu.
+pub fn set_prompt_required(ui: &mut Ui, dialog: ComponentId, required: bool) {
+    let Some(input) = dialog_part::<DlgInput>(ui, dialog) else { return };
+    if let Some(i) = ui.get_mut::<DlgInput>(input) {
+        i.required = required;
+    }
+    update_ok(ui, dialog);
+}
+
+/// Troca o ícone e a cor do círculo de uma caixa aberta (o [`message_dlg`], o [`confirm`], o
+/// [`show_message`], o [`prompt`]; `dialog` é o que eles devolvem): `icon` é um nome de ícone
+/// (vazio: o do tipo) e `color` um token do tema ou uma cor (`None`: a do tipo).
+///
+/// ```ignore
+/// let caixa = confirm(ui, "Excluir", "Excluir o perfil?", "Excluir", true, |_, _| {});
+/// set_dialog_icon(ui, caixa, "delete", Some(ColorRef::Token("danger".into())));
+/// ```
+pub fn set_dialog_icon(ui: &mut Ui, dialog: ComponentId, icon: &str, color: Option<aylis_core::ColorRef>) {
+    let Some(id) = dialog_part::<DlgIcon>(ui, dialog) else { return };
+    if let Some(i) = ui.get_mut::<DlgIcon>(id) {
+        i.icon = icon.to_string();
+        i.color = color;
+    }
+    ui.request_repaint();
+}
+
+/// O pedaço da caixa (o ícone, o campo) do tipo `T`.
+fn dialog_part<T: Component + 'static>(ui: &Ui, dialog: ComponentId) -> Option<ComponentId> {
+    let mut stack = ui.children(dialog).to_vec();
+    while let Some(id) = stack.pop() {
+        if ui.get::<T>(id).is_some() {
+            return Some(id);
+        }
+        stack.extend(ui.children(id).iter().copied());
+    }
+    None
+}
+
+/// Liga o OK da pergunta só quando o campo pode ser aceito (o `required`).
+fn update_ok(ui: &mut Ui, dialog: ComponentId) {
+    let Some(input) = dialog_part::<DlgInput>(ui, dialog) else { return };
+    let Some(i) = ui.get::<DlgInput>(input) else { return };
+    let (edit, Some(ok), required) = (i.edit, i.ok, i.required) else { return };
+    let text = ui.get_prop(edit, "text").ok().and_then(|v| v.to_str().ok().map(str::to_string)).unwrap_or_default();
+    let _ = ui.set_prop(ok, "enabled", !required || !text.trim().is_empty());
 }
 
 /// Pergunta de sim ou não com os textos do app: `title`, `text`, o botão `ok` (ao lado do
@@ -688,9 +802,30 @@ pub fn message_dlg(
 pub fn confirm(ui: &mut Ui, title: &str, text: &str, ok: &str, danger: bool, on_close: impl FnOnce(&mut Ui, bool) + 'static) -> ComponentId {
     let kind = if danger { DlgKind::Warning } else { DlgKind::Confirmation };
     let cancel = aylis_core::messages::t("Cancelar").to_string();
-    message_box(ui, title, text, kind, &[ModalResult::Ok, ModalResult::Cancel], &[ok, &cancel], danger, move |ui, r| {
+    message_box(ui, title, text, kind, &[ModalResult::Ok, ModalResult::Cancel], &[ok, &cancel], danger, BoxExtras::default(), move |ui, r, _| {
         on_close(ui, r == ModalResult::Ok)
     })
+}
+
+/// O que a caixa tem além do texto e dos botões: o ícone e a cor escolhidos pelo app e o
+/// campo da pergunta (o texto inicial e se é obrigatório).
+#[derive(Default)]
+struct BoxExtras {
+    icon: String,
+    icon_color: Option<aylis_core::ColorRef>,
+    input: Option<(String, bool)>,
+}
+
+/// O campo da pergunta: o `Edit` e o OK que ele liga e desliga (o `required`). Não pinta nada.
+struct DlgInput {
+    base: ControlBase,
+    edit: ComponentId,
+    ok: Option<ComponentId>,
+    required: bool,
+}
+
+impl Component for DlgInput {
+    leaf_control!("DlgInput");
 }
 
 /// A caixa de mensagem (do [`message_dlg`] e do [`MessageDialog`]); `title` vazio: o do tipo.
@@ -702,7 +837,8 @@ fn message_box(
     buttons: &[ModalResult],
     captions: &[&str],
     danger: bool,
-    on_close: impl FnOnce(&mut Ui, ModalResult) + 'static,
+    extras: BoxExtras,
+    on_close: impl FnOnce(&mut Ui, ModalResult, Option<String>) + 'static,
 ) -> ComponentId {
     let title = if title.is_empty() {
         aylis_core::messages::t(match kind {
@@ -731,8 +867,17 @@ fn message_box(
         cb.set_align(Align::Bottom).set_height(footer_height).set_margins([0.0, footer_gap, 0.0, 0.0]).set_padding(footer_padding);
     }
     let buttons: Vec<ModalResult> = if buttons.is_empty() { vec![ModalResult::Ok] } else { buttons.to_vec() };
+    // O Esc: o Cancelar, o Não ou, sem eles, o único botão (o mesmo que fechar pelo X).
+    let escape = if buttons.contains(&ModalResult::Cancel) {
+        ModalResult::Cancel
+    } else if buttons.contains(&ModalResult::No) {
+        ModalResult::No
+    } else {
+        buttons[0]
+    };
     // Com align right, o primeiro fica mais à direita: a ordem visual é a da lista.
     let mut button_captions = Vec::with_capacity(buttons.len());
+    let mut ok_button = None;
     for (i, result) in buttons.iter().rev().enumerate() {
         let caption = captions.get(buttons.len() - 1 - i).map_or_else(|| aylis_core::messages::t(button_text(*result)).to_string(), |c| c.to_string());
         button_captions.insert(0, caption.clone());
@@ -741,6 +886,15 @@ fn message_box(
             cb.set_align(Align::Right).set_width(BUTTON_WIDTH).set_margins([BUTTON_GAP, 0.0, 0.0, 0.0]);
         }
         let _ = ui.set_prop(b, "modal_result", result.name());
+        // O botão do Esc é o `cancel_button` do diálogo: sem ele, o Esc não fechava o `confirm`.
+        if *result == escape {
+            let _ = ui.set_prop(b, "cancel_button", true);
+        }
+        // Com o campo, o Enter nele confirma (o OK, ou o Sim, é o botão padrão).
+        if extras.input.is_some() && matches!(result, ModalResult::Ok | ModalResult::Yes) && ok_button.is_none() {
+            let _ = ui.set_prop(b, "default_button", true);
+            ok_button = Some(b);
+        }
         if i + 1 < buttons.len() {
             let _ = ui.set_prop(b, "style", "flat");
         } else {
@@ -753,10 +907,25 @@ fn message_box(
     // O Ctrl+C copia a caixa inteira, no formato do Windows (o ícone atende o atalho).
     let rule = "---------------------------";
     let copy = format!("{rule}\n{title}\n{rule}\n{text}\n{rule}\n{}\n{rule}\n", button_captions.join("   "));
-    let icon = ui.add(DlgIcon { base: ControlBase::new(ICON_SIZE, ICON_SIZE), kind, copy }, form);
+    let icon = ui.add(DlgIcon { base: ControlBase::new(ICON_SIZE, ICON_SIZE), kind, copy, icon: extras.icon, color: extras.icon_color }, form);
     if let Some(cb) = ui.control_mut(icon) {
         cb.set_align(Align::Left).set_margins([0.0, 0.0, ICON_GAP, 0.0]);
     }
+    // A pergunta: o campo embaixo do rótulo, ao lado do ícone, com o foco.
+    let input = extras.input.map(|(value, required)| {
+        let edit = ui.add(Edit::new(value), form);
+        if let Some(cb) = ui.control_mut(edit) {
+            cb.set_align(Align::Bottom).set_height(INPUT_HEIGHT).set_margins([0.0, INPUT_GAP, 0.0, 0.0]);
+        }
+        let marker = ui.add(DlgInput { base: ControlBase::new(0.0, 0.0), edit, ok: ok_button, required }, form);
+        if let Some(cb) = ui.control_mut(marker) {
+            cb.set_visible(false);
+        }
+        ui.on(edit, "on_change", move |ui, _, _| update_ok(ui, form));
+        update_ok(ui, form);
+        ui.set_focus(edit);
+        edit
+    });
     // A janela no tamanho do texto: a largura da linha mais comprida (até um máximo, depois
     // quebra) e a altura das linhas; passou da altura máxima, o texto rola.
     let label = ui.add(Label::new(text), form);
@@ -782,21 +951,17 @@ fn message_box(
     }
     let buttons_width = buttons.len() as f32 * (BUTTON_WIDTH + BUTTON_GAP);
     let width = (BOX_PADDING * 2.0 + ICON_SIZE + ICON_GAP + client_width).max(BOX_PADDING * 2.0 + buttons_width);
-    let height = BOX_PADDING * 2.0 + text_height.min(TEXT_MAX_HEIGHT).max(ICON_SIZE) + footer_gap + footer_height;
+    let input_height = if input.is_some() { INPUT_HEIGHT + INPUT_GAP } else { 0.0 };
+    let text_area = if input.is_some() { (text_height.min(TEXT_MAX_HEIGHT) + input_height).max(ICON_SIZE) } else { text_height.min(TEXT_MAX_HEIGHT).max(ICON_SIZE) };
+    let height = BOX_PADDING * 2.0 + text_area + footer_gap + footer_height;
     if let Some(cb) = ui.control_mut(form) {
         cb.set_width(width.ceil()).set_height(height.ceil());
     }
-    let escape = if buttons.contains(&ModalResult::Cancel) {
-        ModalResult::Cancel
-    } else if buttons.contains(&ModalResult::No) {
-        ModalResult::No
-    } else {
-        buttons[0]
-    };
     let _ = ui.show_modal(form, move |ui, result| {
         let result = if result == ModalResult::None { escape } else { result };
+        let value = input.and_then(|edit| ui.get_prop(edit, "text").ok()).and_then(|v| v.to_str().ok().map(str::to_string));
         ui.free(form);
-        on_close(ui, result);
+        on_close(ui, result, value);
     });
     form
 }
@@ -838,16 +1003,22 @@ const FOOTER_HEIGHT: f32 = 36.0;
 const FOOTER_GAP: f32 = 14.0;
 const BUTTON_WIDTH: f32 = 100.0;
 const BUTTON_GAP: f32 = 8.0;
+/// O campo da pergunta ([`prompt`]) e o espaço entre ele e o rótulo.
+const INPUT_HEIGHT: f32 = 32.0;
+const INPUT_GAP: f32 = 10.0;
 const TEXT_MIN_WIDTH: f32 = 240.0;
 const TEXT_MAX_WIDTH: f32 = 520.0;
 /// Acima disto o texto rola (a caixa de pânico mostra a mensagem inteira).
 const TEXT_MAX_HEIGHT: f32 = 360.0;
 
-/// O ícone redondo da caixa de mensagem. Atende também o Ctrl+C da caixa (`copy`).
+/// O ícone redondo da caixa de mensagem. Atende também o Ctrl+C da caixa (`copy`). `icon` e
+/// `color` são os escolhidos pelo app ([`set_dialog_icon`]); vazios, os do tipo.
 struct DlgIcon {
     base: ControlBase,
     kind: DlgKind,
     copy: String,
+    icon: String,
+    color: Option<aylis_core::ColorRef>,
 }
 
 impl Component for DlgIcon {
@@ -863,9 +1034,21 @@ impl Component for DlgIcon {
         // O círculo ocupa o controle inteiro (sem sobra em volta).
         let side = ctx.rect.width.min(ctx.rect.height);
         let r = RectF::new(ctx.rect.x + (ctx.rect.width - side) / 2.0, ctx.rect.y + (ctx.rect.height - side) / 2.0, side, side);
-        canvas.fill_ellipse(r, &Brush::Solid(ctx.theme.color(token)));
-        // A cor sobre o círculo; o tema sem ela usa a do texto sobre o primário.
-        let color = ctx.theme.colors.get(on).copied().unwrap_or_else(|| ctx.theme.color("on_primary"));
+        let fill = self.color.as_ref().map_or_else(|| ctx.theme.color(token), |c| ctx.theme.color_of(c));
+        canvas.fill_ellipse(r, &Brush::Solid(fill));
+        // A cor sobre o círculo; o tema sem ela usa a do texto sobre o primário. Com a cor do
+        // app, o `on_` do token escolhido ou, numa cor solta, o texto claro ou escuro do tema
+        // pelo brilho dela.
+        let color = match &self.color {
+            None => ctx.theme.colors.get(on).copied().unwrap_or_else(|| ctx.theme.color("on_primary")),
+            Some(aylis_core::ColorRef::Token(t)) if ctx.theme.colors.contains_key(&format!("on_{t}")) => ctx.theme.color(&format!("on_{t}")),
+            Some(_) => readable_on(ctx, fill),
+        };
+        if !self.icon.is_empty() {
+            let inner = side * 0.56;
+            ctx.draw_icon(canvas, &self.icon, RectF::new(r.x + (side - inner) / 2.0, r.y + (side - inner) / 2.0, inner, inner), color);
+            return;
+        }
         if glyph.is_empty() {
             // O X em dois traços, no centro exato do círculo (o "✕" da fonte fica fora do
             // centro, e cada fonte num lugar).
@@ -891,6 +1074,16 @@ impl Component for DlgIcon {
             ctx.set_handled();
         }
     }
+}
+
+/// A cor do tema que se lê sobre `fill`: o `on_primary` sobre uma cor escura, o `text` (do
+/// tema claro) sobre uma clara.
+fn readable_on(ctx: &PaintCtx<'_>, fill: Color) -> Color {
+    let luminance = (0.299 * fill.r as f32 + 0.587 * fill.g as f32 + 0.114 * fill.b as f32) / 255.0;
+    let (light, dark) = (ctx.theme.color("on_primary"), ctx.theme.color("text"));
+    let lum = |c: Color| (0.299 * c.r as f32 + 0.587 * c.g as f32 + 0.114 * c.b as f32) / 255.0;
+    // As duas candidatas, a que mais se afasta do fundo.
+    if (lum(light) - luminance).abs() >= (lum(dark) - luminance).abs() { light } else { dark }
 }
 
 // ---------------------------------------------------------------------------

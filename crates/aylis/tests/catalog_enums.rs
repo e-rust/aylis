@@ -75,6 +75,7 @@ fn the_catalog_enums_are_in_the_prelude() {
     let _: Option<aylis::prelude::TextCase> = None;
     let _: Option<aylis::prelude::TimerPrecision> = None;
     let _: Option<aylis::prelude::TitleAlign> = None;
+    let _: Option<aylis::prelude::ToastKind> = None;
     let _: Option<aylis::prelude::Transition> = None;
     let _: Option<aylis::prelude::TreeLeafLayout> = None;
     let _: Option<aylis::prelude::Trigger> = None;

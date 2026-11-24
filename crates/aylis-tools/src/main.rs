@@ -18,6 +18,7 @@
 //! aylis-tool recording-to-test sessao.aylisrec [--out roteiro.json] [--no-waits]
 //! aylis-tool ide-script roteiro.json [--headless]  ferramentas do MCP da IDE em sequência
 //! aylis-tool handler-times <base.json> <estado.json>... [--update] [--summary arquivo.md]
+//! aylis-tool test-all [--all] [--jobs n] [-p pacote]... [--report arquivo.json]  a bateria sem repetir o que não mudou
 //! ```
 
 use std::path::PathBuf;
@@ -224,6 +225,17 @@ fn main() -> ExitCode {
             }
             None => Err("uso: aylis-tool emoji <pasta com emoji-test.txt, pt.json e pt-derived.json>".into()),
         },
+        // A bateria do workspace sem repetir o que não mudou (`aylis_tools::test_all`).
+        Some("test-all") => {
+            let packages: Vec<String> = args.iter().enumerate().filter(|(_, a)| *a == "-p" || *a == "--package").filter_map(|(i, _)| args.get(i + 1).cloned()).collect();
+            let opts = aylis_tools::test_all::Options {
+                all: args.iter().any(|a| a == "--all"),
+                jobs: value_of(&args, "--jobs").and_then(|j| j.parse().ok()).unwrap_or(0),
+                packages,
+                report: value_of(&args, "--report").map(PathBuf::from),
+            };
+            aylis_tools::test_all::run(&aylis_tools::aylis_root(), &opts)
+        }
         // Mede o tempo de quadro dos exemplos (compilados em release) e grava um JSON.
         Some("bench") => match args.get(1).filter(|a| !a.starts_with("--")) {
             Some(dest) => {

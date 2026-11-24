@@ -198,6 +198,51 @@ Sem mexer no tema, as variantes prontas `Button.reveal` (borda e fundo) e `Panel
 (a borda) ligam o efeito num controle só: `style = reveal`. O mouse que anda repinta só a
 parte dos controles com Reveal que a luz alcança. Com o toque, não há luz.
 
+## O ícone dos campos
+
+O ícone do `Edit` (`icon`) e o "×" de limpar do `Edit` e do `ComboBox` seguem o estilo do
+controle, com os estados (`hover`, `focused`, `disabled`...):
+
+```json
+"styles": {
+  "Edit": { "icon_size": 18, "icon_color": "text_muted", "icon_gap": 8,
+            "focused": { "icon_color": "primary" } },
+  "Edit.error": { "icon_color": "danger" }
+}
+```
+
+- `icon_size`: o lado do ícone, em pixels (sem ele, 1,15 vez a fonte; o "×" tem 85% disso);
+- `icon_color`: a cor (token ou `#RRGGBB`; sem ela, `text_muted`);
+- `icon_gap`: o espaço até o texto (6).
+
+Com `error` preenchido, o estilo `<Classe>.error` (se o tema tiver) vale por cima, só nesses
+três tokens. O `Edit` e o `ComboBox` desenham a moldura, o rótulo e o ícone com a mesma peça
+(`aylis_controls_base::field`): o `ComboBox` tem `label`, `clear_button` e o estilo
+`outlined` como o `Edit`.
+
+## A barra de rolagem
+
+O estilo `ScrollBar` vale para a barra de todos os controles que rolam (`ScrollBox`, `Memo`
+e `CodeEditor`, `ListBox`, `TreeView`, a lista aberta do `ComboBox`), e o `scroll_bar` do
+estilo de um controle (ou de uma variante) muda só a barra dele:
+
+```json
+"styles": {
+  "ScrollBar": { "width": 6, "fill": "transparent", "thumb": "text_muted/40", "radius": 3,
+                 "hover": { "thumb": "text_muted/70" } },
+  "ScrollBox.fina": { "scroll_bar": { "width": 4 } }
+}
+```
+
+- `width`: a largura da barra (no `ScrollBox`, a calha acompanha);
+- `fill`: o trilho; `thumb`: o polegar; no `hover`, o polegar com o mouse em cima ou sendo
+  arrastado;
+- `radius`: o raio do polegar (sem ele, meia largura).
+
+O que o tema não diz fica como era em cada controle (os temas embutidos não têm o
+`ScrollBar`: a barra de hoje). A lista aberta do `ComboBox` segue o `scroll_bar` do estilo
+do `ComboBox` que a abriu.
+
 ## Cores do projeto e cores com nome
 
 As cores que o app usa ficam num lugar só, por nome, e qualquer propriedade de cor

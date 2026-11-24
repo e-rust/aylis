@@ -1148,31 +1148,24 @@ impl Component for Edit {
         };
         let see_through = see_through(s.fill);
         let danger = ctx.theme.color("danger");
-        // Ajuda, erro e contador ficam embaixo da caixa.
+        // Ajuda, erro e contador ficam embaixo da caixa: com `auto_size`, dentro da altura (que
+        // já os soma); com altura fixa, logo abaixo dela, e a caixa fica inteira (antes, o erro
+        // tomava 18 px da caixa e apertava o texto).
         let below = !self.helper.is_empty() || !self.error.is_empty() || self.counter;
         let mut boxr = ctx.rect;
-        if below {
+        if below && self.base.auto_size() {
             boxr.height = (boxr.height - BELOW).max(16.0);
         }
-        canvas.fill_rect(boxr, s.radius, &Brush::Solid(s.fill));
-        let border = if self.error.is_empty() { s.border_color } else { danger };
-        if self.border && s.border_width > 0.0 && !border.is_transparent() {
-            // Vazio, o estilo `Edit.empty` do tema (se houver) troca o traço da borda: o
-            // contorno tracejado do campo ainda não preenchido (C37 do Tabernáculo).
-            let empty_dash = self.text.is_empty().then(|| ctx.theme.style("Edit.empty")).flatten().and_then(|st| st.base.border_style.as_deref()).map(|b| match b {
-                "dashed" => vec![6.0, 4.0],
-                "dotted" => vec![1.5, 3.0],
-                _ => Vec::new(),
-            });
-            let mut stroke = s.border_stroke(border, s.border_width.max(if self.error.is_empty() { 0.0 } else { 1.5 }));
-            if let Some(dash) = empty_dash {
-                stroke = if dash.is_empty() { Stroke::new(border, stroke.width) } else { Stroke::new(border, stroke.width).dashed(dash) };
-            }
-            canvas.stroke_rect(boxr, s.radius, &stroke);
-        }
-        if self.border && !self.plain {
-            crate::looks::paint_field_underline_in(canvas, ctx, boxr);
-        }
+        // A moldura (fundo, borda, linha de baixo e o rótulo) é a mesma do `ComboBox`.
+        let frame = crate::field::FieldFrame {
+            label: &self.label,
+            error: !self.error.is_empty(),
+            has_value: !self.text.is_empty(),
+            border: self.border,
+            underline: !self.plain,
+            empty_style: Some("Edit.empty"),
+        };
+        frame.paint_box(canvas, ctx, s, boxr);
         if below {
             let mut t = ctx.text_style();
             t.font.size = (t.font.size * 0.8).round();
@@ -1188,51 +1181,17 @@ impl Component for Edit {
             }
         }
         // O rótulo: dentro do campo (como o placeholder) ou pequeno, sobre a borda.
-        let floating = !self.label.is_empty() && (ctx.state.focused || !self.text.is_empty());
-        if floating {
-            let mut t = ctx.text_style();
-            t.font.size = (t.font.size * 0.75).round();
-            t.color = if !self.error.is_empty() {
-                danger
-            } else if ctx.state.focused {
-                ctx.theme.color("primary")
-            } else {
-                ctx.theme.color("text_muted")
-            };
-            let w = canvas.measure_text(&self.label, &t).width + 8.0;
-            if ctx.variant() == "filled" {
-                // Campo preenchido: o rótulo fica dentro, em cima (o texto desce).
-                let r = RectF::new(boxr.x + s.padding.left - 2.0, boxr.y + 4.0, w, t.font.size * 1.4);
-                canvas.draw_text(&self.label, r, &t);
-            } else {
-                let r = RectF::new(boxr.x + 8.0, boxr.y - t.font.size * 0.7, w, t.font.size * 1.4);
-                let back = if s.fill.a > 200 { s.fill } else { ctx.theme.color("background") };
-                canvas.fill_rect(RectF::new(r.x, boxr.y - 1.0, r.width, 3.0), 0.0, &Brush::Solid(back));
-                t.h_align = TextAlign::Center;
-                canvas.draw_text(&self.label, r, &t);
-            }
-        }
-
-        let mut inner = boxr.deflate(s.padding);
-        if floating && ctx.variant() == "filled" {
-            inner.y += 8.0;
-            inner.height = (inner.height - 8.0).max(0.0);
-        }
+        let floating = frame.paint_label(canvas, ctx, s, boxr);
+        let mut inner = frame.inner(ctx, s, boxr, floating);
         inner.width = (inner.width - self.right_inset).max(0.0);
         let muted = ctx.theme.color("text_muted");
-        let icon_side = (ctx.style.font.size * 1.15).round();
+        // O ícone e o "×" pelo estilo (`icon_size`, `icon_color`, `icon_gap`).
+        let icon = crate::field::FieldIcon::of(ctx, "Edit", !self.error.is_empty());
         if !self.icon.is_empty() {
-            let r = RectF::new(inner.x, inner.y + (inner.height - icon_side) / 2.0, icon_side, icon_side);
-            ctx.draw_icon(canvas, &self.icon, r, muted);
-            inner.x += icon_side + 6.0;
-            inner.width = (inner.width - icon_side - 6.0).max(0.0);
+            icon.paint_leading(canvas, ctx, &self.icon, &mut inner);
         }
         if self.clear_button && !self.text.is_empty() && !self.read_only {
-            let side = (icon_side * 0.85).round();
-            let r = RectF::new(inner.right() - side, inner.y + (inner.height - side) / 2.0, side, side);
-            ctx.draw_icon(canvas, "close", r, muted);
-            self.clear_rect.set(Some(r));
-            inner.width = (inner.width - side - 4.0).max(0.0);
+            self.clear_rect.set(Some(icon.paint_clear(canvas, ctx, &mut inner)));
         } else {
             self.clear_rect.set(None);
         }
@@ -1421,12 +1380,12 @@ impl aylis_core::LayoutHooks for Edit {
             &self.placeholder
         };
         let mut width = measure(shown);
-        let icon_side = (style.font.size * 1.15).round();
+        let icon = crate::field::FieldIcon::of_ui(ui, id, "Edit", !self.error.is_empty());
         if !self.icon.is_empty() {
-            width += icon_side + 6.0;
+            width += icon.side + icon.gap;
         }
         if self.clear_button && !self.read_only {
-            width += (icon_side * 0.85).round() + 4.0;
+            width += icon.clear_side() + 4.0;
         }
         for piece in [&self.prefix, &self.suffix] {
             if !piece.is_empty() {

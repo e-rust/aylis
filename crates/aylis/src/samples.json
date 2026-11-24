@@ -1,4 +1,8 @@
 {
+  "HttpClient": { "props": { "base_url": "https://api.exemplo.com/v1", "headers": [{"name": "Accept", "value": "application/json"}], "request_timeout": 15000 } },
+  "WebSocketClient": { "props": { "url": "wss://eventos.exemplo.com/alertas", "reconnect_delay": 1000, "reconnect_max_delay": 30000 } },
+  "McpResource": { "props": { "uri": "app://tabelas/{tabela}", "title": "Colunas de uma tabela", "description": "As colunas, os tipos e as chaves de uma tabela do sistema.", "mime_type": "application/json" } },
+  "McpPrompt": { "props": { "prompt_name": "resumo_tabela", "title": "Resumir uma tabela", "arguments": "tabela: o nome da tabela; foco?: o que destacar", "text": "Leia app://tabelas/{tabela} e resuma para que serve a tabela, destacando {foco}." } },
   "ListView": { "size": [320, 280], "props": { "items": [{"title": "Ana Souza", "detail": "Vendas"}, {"title": "Bruno Lima", "detail": "Financeiro"}, {"title": "Carla Dias", "detail": "Suporte"}, {"title": "Diego Alves", "detail": "Compras"}, {"title": "Elisa Rocha", "detail": "Marketing"}] } },
   "ListBox": { "size": [220, 180], "props": { "items": "Maçã;Banana;Laranja;Uva;Pera;Manga", "item_index": 1 } },
   "DateTimeEdit": { "size": [200, 36], "props": { "date_time": "2026-11-12T14:30" } },
@@ -20,6 +24,9 @@
     { "class": "Panel", "name": "slide3", "align": "client", "fill": "#DB2777", "children": [ { "class": "Label", "name": "lblSlide3", "text": "Ou use as setas", "align": "client", "h_align": "center", "font_size": 24, "bold": true, "color": "#FFFFFF" } ] } ] },
   "SkeletonLoader": { "size": [320, 200], "props": { "layout": "list-item;list-item;text;text" } },
   "Snackbar": { "size": [392, 64], "props": { "text": "Item apagado", "action": "DESFAZER", "timeout": 0, "active": true } },
+  "ToastStack": { "size": [400, 200] },
+  "CommandPalette": { "size": [480, 340], "props": { "items": [{"id": "open", "name": "Abrir arquivo", "category": "Arquivo", "shortcut": "Ctrl+O", "icon": "folder"}, {"id": "save", "name": "Salvar", "category": "Arquivo", "description": "Grava o documento atual", "shortcut": "Ctrl+S", "icon": "download"}, {"id": "find", "name": "Procurar", "category": "Editar", "shortcut": "Ctrl+F", "icon": "search"}, {"id": "settings", "name": "Configurações", "category": "Editar", "description": "Tema, idioma e atalhos", "icon": "settings"}], "recent": "save" } },
+  "EmptyState": { "size": [320, 260], "props": { "action": "Limpar filtros" } },
   "AjaxBar": { "size": [392, 40], "props": { "active": true } },
   "BottomSheet": { "size": [392, 300], "props": { "open": true, "sheet_height": 240 }, "children": [
     { "class": "Label", "name": "lblFolhaTitulo", "text": "Compartilhar", "align": "top", "height": 32, "bold": true, "font_size": 18, "margins": [16, 24, 16, 0] },

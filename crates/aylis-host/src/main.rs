@@ -182,6 +182,9 @@ fn run(args: Args) -> Result<(), Error> {
         Some(p) => Some(aylis_project::install(&mut ui, p)?),
         None => None,
     };
+    // Os DataModules criados no início: o `on_create` deles espera o backend estar pronto (o
+    // `run`), senão o evento sai antes de existir quem o trate.
+    let created = aylis_project::data_modules(&ui);
     // Desenvolvimento (a IDE executa com `--dev`): form salvo aparece sem reiniciar, e o
     // canal cifrado com a IDE (inspetor, rastro de eventos).
     let start = if args.dev { aylis_remote::script::start_line().ok_or("--dev: o stdin não trouxe a linha de início")? } else { Value::Null };
@@ -229,6 +232,7 @@ fn run(args: Args) -> Result<(), Error> {
     // junto, sem os 3 s de espera.
     ui.on_terminate(|_| TERMINATED.store(true, std::sync::atomic::Ordering::Relaxed));
     let form = startup(&mut ui, &mut lines, &out, main_form)?;
+    aylis_project::fire_created(&mut ui, &created);
     let result = match (script, &args.png) {
         (Some((script, output)), _) => scripted(ui, form, lines, &out, script, output),
         (None, Some(path)) => headless(ui, form, lines, &out, path),

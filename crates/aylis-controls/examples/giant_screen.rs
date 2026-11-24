@@ -198,7 +198,8 @@ pub fn measure(width: u32, height: u32, full: usize, frames: usize) -> Report {
             let started = Instant::now();
             change(&mut g, i);
             events.push(started.elapsed().as_secs_f64() * 1000.0);
-            let (ms, fraction, count) = frame(&mut g, true);
+            // Como a plataforma: sem nada a pintar (o valor posto era o mesmo), não há quadro.
+            let (ms, fraction, count) = if g.ui.needs_repaint() { frame(&mut g, true) } else { (0.0, 0.0, 0) };
             times.push(ms);
             areas.push(fraction);
             painted.push(count as f64);

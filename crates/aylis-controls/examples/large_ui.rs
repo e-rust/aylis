@@ -178,6 +178,10 @@ pub fn measure(large: &mut Large, frames: usize) -> Vec<(&'static str, f64, f64,
         for (k, partial) in [true, false].into_iter().enumerate() {
             for i in 0..frames {
                 change(large, i);
+                // Como a plataforma: sem nada a pintar (o valor posto era o mesmo), não há quadro.
+                if !large.ui.needs_repaint() {
+                    continue;
+                }
                 let (ms, fraction) = frame(large, &renderer, &mut pixels, partial);
                 times[k] += ms;
                 if partial {

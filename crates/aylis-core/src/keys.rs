@@ -294,7 +294,7 @@ mod tests {
         assert!(m.shift && !m.ctrl && k == Key::Enter);
         assert_eq!(parse_shortcut("Ctrl++").map(|(_, k)| k), Some(Key::Char('+')));
         assert_eq!(parse_shortcut_list("Enter; Down").len(), 2);
-        let event = KeyEvent { key: Key::Char('S'), modifiers: Modifiers { ctrl: true, ..Default::default() }, repeat: false };
+        let event = KeyEvent { key: Key::Char('S'), modifiers: Modifiers { ctrl: true, ..Default::default() }, repeat: false, form: None };
         assert!(shortcut_matches(parse_shortcut("Ctrl+S").unwrap(), &event));
     }
 

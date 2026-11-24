@@ -863,9 +863,100 @@ pub trait WindowCaptureService {
     fn capture(&mut self, form: crate::ComponentId) -> Option<(u32, u32, Vec<u8>)>;
 }
 
+/// O que a plataforma sabe da área de trabalho fora das janelas do app: o mouse na tela, a
+/// janela do app sob um ponto, os "Efeitos de transparência" e a imagem de um monitor. Tudo em
+/// pixels físicos da área de trabalho, como os [`Monitor`](crate::monitors::Monitor)s. O que o
+/// sistema não informa fica no padrão: `None` (Wayland, celular, navegador).
+pub trait DesktopService {
+    /// O mouse na tela (pixels físicos), também fora das janelas do app.
+    fn cursor_position(&self) -> Option<(i32, i32)> {
+        None
+    }
+    /// O form do app à vista no ponto (pixels físicos), pela ordem real das janelas: `None` se
+    /// a janela de cima é de outro programa, está minimizada, ou o sistema não diz.
+    fn form_at(&self, _x: i32, _y: i32) -> Option<crate::ComponentId> {
+        None
+    }
+    /// Os "Efeitos de transparência" do sistema ligados (`None`: o sistema não informa).
+    fn transparency(&self) -> Option<bool> {
+        None
+    }
+    /// A imagem do monitor (pixels físicos `x, y, largura, altura` da área dele), reduzida
+    /// para no máximo `max_width` de largura (0: inteira). `done` pode ser chamado em outra
+    /// thread, depois de o sistema perguntar ao usuário; recusado ou sem o recurso, o erro.
+    fn capture_monitor(&mut self, _area: (i32, i32, u32, u32), _max_width: u32, done: Box<dyn FnOnce(Result<crate::Image, String>) + Send>) {
+        done(Err(crate::messages::t("A captura da tela não existe neste sistema.")));
+    }
+}
+
+/// Quantas instâncias do app podem rodar (o `single_instance` do projeto).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum SingleInstance {
+    /// Quantas abrirem.
+    #[default]
+    Off,
+    /// Uma por usuário (outro usuário da mesma máquina abre a dele).
+    User,
+    /// Uma na máquina: a de outro usuário também impede (e não recebe os argumentos, que só
+    /// vão a quem é do mesmo usuário).
+    Machine,
+}
+
+impl crate::prop::PropEnum for SingleInstance {
+    const NAMES: &'static [&'static str] = &["off", "user", "machine"];
+    fn from_index(i: usize) -> Option<Self> {
+        [SingleInstance::Off, SingleInstance::User, SingleInstance::Machine].get(i).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
+impl SingleInstance {
+    /// O valor do projeto: vazio e o que não é um dos nomes são `off`.
+    pub fn parse(text: &str) -> Self {
+        <Self as crate::prop::PropEnum>::from_name(text.trim()).unwrap_or_default()
+    }
+}
+
+impl crate::Ui {
+    /// Outra abertura do app (com `single_instance`) entregou os argumentos dela e saiu: a
+    /// janela ativa (ou a principal) vem para a frente, como o `Show` (a escondida na bandeja
+    /// também aparece), e o `on_second_instance` de cada `ApplicationEvents` recebe a lista.
+    /// Os argumentos vêm de outro processo do mesmo usuário: o app valida o que usa.
+    pub fn fire_second_instance(&mut self, args: Vec<String>) {
+        if let Some(form) = self.active_form().or_else(|| self.main_form()).filter(|f| self.is_open(*f)) {
+            self.window_command(form, crate::WindowCommand::Show);
+        }
+        // Como o `on_files_drop`: a lista separada por `;` (um argumento com `;` chega
+        // inteiro só pelo `second_instance_args`).
+        let text = args.join(";");
+        self.extension::<SecondInstanceArgs>().0 = args;
+        for app in self.components().filter(|&c| self.class_name(c) == Some("ApplicationEvents")).collect::<Vec<_>>() {
+            self.fire(app, "on_second_instance", &crate::EventArgs::Text(text.clone()));
+        }
+        self.process_events();
+    }
+}
+
+/// Os argumentos da última outra abertura do app ([`Ui::second_instance_args`](crate::Ui::second_instance_args)).
+#[derive(Default)]
+struct SecondInstanceArgs(Vec<String>);
+
+impl crate::Ui {
+    /// Os argumentos da última outra abertura do app, exatos (o `on_second_instance` os
+    /// recebe separados por `;`). Vazio antes da primeira.
+    pub fn second_instance_args(&self) -> &[String] {
+        self.extension_ref::<SecondInstanceArgs>().map_or(&[], |a| a.0.as_slice())
+    }
+}
+
 /// Conjunto de serviços fornecidos pela plataforma. Todos são opcionais.
 #[derive(Default)]
 pub struct Services {
+    /// O mouse fora das janelas, a janela sob um ponto, a transparência e a captura de um
+    /// monitor ([`DesktopService`]).
+    pub desktop: Option<Box<dyn DesktopService>>,
     /// A captura da janela (a foto com o WebView).
     pub window_capture: Option<Box<dyn WindowCaptureService>>,
     pub offscreen: Option<Box<dyn OffscreenService>>,

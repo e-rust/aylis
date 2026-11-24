@@ -13,6 +13,8 @@ Só as comuns.
 | Evento | Quando | No Object Inspector | Pergunta |
 |---|---|---|---|
 | `on_change` | o valor mudou (pelo usuário ou pelo código) | — |  |
+| `on_transparency_change` | — | — |  |
+| `on_capture` | — | — |  |
 
 ## Em código
 

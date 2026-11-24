@@ -13,6 +13,77 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Ajustes de 23/11/2026: as notas da versão e as medições**
+
+Os recursos e as correções de 23/11 (as decisões no [histórico](historico-decisoes.md), seção
+17; as conferências no roteiro, itens 166 a 177), sem commit.
+
+- [ ] **Para as notas da versão** (mudanças que quebram ou mudam o que o app já fazia):
+  - nos registros tipados em Rust, a cor e as medidas são `Option` (`text_color: Some(cor)`,
+    `width: Some(120.0)`); o `font_weight` é o `FontWeight` do núcleo
+    (`Some(FontWeight::SemiBold)`); o `GENERATOR_VERSION` subiu, e os projetos regeneram;
+  - o `aylis::prelude` exporta os controles por uma lista explícita: as structs com o nome de
+    um registro tipado (`ColumnSpec`, `TreeNode`...) saem dele e ficam pelo caminho completo
+    (`aylis::dbcontrols::ColumnSpec`);
+  - o registro das abas do `TabStrip` passou de `TabItem` a `TabStripItem`;
+  - o `on_select` da `CommandPalette` recebe `PaletteSelection { id, name }` (era o nome);
+  - o `EmptyState` novo vem sem o botão "Limpar filtros" (`action` vazio);
+  - a linha de filtro do `DataGrid` grava `fold([campo]) like ...` no `filter` (era
+    `[campo] like ...`);
+  - o menu da bandeja `light`/`dark` usa as cores dos temas do Aylis (o tom muda um pouco).
+- [ ] **Medições** (release):
+  - `set_prop` com o mesmo valor e o layout só do contêiner alcançado: a volta do timer de 64
+    frames de 20 controles, 13,76 ms → 0,014 ms (mesmo valor) e 0,27 ms (valor que muda); no
+    `giant_screen`, o relógio de 4,55 para 0,66 ms por quadro;
+  - SVG com máscara e recorte (`svg_effects`, 600 ícones de 32 px em 1280 × 800): Skia CPU
+    3,8 ms sem efeito, 5,6 ms com efeito na primeira pintura e 2,9 ms guardado; Direct2D (alvo
+    WIC) 10,1 × 11,1 ms;
+  - camada de opacidade com mistura dentro no Direct2D (52 células em 1920 × 1080, o melhor
+    de 10): a imagem fora da camada 106,7 → 35,6 ms; dentro 129,7 → 29,5 ms (a camada da
+    mistura do tamanho da célula, não da tela);
+  - `giant_screen` com a máquina parada, duas rodadas dentro da base (não regravada): pintura
+    inteira 704 e 707 ms (base 696), digitar 0,81/0,82 ms (1,31), relógio 0,65/0,69 (4,57),
+    60 barras 2,28/2,15 (3,09), deslizar 2,59/2,52 (2,99), rolar 18,45/18,31 (19,55).
+
+**Ajustes de 22/11/2026: a bateria de testes sem repetir o que não mudou (`aylis-tool test-all`)**
+
+Pedido do autor ("um app que consiga executar todos os testes de uma vez, que produza um
+resultado que apresentaria diferença caso algo não esteja correto, sem precisar passar por cada
+teste toda vez", depois "faça o test-all").
+
+- [ ] Feito, esperando a conferência do autor (sem commit):
+  - `aylis-tool test-all` (`aylis_tools::test_all`): compila os testes (`cargo test --no-run`),
+    e a chave de cada alvo é a marca do executável mais as do que ele lê em execução,
+    declarado em `resources/test-inputs.json` (329 alvos levantados no código: `pure`,
+    `ignored`, uma lista de pastas e arquivos, ou `always` com o motivo: as ferramentas das
+    linguagens, o hardware, compilar projetos, medir tempo). Chave igual à de uma rodada que
+    passou: vem do cache (`<target>/.aylis-tests.json`). Pacotes em paralelo, os alvos de um
+    pacote em sequência, os `always` e os testes da documentação (`workspace/doc`, um
+    `cargo test --doc` do workspace) no fim; falha roda de novo e, se passar, sai instável.
+    O relatório `medicoes/testes.json` não tem tempos: duas rodadas boas deram o mesmo arquivo;
+  - `CLAUDE.md`: o passo 1 do "Antes do commit" passou a ser o `test-all` (`--all` antes de
+    uma release);
+  - acertos para rodar fora do `cargo test`: o teste do `cleanup` só exige o cargo como pai
+    quando a variável `CARGO` está definida; o `no_delphi` aceita o nome dele no
+    `test-inputs.json`; os alvos sem o harness do libtest valem pelo código de saída.
+- Medido nesta máquina (22/11; a pasta de compilação no F:, recém-criada):
+  - 1ª rodada (cache vazio): 44 min (34 de testes), 375 alvos, 1.649 testes; as 5 falhas eram
+    do jeito de rodar (acima), não do código;
+  - 2ª (depois de mudar o `aylis-tools` e um teste do `aylis`): 283 s (74 s compilando), 191 do
+    cache e 140 rodaram, nenhuma falha;
+  - 3ª, sem mudança nenhuma: 241 s (63 s compilando), 176 do cache e 155 rodaram (28 `always`).
+- Falta:
+  - **a recompilação entre rodadas sem mudança**: ~60 s de compilação e ~130 alvos que
+    poderiam vir do cache rodam de novo, porque o cargo relinka os executáveis (o `rcgen` e o
+    que depende dele: o `aylis-devlink`, o `aylis`, a IDE, os exemplos). Provável causa, não
+    confirmada: os testes `always` que compilam projetos chamam o cargo pelo `aylis-tool` e pela
+    IDE com outro ambiente (as variáveis do compilador C), e os build scripts que as anotam
+    fazem o cargo refazer a próxima compilação da bateria. Caminhos: conferir com
+    `CARGO_LOG=cargo::core::compiler::fingerprint=info` logo depois de uma rodada; dar a esses
+    testes uma pasta de compilação própria; ou chavear pelo conteúdo do executável sem a data
+    do cabeçalho PE;
+  - os doctests do workspace levam vários minutos quando uma biblioteca muda.
+
 **Ajustes de 22/11/2026: a rolagem da Landing no celular**
 
 Pedido do autor ("investigue a lentidão ao scrolar a landing page", depois "Sim, corrija"),

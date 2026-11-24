@@ -73,6 +73,34 @@ fn wide(s: &str) -> Vec<u16> {
     s.encode_utf16().collect()
 }
 
+/// Os trechos (em bytes) que o Unicode manda mostrar como texto, e não como emoji: os
+/// caracteres emoji cuja apresentação padrão é de texto (`Emoji_Presentation=No`: `⚠`, `ℹ`,
+/// `☎`), a não ser seguidos de U+FE0F, e qualquer emoji seguido de U+FE0E (que entra no
+/// trecho). As sequências (ZWJ, tom de pele, tecla) ficam como estão. A mesma regra do
+/// `aylis-skia`; o navegador já faz assim.
+fn text_presentation_ranges(text: &str) -> Vec<(usize, usize)> {
+    use unicode_properties::{EmojiStatus, UnicodeEmoji};
+    let mut out = Vec::new();
+    let mut prev = '\0';
+    let mut chars = text.char_indices().peekable();
+    while let Some((i, c)) = chars.next() {
+        let next = chars.peek().map(|&(_, n)| n);
+        let joined = prev == '\u{200D}' || matches!(next, Some('\u{200D}' | '\u{20E3}' | '\u{1F3FB}'..='\u{1F3FF}'));
+        prev = c;
+        if c.is_ascii() || joined || next == Some('\u{FE0F}') {
+            continue;
+        }
+        if next == Some('\u{FE0E}') && c.is_emoji_char() {
+            let (j, v) = chars.next().unwrap_or((i, c));
+            prev = v;
+            out.push((i, j + v.len_utf8()));
+        } else if matches!(c.emoji_status(), EmojiStatus::EmojiOther | EmojiStatus::EmojiModifierBase) {
+            out.push((i, i + c.len_utf8()));
+        }
+    }
+    out
+}
+
 const INFINITE: D2D_RECT_F = D2D_RECT_F { left: -1.0e9, top: -1.0e9, right: 1.0e9, bottom: 1.0e9 };
 
 // ---------------------------------------------------------------------------
@@ -85,9 +113,22 @@ struct FontKey {
     size: u32,
     weight: i32,
     italic: bool,
+    /// O `letter_spacing` do estilo (bits do `f32`).
+    spacing: u32,
+    /// `color_glyphs: false`: emoji na fonte sem cor.
+    mono_emoji: bool,
 }
 
 impl FontKey {
+    /// A chave do texto de um estilo (com o espaço entre letras e as cores dos emoji).
+    fn of_style(style: &TextStyle) -> Self {
+        Self { spacing: style.letter_spacing.to_bits(), mono_emoji: !style.color_glyphs, ..Self::of(&style.font) }
+    }
+
+    fn letter_spacing(&self) -> f32 {
+        f32::from_bits(self.spacing)
+    }
+
     fn of(font: &FontSpec) -> Self {
         let weight = match font.weight {
             FontWeight::Thin => 100,
@@ -98,7 +139,7 @@ impl FontKey {
             FontWeight::Bold => 700,
             FontWeight::Black => 900,
         };
-        Self { family: font.family.clone(), size: (font.size * 100.0).round() as u32, weight, italic: font.italic }
+        Self { family: font.family.clone(), size: (font.size * 100.0).round() as u32, weight, italic: font.italic, spacing: 0, mono_emoji: false }
     }
 
     fn family_name(&self) -> &str {
@@ -122,6 +163,8 @@ struct Text {
     /// Layouts prontos (texto + fonte): medir e desenhar reaproveitam.
     layouts: RefCell<HashMap<(FontKey, String), (IDWriteTextLayout, f32)>>,
     line_heights: RefCell<HashMap<FontKey, f32>>,
+    /// Os tamanhos de `measure_text_wrapped` já calculados.
+    wrapped: RefCell<aylis_core::canvas::WrapCache>,
 }
 
 const LAYOUT_CACHE: usize = 4096;
@@ -207,6 +250,80 @@ impl Text {
         Some(m)
     }
 
+    /// Os símbolos de apresentação de texto (`⚠`, `ℹ`, ou com U+FE0E) que a fonte pedida não
+    /// tem vão para a Segoe UI Symbol, monocromática: o fallback do sistema os mandava para a
+    /// Segoe UI Emoji, e o desenho com `ENABLE_COLOR_FONT` os pintava coloridos. A mesma regra
+    /// do Skia; o navegador já faz assim.
+    fn text_presentation(&self, layout: &IDWriteTextLayout, text: &str, key: &FontKey) {
+        let ranges = text_presentation_ranges(text);
+        if ranges.is_empty() {
+            return;
+        }
+        let symbol = wide("Segoe UI Symbol\0");
+        for (start, end) in ranges {
+            let Some(c) = text[start..].chars().next() else { continue };
+            if self.has_char(key, c) {
+                continue;
+            }
+            let at = text[..start].encode_utf16().count() as u32;
+            let length = text[start..end].encode_utf16().count() as u32;
+            // SAFETY: `symbol` termina em zero e vive até o fim da chamada; o layout é válido.
+            unsafe {
+                let _ = layout.SetFontFamilyName(PCWSTR(symbol.as_ptr()), DWRITE_TEXT_RANGE { startPosition: at, length });
+            }
+        }
+    }
+
+    /// `color_glyphs: false`: os emoji ([`aylis_core::canvas::MONO_EMOJI_RANGES`]) vão para a
+    /// Noto Emoji sem cor quando o app a registrou; sem ela, o desenho sem
+    /// `ENABLE_COLOR_FONT` já tira a cor da fonte de emoji do sistema.
+    fn mono_emoji(&self, layout: &IDWriteTextLayout, text: &str) {
+        if !aylis_core::canvas::mono_emoji_available() {
+            return;
+        }
+        let family = wide(&format!("{}\0", aylis_core::canvas::MONO_EMOJI_FAMILY));
+        for (start, end) in aylis_core::canvas::mono_emoji_ranges(text) {
+            let at = text[..start].encode_utf16().count() as u32;
+            let length = text[start..end].encode_utf16().count() as u32;
+            // SAFETY: `family` termina em zero e vive até o fim da chamada; o layout é válido.
+            unsafe {
+                let _ = layout.SetFontFamilyName(PCWSTR(family.as_ptr()), DWRITE_TEXT_RANGE { startPosition: at, length });
+            }
+        }
+    }
+
+    /// A fonte pedida (da coleção do Aylis ou do sistema) tem o caractere?
+    fn has_char(&self, key: &FontKey, c: char) -> bool {
+        let collection = match self.collection.borrow().clone() {
+            Some(c) => c,
+            None => {
+                let mut system = None;
+                // SAFETY: a fábrica DirectWrite é válida e `system` recebe a coleção do sistema.
+                if unsafe { self.dwrite.GetSystemFontCollection(&mut system, false) }.is_err() {
+                    return false;
+                }
+                let Some(system) = system else { return false };
+                system
+            }
+        };
+        let mut family = wide(key.family_name());
+        family.push(0);
+        let (mut index, mut exists) = (0u32, windows::core::BOOL(0));
+        // SAFETY: `family` termina em zero e vive até o fim do bloco; os ponteiros de saída são
+        // variáveis locais.
+        unsafe {
+            if collection.FindFamilyName(PCWSTR(family.as_ptr()), &mut index, &mut exists).is_err() || !exists.as_bool() {
+                return false;
+            }
+            let style = if key.italic { DWRITE_FONT_STYLE_ITALIC } else { DWRITE_FONT_STYLE_NORMAL };
+            collection
+                .GetFontFamily(index)
+                .and_then(|f| f.GetFirstMatchingFont(DWRITE_FONT_WEIGHT(key.weight), DWRITE_FONT_STRETCH_NORMAL, style))
+                .and_then(|font| font.HasCharacter(c as u32))
+                .is_ok_and(|has| has.as_bool())
+        }
+    }
+
     /// O layout de uma linha (com cache) e a largura dela.
     fn layout(&self, text: &str, key: &FontKey) -> Option<(IDWriteTextLayout, f32)> {
         self.sync_fonts();
@@ -217,9 +334,26 @@ impl Text {
         let format = self.format(key)?;
         let w = wide(text);
         let layout = unsafe { self.dwrite.CreateTextLayout(&w, &format, 1.0e6, 1.0e6).ok()? };
+        self.text_presentation(&layout, text, key);
+        if key.mono_emoji {
+            self.mono_emoji(&layout, text);
+        }
+        let spacing = key.letter_spacing();
+        if spacing != 0.0 {
+            // O espaço vai depois de cada letra; a largura medida não conta o da última (a
+            // regra do `TextStyle::letter_spacing`, igual no Skia e no navegador).
+            if let Ok(l1) = layout.cast::<IDWriteTextLayout1>() {
+                let all = DWRITE_TEXT_RANGE { startPosition: 0, length: w.len() as u32 };
+                // SAFETY: `l1` é o mesmo layout válido, visto pela interface `IDWriteTextLayout1`.
+                unsafe {
+                    let _ = l1.SetCharacterSpacing(0.0, spacing, 0.0, all);
+                }
+            }
+        }
         let mut m = DWRITE_TEXT_METRICS::default();
         unsafe { layout.GetMetrics(&mut m).ok()? };
-        let entry = (layout, m.widthIncludingTrailingWhitespace);
+        let width = if spacing != 0.0 && !text.is_empty() { m.widthIncludingTrailingWhitespace - spacing } else { m.widthIncludingTrailingWhitespace };
+        let entry = (layout, width);
         let mut cache = self.layouts.borrow_mut();
         if cache.len() > LAYOUT_CACHE {
             cache.clear();
@@ -252,7 +386,7 @@ pub struct D2dTextService {
 
 impl TextService for D2dTextService {
     fn measure(&self, text: &str, style: &TextStyle, max_width: Option<f32>) -> SizeF {
-        let key = FontKey::of(&style.font);
+        let key = FontKey::of_style(style);
         let lh = self.text.line_height(&key);
         match max_width {
             None => {
@@ -295,6 +429,9 @@ pub struct D2dRenderer {
     /// abre uma janela por monitor, e o print do NoOBS precisa aparecer em ~100 ms). Cada janela
     /// continua com o próprio contexto do Direct2D e a própria swap chain.
     devices: RefCell<Vec<SharedDevice>>,
+    /// Uma mistura já abriu dentro de uma camada de opacidade com desenho: daí em diante, as
+    /// camadas de opacidade são abertas fora da tela (veja `isolate_open_layer`).
+    isolate_layers: std::cell::Cell<bool>,
 }
 
 /// Um dispositivo do Direct3D 11 (com o do Direct2D por cima) para as janelas de uma placa.
@@ -414,11 +551,13 @@ impl D2dRenderer {
                     formats: RefCell::default(),
                     layouts: RefCell::default(),
                     line_heights: RefCell::default(),
+                    wrapped: RefCell::default(),
                 }),
                 strokes: RefCell::default(),
                 geometries: RefCell::default(),
                 decoded: RefCell::new(ImageCache::named("Direct2D · arquivos decodificados")),
                 devices: RefCell::default(),
+                isolate_layers: std::cell::Cell::new(false),
             })
         }
     }
@@ -829,7 +968,7 @@ impl D2dRenderer {
                 let mut params = params;
                 std::mem::ManuallyDrop::drop(&mut params.geometricMask);
                 std::mem::ManuallyDrop::drop(&mut params.opacityBrush);
-                pushes.push(Push::Layer(group, 1.0, Matrix3x2::identity()));
+                pushes.push(Push::Layer(group, 1.0, Matrix3x2::identity(), 0));
             }
 
             let base = Matrix3x2::scale(scale, scale);
@@ -876,6 +1015,7 @@ impl D2dRenderer {
                 pushes,
                 cache,
                 gpu,
+                draws: 0,
             };
             paint(&mut canvas);
             canvas.unwind();
@@ -1403,7 +1543,9 @@ impl HwndTarget {
 /// fecha tudo para copiar o alvo e reabre depois).
 enum Push {
     Clip(D2D_RECT_F, Matrix3x2),
-    Layer(Option<ID2D1Geometry>, f32, Matrix3x2),
+    /// Máscara, opacidade, transformação e o [`D2dCanvas::draws`] de quando abriu (a camada
+    /// ainda vazia pode virar isolada sem perder nada: veja `isolate_open_layer`).
+    Layer(Option<ID2D1Geometry>, f32, Matrix3x2, usize),
 }
 
 struct Frame {
@@ -1431,15 +1573,18 @@ struct MaskState {
     pushes: Vec<Push>,
     content: ID2D1BitmapRenderTarget,
     mask: Option<ID2D1BitmapRenderTarget>,
+    /// A máscara é de luminância (o `<mask>` do SVG): o brilho vira o alfa antes de recortar.
+    luminance: bool,
 }
 
-/// Uma camada com modo de mistura aberta ([`Canvas::save_layer_blend`]): o alvo de antes, a
-/// camada fora da tela e o pedaço (em pixels) onde ela se junta ao fundo no `restore`.
+/// Uma camada fora da tela aberta: a com modo de mistura ([`Canvas::save_layer_blend`]) ou a
+/// de opacidade isolada (`mode` `None`). O alvo de antes, a camada (do tamanho do pedaço) e o
+/// pedaço (em pixels do alvo de antes) onde ela se junta ao fundo no `restore`.
 struct BlendState {
     main: ID2D1RenderTarget,
     pushes: Vec<Push>,
     content: ID2D1BitmapRenderTarget,
-    mode: D2D1_BLEND_MODE,
+    mode: Option<D2D1_BLEND_MODE>,
     opacity: f32,
     area: D2D_RECT_U,
     /// O `frames.len()` do `save` que a abriu (o `restore` dele fecha a camada).
@@ -1463,6 +1608,8 @@ pub struct D2dCanvas<'a> {
     cache: &'a mut DeviceCache,
     /// O Direct3D por baixo (só no alvo por swap chain), para compor texturas de fora.
     gpu: Option<&'a mut GpuLink>,
+    /// Quantos desenhos já foram feitos (para saber se uma camada aberta ainda está vazia).
+    draws: usize,
 }
 
 impl D2dCanvas<'_> {
@@ -1507,6 +1654,7 @@ impl D2dCanvas<'_> {
             let (Ok(content), Some(mask)) = (state.content.GetBitmap(), state.mask.as_ref().and_then(|m| m.GetBitmap().ok())) else {
                 return;
             };
+            let mask = if state.luminance { self.luminance_to_alpha(&mask).unwrap_or(mask) } else { mask };
             let size = self.target.GetSize();
             let full = D2D_RECT_F { left: 0.0, top: 0.0, right: size.width, bottom: size.height };
             // Os bitmaps estão no espaço da tela: compõe sem transformação.
@@ -1528,6 +1676,119 @@ impl D2dCanvas<'_> {
                 self.target.PopLayer();
             }
             self.target.SetTransform(&self.transform);
+        }
+    }
+
+    /// A máscara com o brilho no alfa (o efeito Color Matrix nas cores pré-multiplicadas: o
+    /// brilho vezes o alfa, com os pesos do SVG e do `LumaColorFilter` do Skia), num bitmap do
+    /// mesmo tamanho.
+    fn luminance_to_alpha(&self, mask: &ID2D1Bitmap) -> Option<ID2D1Bitmap> {
+        let out = self.offscreen()?;
+        // SAFETY: chamadas COM do Direct2D; os bytes passados ao `SetValue` vivem até a volta.
+        unsafe {
+            let dc: ID2D1DeviceContext = out.cast().ok()?;
+            let effect = dc.CreateEffect(&CLSID_D2D1ColorMatrix).ok()?;
+            effect.SetInput(0, mask, true);
+            // Linhas R, G, B, A e a constante; colunas R', G', B', A'.
+            #[rustfmt::skip]
+            let matrix: [f32; 20] = [
+                0.0, 0.0, 0.0, 0.2125,
+                0.0, 0.0, 0.0, 0.7154,
+                0.0, 0.0, 0.0, 0.0721,
+                0.0, 0.0, 0.0, 0.0,
+                0.0, 0.0, 0.0, 0.0,
+            ];
+            let bytes: Vec<u8> = matrix.iter().flat_map(|v| v.to_le_bytes()).collect();
+            effect.SetValue(D2D1_COLORMATRIX_PROP_COLOR_MATRIX.0 as u32, D2D1_PROPERTY_TYPE_MATRIX_5X4, &bytes).ok()?;
+            let mode = (D2D1_COLORMATRIX_ALPHA_MODE_PREMULTIPLIED.0 as u32).to_le_bytes();
+            effect.SetValue(D2D1_COLORMATRIX_PROP_ALPHA_MODE.0 as u32, D2D1_PROPERTY_TYPE_ENUM, &mode).ok()?;
+            let output = effect.GetOutput().ok()?;
+            dc.SetTransform(&Matrix3x2::identity());
+            dc.DrawImage(&output, None, None, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR, D2D1_COMPOSITE_MODE_SOURCE_COPY);
+            out.EndDraw(None, None).ok()?;
+            out.GetBitmap().ok()
+        }
+    }
+
+    /// O pedaço do alvo (em pixels) que os recortes abertos deixam desenhar.
+    fn clip_area(&self) -> D2D_RECT_U {
+        // SAFETY: chamada COM sem argumentos num alvo válido.
+        let size = unsafe { self.target.GetPixelSize() };
+        let (mut x0, mut y0, mut x1, mut y1) = (0.0f32, 0.0f32, size.width as f32, size.height as f32);
+        for p in &self.pushes {
+            if let Push::Clip(r, m) = p {
+                let map = |x: f32, y: f32| (x * m.M11 + y * m.M21 + m.M31, x * m.M12 + y * m.M22 + m.M32);
+                let pts = [map(r.left, r.top), map(r.right, r.top), map(r.left, r.bottom), map(r.right, r.bottom)];
+                x0 = x0.max(pts.iter().map(|p| p.0).fold(f32::MAX, f32::min));
+                y0 = y0.max(pts.iter().map(|p| p.1).fold(f32::MAX, f32::min));
+                x1 = x1.min(pts.iter().map(|p| p.0).fold(f32::MIN, f32::max));
+                y1 = y1.min(pts.iter().map(|p| p.1).fold(f32::MIN, f32::max));
+            }
+        }
+        D2D_RECT_U {
+            left: x0.floor().max(0.0) as u32,
+            top: y0.floor().max(0.0) as u32,
+            right: (x1.ceil().max(0.0) as u32).min(size.width),
+            bottom: (y1.ceil().max(0.0) as u32).min(size.height),
+        }
+    }
+
+    /// Abre uma camada num alvo fora da tela do tamanho de `area` (pixels do alvo de agora): a
+    /// mistura `mode`, ou a camada de opacidade isolada (`None`). Ela fecha no `restore` que
+    /// encontrar `frame` saves abertos. `false`: não deu (pedaço vazio, sem memória).
+    fn open_offscreen(&mut self, mode: Option<D2D1_BLEND_MODE>, opacity: f32, area: D2D_RECT_U, frame: usize) -> bool {
+        let (w, h) = (area.right.saturating_sub(area.left), area.bottom.saturating_sub(area.top));
+        if w == 0 || h == 0 {
+            return false;
+        }
+        // SAFETY: chamadas COM do Direct2D; o alvo novo fica guardado no `BlendState` até o
+        // `end_blend_inner`.
+        let content = unsafe {
+            self.target.CreateCompatibleRenderTarget(
+                Some(&D2D_SIZE_F { width: w as f32, height: h as f32 }),
+                Some(&D2D_SIZE_U { width: w, height: h }),
+                None,
+                D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE,
+            )
+        };
+        let Ok(content) = content else { return false };
+        let Ok(as_target) = content.cast::<ID2D1RenderTarget>() else { return false };
+        // SAFETY: o alvo acabou de ser criado; o `BeginDraw` fecha no `end_blend_inner`.
+        unsafe {
+            content.BeginDraw();
+            content.Clear(Some(&color(Color::TRANSPARENT)));
+        }
+        let main = std::mem::replace(&mut self.target, as_target);
+        let pushes = std::mem::take(&mut self.pushes);
+        self.blends.push(BlendState { main, pushes, content, mode, opacity, area, frame });
+        // As mesmas coordenadas, com o canto do pedaço na origem do alvo novo.
+        let m = mul(&self.transform, &Matrix3x2::translation(-(area.left as f32), -(area.top as f32)));
+        self.set_transform(m);
+        true
+    }
+
+    /// A mistura lê o alvo, e para isso o Direct2D fecha as camadas abertas nele: uma camada
+    /// de opacidade aberta era composta duas vezes (o que já estava nela) e a mistura se juntava
+    /// ao que está fora dela. Fica igual ao Skia, ao navegador e ao CSS (a camada com opacidade
+    /// é um grupo isolado) assim: a camada de opacidade ainda vazia vira, aqui, uma camada fora
+    /// da tela; a que já tem desenho não tem mais como, e as camadas de opacidade passam a ser
+    /// abertas fora da tela desde a pintura seguinte.
+    fn isolate_open_layer(&mut self) {
+        if let Some(Push::Layer(None, opacity, _, draws)) = self.pushes.last() {
+            let (opacity, empty, i) = (*opacity, *draws == self.draws, self.pushes.len() - 1);
+            if opacity < 1.0 && empty {
+                if let Some(pos) = self.frames.iter().rposition(|f| f.pushes == i) {
+                    self.pop_until(i);
+                    let area = self.clip_area();
+                    if !self.open_offscreen(None, opacity, area, pos + 1) {
+                        self.push_layer(None, opacity);
+                    }
+                    return;
+                }
+            }
+        }
+        if self.pushes.iter().any(|p| matches!(p, Push::Layer(None, o, ..) if *o < 1.0)) {
+            self.renderer.isolate_layers.set(true);
         }
     }
 
@@ -1583,6 +1844,20 @@ impl D2dCanvas<'_> {
         if a.right <= a.left || a.bottom <= a.top {
             return;
         }
+        let piece = D2D_RECT_F { left: a.left as f32, top: a.top as f32, right: a.right as f32, bottom: a.bottom as f32 };
+        let Some(mode) = state.mode else {
+            // A camada de opacidade isolada: o pedaço por cima, com a opacidade (os recortes e
+            // as camadas de fora valem).
+            // SAFETY: chamadas COM do Direct2D com o bitmap e o retângulo locais.
+            unsafe {
+                if let Ok(layer) = state.content.GetBitmap() {
+                    self.target.SetTransform(&Matrix3x2::identity());
+                    self.target.DrawBitmap(&layer, Some(&piece), state.opacity, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, None);
+                }
+                self.target.SetTransform(&self.transform);
+            }
+            return;
+        };
         let _ = (|| -> windows_core::Result<()> {
             unsafe {
                 let dc: ID2D1DeviceContext = self.target.cast()?;
@@ -1590,8 +1865,8 @@ impl D2dCanvas<'_> {
                 let size = D2D_SIZE_U { width: a.right - a.left, height: a.bottom - a.top };
                 let backdrop = self.target.CreateBitmap(size, None, 0, &props)?;
                 self.without_pushes(|c| c.target.Flush(None, None).and_then(|_| backdrop.CopyFromRenderTarget(None, &c.target, Some(&a))))?;
-                let layer = self.target.CreateBitmap(size, None, 0, &props)?;
-                layer.CopyFromBitmap(None, &state.content.GetBitmap()?, Some(&a))?;
+                // A camada já é do tamanho do pedaço.
+                let layer = state.content.GetBitmap()?;
                 let effect = dc.CreateEffect(&CLSID_D2D1Blend)?;
                 effect.SetInput(0, &backdrop, true);
                 if state.opacity < 1.0 {
@@ -1602,11 +1877,10 @@ impl D2dCanvas<'_> {
                 } else {
                     effect.SetInput(1, &layer, true);
                 }
-                effect.SetValue(D2D1_BLEND_PROP_MODE.0 as u32, D2D1_PROPERTY_TYPE_ENUM, &(state.mode.0 as u32).to_le_bytes())?;
+                effect.SetValue(D2D1_BLEND_PROP_MODE.0 as u32, D2D1_PROPERTY_TYPE_ENUM, &(mode.0 as u32).to_le_bytes())?;
                 // O resultado já é o fundo com a camada: substitui o pedaço (os recortes de
                 // fora continuam valendo). Recortado nele: a cópia apagaria o resto do recorte.
                 dc.SetTransform(&Matrix3x2::identity());
-                let piece = D2D_RECT_F { left: a.left as f32, top: a.top as f32, right: a.right as f32, bottom: a.bottom as f32 };
                 dc.PushAxisAlignedClip(&piece, D2D1_ANTIALIAS_MODE_ALIASED);
                 let offset = windows_numerics::Vector2 { X: a.left as f32, Y: a.top as f32 };
                 dc.DrawImage(&effect.GetOutput()?, Some(&offset), None, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR, D2D1_COMPOSITE_MODE_SOURCE_COPY);
@@ -1634,7 +1908,7 @@ impl D2dCanvas<'_> {
 
     fn push_layer(&mut self, mask: Option<ID2D1Geometry>, opacity: f32) {
         self.push_layer_raw(mask.clone(), opacity);
-        self.pushes.push(Push::Layer(mask, opacity, self.transform));
+        self.pushes.push(Push::Layer(mask, opacity, self.transform, self.draws));
     }
 
     fn push_layer_raw(&self, mask: Option<ID2D1Geometry>, opacity: f32) {
@@ -1672,7 +1946,7 @@ impl D2dCanvas<'_> {
                     self.target.SetTransform(m);
                     self.target.PushAxisAlignedClip(r, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
                 },
-                Push::Layer(mask, opacity, m) => {
+                Push::Layer(mask, opacity, m, _) => {
                     unsafe { self.target.SetTransform(m) };
                     self.push_layer_raw(mask.clone(), *opacity);
                 }
@@ -1908,7 +2182,9 @@ impl D2dCanvas<'_> {
         let Some((layout, _)) = self.renderer.text.layout(line, key) else { return };
         unsafe {
             self.brush.SetColor(&color(c));
-            self.target.DrawTextLayout(v(at), &layout, &self.brush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
+            // `color_glyphs: false`: sem a cor das fontes de emoji.
+            let options = if key.mono_emoji { D2D1_DRAW_TEXT_OPTIONS_NONE } else { D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT };
+            self.target.DrawTextLayout(v(at), &layout, &self.brush, options);
         }
     }
 }
@@ -2087,6 +2363,7 @@ impl Canvas for D2dCanvas<'_> {
     }
 
     fn draw_gpu_surface(&mut self, dest: RectF, surface: &GpuSurface) -> bool {
+        self.draws += 1;
         self.draw_gpu(dest, surface).is_some()
     }
 
@@ -2125,6 +2402,14 @@ impl Canvas for D2dCanvas<'_> {
 
     fn save_layer(&mut self, opacity: f32) {
         self.save();
+        // Desde que uma mistura abriu dentro de uma camada com desenho: isolada (fora da tela, do
+        // tamanho do recorte de agora).
+        if opacity < 1.0 && self.renderer.isolate_layers.get() {
+            let area = self.clip_area();
+            if self.open_offscreen(None, opacity, area, self.frames.len()) {
+                return;
+            }
+        }
         self.push_layer(None, opacity);
     }
 
@@ -2150,6 +2435,7 @@ impl Canvas for D2dCanvas<'_> {
             B::Color => D2D1_BLEND_MODE_COLOR,
             B::Luminosity => D2D1_BLEND_MODE_LUMINOSITY,
         };
+        self.isolate_open_layer();
         // O pedaço em pixels: os quatro cantos pela transformação de agora (com giro, a caixa
         // em volta), dentro do alvo.
         let m = self.transform;
@@ -2166,15 +2452,17 @@ impl Canvas for D2dCanvas<'_> {
             right: (x1.ceil().max(0.0) as u32).min(size.width),
             bottom: (y1.ceil().max(0.0) as u32).min(size.height),
         };
-        let Some(content) = self.offscreen() else { return self.save_layer(opacity) };
-        let Ok(as_target) = content.cast::<ID2D1RenderTarget>() else { return self.save_layer(opacity) };
+        // A camada do tamanho do pedaço (antes, do alvo inteiro: 52 marcas d'água numa tela
+        // cheia criavam 52 alvos do tamanho da tela por quadro).
         self.save();
-        let main = std::mem::replace(&mut self.target, as_target);
-        let pushes = std::mem::take(&mut self.pushes);
-        self.blends.push(BlendState { main, pushes, content, mode, opacity, area, frame: self.frames.len() });
+        if !self.open_offscreen(Some(mode), opacity, area, self.frames.len()) {
+            self.frames.pop();
+            self.save_layer(opacity);
+        }
     }
 
     fn fill_rect(&mut self, r: RectF, radius: f32, brush: &Brush) {
+        self.draws += 1;
         let Some(b) = self.brush(brush, r) else { return };
         unsafe {
             if radius > 0.0 {
@@ -2187,6 +2475,7 @@ impl Canvas for D2dCanvas<'_> {
 
     /// O traço fica do lado de dentro, como no Skia.
     fn stroke_rect(&mut self, r: RectF, radius: f32, stroke: &Stroke) {
+        self.draws += 1;
         if stroke.width <= 0.0 {
             return;
         }
@@ -2204,12 +2493,14 @@ impl Canvas for D2dCanvas<'_> {
     }
 
     fn fill_ellipse(&mut self, r: RectF, brush: &Brush) {
+        self.draws += 1;
         let Some(b) = self.brush(brush, r) else { return };
         let e = D2D1_ELLIPSE { point: v(r.center()), radiusX: r.width / 2.0, radiusY: r.height / 2.0 };
         unsafe { self.target.FillEllipse(&e, &b) };
     }
 
     fn stroke_ellipse(&mut self, r: RectF, stroke: &Stroke) {
+        self.draws += 1;
         if stroke.width <= 0.0 {
             return;
         }
@@ -2221,6 +2512,7 @@ impl Canvas for D2dCanvas<'_> {
     }
 
     fn draw_line(&mut self, from: PointF, to: PointF, stroke: &Stroke) {
+        self.draws += 1;
         let area = RectF::new(from.x.min(to.x), from.y.min(to.y), (from.x - to.x).abs(), (from.y - to.y).abs()).inflate(stroke.width);
         let Some(b) = self.brush(&stroke.brush, area) else { return };
         let style = self.renderer.stroke_style(stroke);
@@ -2228,11 +2520,13 @@ impl Canvas for D2dCanvas<'_> {
     }
 
     fn fill_path(&mut self, path: &Path, brush: &Brush) {
+        self.draws += 1;
         let (Some(g), Some(b)) = (self.geometry(path), self.brush(brush, path.bounds())) else { return };
         unsafe { self.target.FillGeometry(&g, &b, None::<&ID2D1Brush>) };
     }
 
     fn stroke_path(&mut self, path: &Path, stroke: &Stroke) {
+        self.draws += 1;
         if stroke.width <= 0.0 {
             return;
         }
@@ -2244,6 +2538,7 @@ impl Canvas for D2dCanvas<'_> {
     /// Desfoque de verdade (Gaussian Blur, sigma = raio ÷ 2, como no Skia), guardado por
     /// tamanho, cantos, desfoque e cor: nos quadros seguintes a sombra é só uma imagem.
     fn draw_shadow(&mut self, r: RectF, radius: f32, shadow: &Shadow) {
+        self.draws += 1;
         if shadow.color.a == 0 {
             return;
         }
@@ -2272,10 +2567,11 @@ impl Canvas for D2dCanvas<'_> {
     }
 
     fn draw_text(&mut self, text: &str, r: RectF, style: &TextStyle) {
+        self.draws += 1;
         if text.is_empty() || r.width <= 0.0 {
             return;
         }
-        let key = FontKey::of(&style.font);
+        let key = FontKey::of_style(style);
         let text_cache = self.renderer.text.clone();
         let lh = text_cache.line_height(&key);
         let mut measure = |s: &str| text_cache.width(s, &key);
@@ -2322,11 +2618,21 @@ impl Canvas for D2dCanvas<'_> {
     }
 
     fn measure_text(&mut self, text: &str, style: &TextStyle) -> SizeF {
-        let key = FontKey::of(&style.font);
+        let key = FontKey::of_style(style);
         SizeF::new(self.renderer.text.width(text, &key), self.renderer.text.line_height(&key))
     }
 
+    fn measure_text_wrapped(&mut self, text: &str, style: &TextStyle, max_width: f32) -> SizeF {
+        let text_cache = self.renderer.text.clone();
+        let key = FontKey::of_style(style);
+        let mut wrapped = text_cache.wrapped.borrow_mut();
+        wrapped.get_or(text, style, max_width, || {
+            aylis_core::canvas::wrapped_size(text, max_width, text_cache.line_height(&key), &mut |s| text_cache.width(s, &key))
+        })
+    }
+
     fn draw_image(&mut self, image: &Image, src: RectF, dest: RectF, opacity: f32) {
+        self.draws += 1;
         let Some((bitmap, _, _)) = self.bitmap(image) else { return };
         unsafe {
             self.target.DrawBitmap(&bitmap, Some(&rect(dest)), opacity, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, Some(&rect(src)));
@@ -2338,6 +2644,7 @@ impl Canvas for D2dCanvas<'_> {
     }
 
     fn backdrop_blur(&mut self, r: RectF, radius: f32, blur: f32) -> bool {
+        self.draws += 1;
         // O pedaço do alvo (em pixels, pela transformação atual) vira um bitmap, que volta
         // desfocado pelo efeito Gaussian Blur, recortado nos cantos arredondados.
         let m = self.transform;
@@ -2390,7 +2697,7 @@ impl Canvas for D2dCanvas<'_> {
         let Ok(as_target) = content.cast::<ID2D1RenderTarget>() else { return false };
         let main = std::mem::replace(&mut self.target, as_target);
         let pushes = std::mem::take(&mut self.pushes);
-        self.masks.push(MaskState { main, pushes, content, mask: None });
+        self.masks.push(MaskState { main, pushes, content, mask: None, luminance: false });
         true
     }
 
@@ -2408,7 +2715,15 @@ impl Canvas for D2dCanvas<'_> {
         }
     }
 
+    fn begin_luminance_mask(&mut self) {
+        self.begin_mask();
+        if let Some(state) = self.masks.last_mut() {
+            state.luminance = true;
+        }
+    }
+
     fn end_mask(&mut self) {
+        self.draws += 1;
         self.end_mask_inner();
     }
 
@@ -2431,6 +2746,7 @@ impl Canvas for D2dCanvas<'_> {
         (key, w as u32, h as u32, m.M11.to_bits(), m.M22.to_bits()).hash(&mut hasher);
         let full = hasher.finish();
         if let Some(bitmap) = self.cache.layers.get(full).cloned() {
+            self.draws += 1;
             self.draw_layer(&bitmap, &dest);
             return true;
         }
@@ -2465,6 +2781,7 @@ impl Canvas for D2dCanvas<'_> {
     }
 
     fn end_cached(&mut self) {
+        self.draws += 1;
         self.end_cached_inner();
     }
 

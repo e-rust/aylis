@@ -85,7 +85,7 @@ impl Theme {
         let mut out = Vec::new();
         for (key, style) in &self.styles {
             for props in [&style.base, &style.hover, &style.pressed, &style.focused, &style.checked, &style.disabled] {
-                for c in [&props.fill, &props.text, &props.border_color].into_iter().flatten() {
+                for c in [&props.fill, &props.text, &props.border_color, &props.icon_color, &props.thumb].into_iter().flatten() {
                     if let crate::theme::ColorRef::Token(name) = c
                         && name != "transparent"
                         && self.resolve_color(name).is_none()

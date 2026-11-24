@@ -15,14 +15,13 @@ use windows::Win32::UI::WindowsAndMessaging::{
 };
 use windows::core::w;
 
-/// A janela da imagem do arrasto. Criada no primeiro arrasto com imagem e reaproveitada.
+/// A janela da imagem do arrasto (ou do rótulo dele). Criada no primeiro arrasto e
+/// reaproveitada.
 #[derive(Default)]
 pub struct DragWindow {
     hwnd: Option<HWND>,
-    /// O que está desenhado: (imagem, largura, altura, opacidade em milésimos).
+    /// O que está desenhado (a imagem e o tamanho, ou o texto e a escala).
     key: Option<(u64, u32, u32, u32)>,
-    /// O ponto da imagem (em pixels) que fica no cursor.
-    hotspot: (i32, i32),
     shown: bool,
 }
 
@@ -31,27 +30,26 @@ impl DragWindow {
     /// `scale`: pixels por ponto da janela onde o arrasto começou.
     pub fn sync(&mut self, visual: Option<(&DragVisual, f32)>) {
         let Some((v, scale)) = visual else {
-            if self.shown {
-                if let Some(h) = self.hwnd {
-                    unsafe {
-                        let _ = ShowWindow(h, SW_HIDE);
-                    }
-                }
-                self.shown = false;
-            }
+            self.hide();
             return;
         };
         let (w, h) = ((v.size.width * scale).round().max(1.0) as u32, (v.size.height * scale).round().max(1.0) as u32);
         let key = (v.image.id(), w, h, (v.opacity.clamp(0.0, 1.0) * 1000.0) as u32);
+        let offset = (-(v.hotspot.x * scale).round() as i32, -(v.hotspot.y * scale).round() as i32);
+        self.show(key, offset, || render(v, w, h, scale).map(|pixels| (w, h, pixels)));
+    }
+
+    /// Mostra junto do cursor, com o canto em `offset` (pixels) a partir dele, o desenho de
+    /// `key`: `draw` dá os pixels (BGRA pré-multiplicados) só quando `key` muda.
+    pub fn show(&mut self, key: (u64, u32, u32, u32), offset: (i32, i32), draw: impl FnOnce() -> Option<(u32, u32, Vec<u8>)>) {
         let mut cursor = POINT::default();
         unsafe {
             let _ = GetCursorPos(&mut cursor);
         }
+        let at = POINT { x: cursor.x + offset.0, y: cursor.y + offset.1 };
         if self.key != Some(key) {
-            let Some(pixels) = render(v, w, h, scale) else { return };
+            let Some((w, h, pixels)) = draw() else { return };
             let Some(hwnd) = self.window() else { return };
-            self.hotspot = ((v.hotspot.x * scale).round() as i32, (v.hotspot.y * scale).round() as i32);
-            let at = POINT { x: cursor.x - self.hotspot.0, y: cursor.y - self.hotspot.1 };
             if !update_layered(hwnd, &pixels, w, h, at) {
                 return;
             }
@@ -59,17 +57,21 @@ impl DragWindow {
         }
         let Some(hwnd) = self.hwnd else { return };
         unsafe {
-            let _ = SetWindowPos(
-                hwnd,
-                Some(HWND_TOPMOST),
-                cursor.x - self.hotspot.0,
-                cursor.y - self.hotspot.1,
-                0,
-                0,
-                SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW,
-            );
+            let _ = SetWindowPos(hwnd, Some(HWND_TOPMOST), at.x, at.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
         }
         self.shown = true;
+    }
+
+    /// Esconde (o arrasto acabou, ou não tem o que mostrar).
+    pub fn hide(&mut self) {
+        if self.shown {
+            if let Some(h) = self.hwnd {
+                unsafe {
+                    let _ = ShowWindow(h, SW_HIDE);
+                }
+            }
+            self.shown = false;
+        }
     }
 
     fn window(&mut self) -> Option<HWND> {
@@ -154,6 +156,19 @@ fn corner_coverage(x: f32, y: f32, w: f32, h: f32, r: f32) -> f32 {
     (r - d + 0.5).clamp(0.0, 1.0)
 }
 
+/// Os pixels RGBA comuns (sem pré-multiplicar, como os do desenho fora da tela) em BGRA
+/// pré-multiplicados, como a janela em camadas pede.
+pub fn premultiplied_bgra(mut rgba: Vec<u8>) -> Vec<u8> {
+    for px in rgba.chunks_exact_mut(4) {
+        let a = px[3] as u32;
+        let (r, g, b) = (px[0] as u32, px[1] as u32, px[2] as u32);
+        px[0] = ((b * a + 127) / 255) as u8;
+        px[1] = ((g * a + 127) / 255) as u8;
+        px[2] = ((r * a + 127) / 255) as u8;
+    }
+    rgba
+}
+
 /// Põe os pixels na janela em camadas, em `at` (coordenadas da tela).
 fn update_layered(hwnd: HWND, bgra: &[u8], w: u32, h: u32, at: POINT) -> bool {
     unsafe {
@@ -212,5 +227,10 @@ mod tests {
         let px = render(&v, 20, 20, 1.0).unwrap();
         let mid = ((10 * 20 + 10) * 4) as usize;
         assert_eq!(&px[mid..mid + 4], &[0, 0, 128, 128], "B G R A, com metade de opacidade");
+    }
+
+    #[test]
+    fn the_label_pixels_turn_premultiplied_bgra() {
+        assert_eq!(premultiplied_bgra(vec![255, 0, 0, 128, 10, 20, 30, 255]), vec![0, 0, 128, 128, 30, 20, 10, 255]);
     }
 }

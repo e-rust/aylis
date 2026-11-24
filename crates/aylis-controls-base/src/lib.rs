@@ -22,6 +22,7 @@ mod dates;
 mod edit;
 mod emoji;
 mod feedback;
+pub mod field;
 mod files;
 mod grid;
 mod drag_image;
@@ -32,6 +33,7 @@ mod memo;
 mod code_editor;
 mod tab_strip;
 pub mod search;
+pub mod scroll_bar;
 pub mod syntax;
 pub mod textmate;
 pub mod textmate_theme;
@@ -66,7 +68,7 @@ mod screen_layout;
 mod toggles;
 mod widgets;
 
-pub use autocomplete::AutoComplete;
+pub use autocomplete::{AutoComplete, fold};
 pub use basic::{
     BorderStyle, Button, CloseAction, CursorConfine, Form, FullScreenMode, KeepAwake, WindowCorners, WindowShape, FormPosition, Frame, IconPosition, Label, Layout, Panel, ProgressBar, Rectangle, WindowState, find_matches, markup_plain, markup_runs, markup_spans, MarkupSpan,
     window_state_commands,
@@ -102,14 +104,14 @@ pub use emoji::{EmojiInfo, EmojiPicker, emoji_groups, emoji_list};
 pub use titlebar::TitleBar;
 pub use taskbar::Taskbar;
 pub use tray::TrayIcon;
-pub use planner::{CalendarEvent, CalendarEventClick, CalendarView, CommandPalette, EventCalendar, parse_events};
+pub use planner::{CalendarEvent, CalendarEventClick, CalendarView, CommandPalette, EventCalendar, PALETTE_SELECTION, PaletteSelection, parse_events};
 pub use render_settings::RenderSettings;
 pub use window_settings::{WindowSettings, WindowSettingsScope};
 pub use image_list::{IMAGE_LIST_ITEM, ImageList, ImageListItem, Picture};
 pub use list_header::{HEADER_COLUMN, HeaderColumn, ListHeader};
 pub use recycler::{Kinder, ListOrientation, RowSource, ScrollBarMode, SelectionMode, Sizer, SwipeAction, VirtualList};
 pub use recorder::{Analytics, EventRecorder, Recording, RECORDING_EXTENSION};
-pub use system::{ApplicationEvents, ExceptionEvent, BusyAction, BusyWatcher, DataModule, DialogKind, FrameTimer, DlgKind, EventInterceptor, InterceptScope, MessageDialog, Notification, OpenDialog, SaveDialog, Timer, confirm, message_dlg, parse_filter, show_message, toast};
+pub use system::{ApplicationEvents, ExceptionEvent, BusyAction, BusyWatcher, DataModule, DialogKind, FrameTimer, DlgKind, EventInterceptor, InterceptScope, MessageDialog, Notification, OpenDialog, SaveDialog, Timer, confirm, message_dlg, parse_filter, prompt, set_dialog_icon, set_prompt_required, show_message, toast};
 pub use tabs::{Expander, GroupBox, StatusBar, TabControl, TabItem, TabPosition, ToolBar};
 pub use feedback::{ToastKind, ToastStack, notify};
 pub use frame_view::FrameView;

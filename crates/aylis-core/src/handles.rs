@@ -92,6 +92,25 @@ pub fn read_enum<E: crate::prop::PropEnum>(ui: &Ui, id: ComponentId, prop: &str)
     read(ui, id, prop).and_then(|v| v.to_enum::<E>().ok()).or_else(|| E::from_index(0)).expect("enum sem valores")
 }
 
+/// O `font_weight` do acesso tipado é o [`crate::FontWeight`] do núcleo: `None` é o `default`
+/// (o peso do pai ou do tema), e os outros nomes seguem [`crate::FONT_WEIGHTS`]. Assim o app usa
+/// um tipo só (`Some(FontWeight::SemiBold)`), e não um enum gerado parecido.
+impl crate::prop::PropEnum for Option<crate::FontWeight> {
+    const NAMES: &'static [&'static str] = &crate::FONT_WEIGHTS;
+
+    fn from_index(index: usize) -> Option<Self> {
+        use crate::FontWeight::*;
+        match index {
+            0 => Some(None),
+            i => [Thin, Light, Normal, Medium, SemiBold, Bold, Black].get(i - 1).map(|w| Some(*w)),
+        }
+    }
+
+    fn index(self) -> usize {
+        self.map_or(0, |w| w as usize + 1)
+    }
+}
+
 /// Lê um conjunto de enums (os nomes que não são do enum ficam de fora).
 pub fn read_set<E: crate::prop::PropEnum>(ui: &Ui, id: ComponentId, prop: &str) -> Vec<E> {
     let names: Vec<String> = match read(ui, id, prop) {
@@ -150,9 +169,16 @@ fn items(text: &str) -> impl Iterator<Item = &str> {
     text.split(';').map(str::trim).filter(|s| !s.is_empty())
 }
 
-/// Lê uma lista de textos (`a;b;c`).
+/// Lê uma lista de textos (`a;b;c`) como os controles a leem: texto vazio é nenhum item, e
+/// fora isso cada pedaço é um item, os vazios e os espaços inclusive (um `ComboBox` com o item
+/// "nenhum" vazio no começo, e o `item_index` alinhado com a lista).
 pub fn read_list(ui: &Ui, id: ComponentId, prop: &str) -> Vec<String> {
-    items(&read_text(ui, id, prop)).map(str::to_string).collect()
+    split_list(&read_text(ui, id, prop))
+}
+
+/// Os itens de um texto `a;b;c` sem descartar nada (vazio: nenhum).
+pub fn split_list(text: &str) -> Vec<String> {
+    if text.is_empty() { Vec::new() } else { text.split(';').map(str::to_string).collect() }
 }
 
 /// Lê uma lista de números (`0.4;0.9`; o que não é número fica de fora).
@@ -296,5 +322,33 @@ pub fn resolve(ui: &Ui, root: ComponentId, name: &str, class: &str, problems: &m
             problems.push(format!("falta o componente {name} ({class})"));
             root
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// O item vazio do começo e os espaços continuam na lista: o `item_index` fica alinhado.
+    #[test]
+    fn the_list_keeps_the_empty_items_and_the_spaces() {
+        let text = match list_value(&["", "A", " B "]) {
+            PropValue::String(s) => s,
+            _ => unreachable!(),
+        };
+        assert_eq!(split_list(&text), ["", "A", " B "]);
+        assert!(split_list("").is_empty());
+    }
+
+    /// Os nomes do `font_weight` e o `FontWeight` do núcleo, ida e volta (`default` é `None`).
+    #[test]
+    fn the_font_weight_names_match_the_core_type() {
+        use crate::prop::PropEnum;
+        for (i, name) in crate::FONT_WEIGHTS.iter().enumerate() {
+            let w = <Option<crate::FontWeight>>::from_index(i).unwrap();
+            assert_eq!(w.name(), *name);
+        }
+        assert_eq!(<Option<crate::FontWeight>>::from_name("semibold"), Some(Some(crate::FontWeight::SemiBold)));
+        assert_eq!(<Option<crate::FontWeight>>::from_name("default"), Some(None));
     }
 }

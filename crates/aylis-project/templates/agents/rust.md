@@ -17,6 +17,10 @@
   Num evento-pergunta (`before_post`, `on_close_query`...) o handler devolve
   `Result<(), String>`: `Err(mensagem)` recusa (o `?` repassa).
 - Outro form pelo tipo: `let form = FrmClientes::create(ui)?; ui.show(form)?;`.
+- Chegar a um form aberto: `FrmClientes::get(ui)` (e `get_mut`) é para outro form, um timer
+  ou a bandeja. Dentro de um handler do próprio form ele dá `None` (a instância está emprestada
+  ao handler): ali, use o `self`; numa função que o handler chama, receba o `self` ou use
+  `FrmClientes::components(ui)` (os componentes, sem o estado).
 - Mensagem: `message_dlg(ui, "Gravado.", DlgKind::Information, &[ModalResult::Ok], |_, _| {});`.
 - Segundo plano: `ui.background(owner, move || trabalho(), move |ui, resultado| { ... })` roda o
   trabalho noutra thread e o fim na tela, só se o form `owner` ainda existir (no navegador, o

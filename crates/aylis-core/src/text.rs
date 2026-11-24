@@ -298,3 +298,30 @@ mod tests {
         assert!(justify_line("aa bb", 3.0, &mut m).is_none(), "não cabe: fica como está");
     }
 }
+
+/// O texto para comparar numa busca, sem acento e sem maiúscula: "São Paulo" vira
+/// "sao paulo", e a busca por "sao" acha "São" (o `AutoComplete`, a `CommandPalette`; para o app,
+/// `aylis::text::fold`; nas expressões do `aylis-data`, `fold()`).
+///
+/// O que cobre: as minúsculas de qualquer escrita (o `to_lowercase` do Unicode) e os acentos
+/// das letras latinas do português, do espanhol, do francês, do alemão e do italiano (agudo,
+/// grave, circunflexo, til, trema, cedilha; `ñ` vira `n`, `ý`/`ÿ` viram `y`). Não troca letras
+/// (`ß`, `æ`, `œ` e `ø` ficam como estão), não mexe em espaços nem em pontuação e não
+/// decompõe o Unicode em geral: um acento de outra escrita continua no texto. Compare sempre
+/// os dois lados dobrados (`fold(item).contains(&fold(busca))`).
+pub fn fold(text: &str) -> String {
+    text.chars()
+        .flat_map(char::to_lowercase)
+        .map(|c| match c {
+            'á' | 'à' | 'â' | 'ã' | 'ä' | 'å' => 'a',
+            'é' | 'è' | 'ê' | 'ë' => 'e',
+            'í' | 'ì' | 'î' | 'ï' => 'i',
+            'ó' | 'ò' | 'ô' | 'õ' | 'ö' => 'o',
+            'ú' | 'ù' | 'û' | 'ü' => 'u',
+            'ý' | 'ÿ' => 'y',
+            'ç' => 'c',
+            'ñ' => 'n',
+            c => c,
+        })
+        .collect()
+}

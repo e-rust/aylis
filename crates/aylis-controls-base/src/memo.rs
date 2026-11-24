@@ -92,6 +92,24 @@ pub struct Memo {
     pub trimming: Trimming,
     /// Linguagem do realce (vazio = texto comum).
     pub syntax: String,
+    /// A cor de cada tipo de trecho do realce trocada só neste controle, sem criar tema
+    /// (vazio: a do `color_theme` ou do tema do app).
+    pub keyword_color: Option<aylis_core::Color>,
+    /// A cor dos tipos no realce, só neste controle (vazio: a do tema).
+    pub type_color: Option<aylis_core::Color>,
+    /// A cor dos textos entre aspas no realce, só neste controle (vazio: a do tema).
+    pub string_color: Option<aylis_core::Color>,
+    /// A cor dos números no realce, só neste controle (vazio: a do tema).
+    pub number_color: Option<aylis_core::Color>,
+    /// A cor dos comentários no realce, só neste controle (vazio: a do tema).
+    pub comment_color: Option<aylis_core::Color>,
+    /// A cor das funções no realce, só neste controle (vazio: a do tema).
+    pub function_color: Option<aylis_core::Color>,
+    /// Tokens somados à linguagem do realce, sem gramática: o nome, as palavras (ou um
+    /// prefixo, como `@`) e a cor de cada um (a lista de [`syntax::SyntaxToken`], em JSON).
+    pub syntax_tokens: String,
+    /// O `syntax_tokens` lido (relido só quando o texto dele muda).
+    tokens: Vec<syntax::SyntaxToken>,
     /// Mostra o número de cada linha à esquerda.
     pub line_numbers: bool,
     /// O Tab entra no texto (senão, passa o foco para o próximo controle).
@@ -285,6 +303,14 @@ impl Default for Memo {
             wrap: false,
             trimming: Trimming::Character,
             syntax: String::new(),
+            keyword_color: None,
+            type_color: None,
+            string_color: None,
+            number_color: None,
+            comment_color: None,
+            function_color: None,
+            syntax_tokens: String::new(),
+            tokens: Vec::new(),
             line_numbers: false,
             want_tabs: false,
             wheel_lines: 8,
@@ -555,6 +581,9 @@ impl Memo {
     }
 
     fn after_set(&mut self, name: &str) {
+        if name == "syntax_tokens" {
+            self.tokens = crate::records::parse_list(&self.syntax_tokens);
+        }
         if name == "text" {
             self.text_changed();
             let end = self.len();
@@ -565,6 +594,19 @@ impl Memo {
             self.diagnostics.clear();
             self.folds.borrow_mut().clear();
             self.extra.clear();
+        }
+    }
+
+    /// A cor trocada no controle para um tipo de trecho (`keyword_color`...).
+    fn kind_color(&self, kind: syntax::TokenKind) -> Option<aylis_core::Color> {
+        match kind {
+            syntax::TokenKind::Plain => None,
+            syntax::TokenKind::Keyword => self.keyword_color,
+            syntax::TokenKind::Type => self.type_color,
+            syntax::TokenKind::String => self.string_color,
+            syntax::TokenKind::Number => self.number_color,
+            syntax::TokenKind::Comment => self.comment_color,
+            syntax::TokenKind::Function => self.function_color,
         }
     }
 
@@ -1503,6 +1545,13 @@ impl Component for Memo {
         wrap: bool => "Text",
         trimming: Trimming => "Text",
         syntax: String => "Text",
+        keyword_color: Option<aylis_core::Color> => "Text",
+        type_color: Option<aylis_core::Color> => "Text",
+        string_color: Option<aylis_core::Color> => "Text",
+        number_color: Option<aylis_core::Color> => "Text",
+        comment_color: Option<aylis_core::Color> => "Text",
+        function_color: Option<aylis_core::Color> => "Text",
+        syntax_tokens: String as RecordList(&syntax::SYNTAX_TOKEN) => "Text",
         line_numbers: bool => "Text",
         want_tabs: bool => "Behavior",
         wheel_lines: u32 => "Behavior",
@@ -2224,6 +2273,9 @@ impl Memo {
             ctx.request_frame();
         }
         let dark = ctx.theme.dark;
+        // As cores dos tokens do controle (`syntax_tokens`), resolvidas no tema uma vez.
+        let token_colors: Vec<aylis_core::Color> = self.tokens.iter().map(|t| ctx.theme.resolve_color(t.color.trim()).unwrap_or(style.color)).collect();
+        let tokens_ci = syntax::case_insensitive(&self.syntax);
         // As ocorrências da palavra do cursor e o par do colchete (só o que está à vista).
         let view = (rows.get(first).map_or(0, |r| r.start), rows.get((first + visible + 1).min(rows.len().saturating_sub(1))).map_or(0, |r| r.end));
         let occurrences = if focused { self.occurrences(view.0, view.1) } else { Vec::new() };
@@ -2306,7 +2358,22 @@ impl Memo {
                 // de novo a cada trecho.
                 let raw: Vec<char> = self.slice(row.start, row.end).chars().collect();
                 let (mut done, mut px) = (0usize, 0.0f32);
-                for span in line_spans {
+                // Os tokens do controle repartem os trechos (só os da linha pintada); sem
+                // tokens, os trechos como vieram (sem lista nova por linha).
+                let refined = (!self.tokens.is_empty()).then(|| syntax::apply_tokens(line_spans, &raw, &self.tokens, &token_colors, tokens_ci));
+                let (mut with_tokens, mut plain);
+                let pieces: &mut dyn Iterator<Item = (Span, Option<aylis_core::Color>)> = match &refined {
+                    Some(list) => {
+                        with_tokens = list.iter().copied();
+                        &mut with_tokens
+                    }
+                    None => {
+                        plain = line_spans.iter().map(|s| (*s, None));
+                        &mut plain
+                    }
+                };
+                for (span, token_color) in pieces {
+                    let span = &span;
                     let (a, b) = (span.start.min(raw.len()).max(done), span.end.min(raw.len()));
                     if a >= b {
                         continue;
@@ -2320,7 +2387,7 @@ impl Memo {
                     let pw = canvas.measure_text(&piece, &text_style).width;
                     done = b;
                     let mut ts = text_style.clone();
-                    ts.color = syntax::span_color(ct, span, dark, style.color);
+                    ts.color = token_color.or_else(|| self.kind_color(span.kind)).unwrap_or_else(|| syntax::span_color(ct, span, dark, style.color));
                     canvas.draw_text(&piece, RectF::new(x + px, y, pw + 8.0, lh), &ts);
                     px += pw;
                 }
@@ -2505,36 +2572,36 @@ impl Memo {
         // Só o texto (`plain`): sem as barras (a roda e o cursor ainda rolam).
         let (has_v, has_h) = (max > 0.5 && !self.plain, hmax > 0.5 && !self.plain);
         let active = self.bar_grab.is_some() || self.bar_hover.get();
-        let track_fill = Brush::Solid(ctx.theme.color("text").with_opacity(0.05));
-        let thumb_fill = Brush::Solid(ctx.theme.color("text_muted").with_opacity(if active { 0.7 } else { 0.4 }));
+        // Pelo tema (`ScrollBar` e o `scroll_bar` do estilo); sem ele, a de antes: 12 px, o
+        // trilho só com o mouse em cima.
+        let look = crate::scroll_bar::resolve(ctx, active, crate::scroll_bar::Defaults {
+            width: BAR_WIDTH,
+            track: active.then(|| ctx.theme.color("text").with_opacity(0.05)),
+            thumb: ctx.theme.color("text_muted").with_opacity(if active { 0.7 } else { 0.4 }),
+        });
+        let bar_w = look.width.max(4.0);
         if has_v {
             // Com as duas, cada uma deixa o canto para a outra.
-            let height = inner.height - if has_h { BAR_WIDTH } else { 0.0 };
-            let track = RectF::new(inner.right() + mini - BAR_WIDTH, inner.y, BAR_WIDTH, height);
+            let height = inner.height - if has_h { bar_w } else { 0.0 };
+            let track = RectF::new(inner.right() + mini - bar_w, inner.y, bar_w, height);
             // A parte à vista no total que dá para rolar (no editor, com o espaço depois da
             // última linha).
             let thumb_h = (inner.height / (max + inner.height) * track.height).clamp(24.0_f32.min(track.height), track.height);
             let thumb_y = track.y + (scroll.y / max).clamp(0.0, 1.0) * (track.height - thumb_h);
-            let thumb = RectF::new(track.x + 2.0, thumb_y, BAR_WIDTH - 4.0, thumb_h);
-            if active {
-                canvas.fill_rect(track, 0.0, &track_fill);
-            }
-            canvas.fill_rect(thumb, (BAR_WIDTH - 4.0) / 2.0, &thumb_fill);
+            let thumb = RectF::new(track.x + 2.0, thumb_y, bar_w - 4.0, thumb_h);
+            look.paint(canvas, Some(track), thumb, (bar_w - 4.0) / 2.0);
             self.bar.set(Some((track, thumb, max)));
         } else {
             self.bar.set(None);
         }
         if has_h {
-            let width = inner.width - if has_v { BAR_WIDTH } else { 0.0 };
-            let track = RectF::new(inner.x, inner.bottom() - BAR_WIDTH, width, BAR_WIDTH);
+            let width = inner.width - if has_v { bar_w } else { 0.0 };
+            let track = RectF::new(inner.x, inner.bottom() - bar_w, width, bar_w);
             let content = widest + 8.0;
             let thumb_w = (inner.width / content * track.width).clamp(24.0_f32.min(track.width), track.width);
             let thumb_x = track.x + (scroll.x / hmax).clamp(0.0, 1.0) * (track.width - thumb_w);
-            let thumb = RectF::new(thumb_x, track.y + 2.0, thumb_w, BAR_WIDTH - 4.0);
-            if active {
-                canvas.fill_rect(track, 0.0, &track_fill);
-            }
-            canvas.fill_rect(thumb, (BAR_WIDTH - 4.0) / 2.0, &thumb_fill);
+            let thumb = RectF::new(thumb_x, track.y + 2.0, thumb_w, bar_w - 4.0);
+            look.paint(canvas, Some(track), thumb, (bar_w - 4.0) / 2.0);
             self.hbar.set(Some((track, thumb, hmax)));
         } else {
             self.hbar.set(None);

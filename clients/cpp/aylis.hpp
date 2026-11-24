@@ -697,15 +697,37 @@ public:
     }
 
     /// Caixa de mensagem que espera: devolve o botão (`"yes"`,
-    /// `"no"`, `"ok"`...). Enquanto espera, os eventos continuam rodando.
-    std::string message_dlg(const std::string& text, const std::string& kind = "information", std::vector<std::string> buttons = {"ok"}) {
+    /// `"no"`, `"ok"`...). Enquanto espera, os eventos continuam rodando. `icon` (nome de ícone) e
+    /// `icon_color` (token do tema, como `"danger"`, ou `"#rrggbb"`) trocam o ícone do tipo.
+    std::string message_dlg(const std::string& text, const std::string& kind = "information", std::vector<std::string> buttons = {"ok"},
+                            const std::string& icon = "", const std::string& icon_color = "") {
         std::vector<Json> list(buttons.begin(), buttons.end());
-        return wait_for("message_dlg", {{"text", text}, {"kind", kind}, {"buttons", Json::array(list)}});
+        Json fields{{"text", text}, {"kind", kind}, {"buttons", Json::array(list)}};
+        dialog_icon(fields, icon, icon_color);
+        return wait_for("message_dlg", std::move(fields));
+    }
+
+    /// A pergunta com um campo de texto (OK e Cancelar), que espera: devolve o texto digitado, ou
+    /// vazio (`std::nullopt`) no Cancelar. `required` não deixa confirmar vazio. Enquanto espera,
+    /// os eventos continuam rodando.
+    std::optional<std::string> prompt(const std::string& title, const std::string& label, const std::string& value = "", bool required = false,
+                                      const std::string& icon = "", const std::string& icon_color = "") {
+        Json fields{{"title", title}, {"label", label}, {"value", value}};
+        if (required) fields.set("required", true);
+        dialog_icon(fields, icon, icon_color);
+        Json result = wait_for_value("prompt", std::move(fields));
+        if (result.is_null()) return std::nullopt;
+        return result.str();
     }
 
     /// Abre o form como modal e espera ele fechar: devolve o
-    /// resultado (`"ok"`, `"cancel"`...).
-    std::string show_modal(const Component& form) { return wait_for("show_modal", {{"target", Json(form.id_)}}); }
+    /// resultado (`"ok"`, `"cancel"`...). Com `container` (um componente de outro form, como a
+    /// página de uma aba), o modal fica só nele e o resto da tela continua respondendo.
+    std::string show_modal(const Component& form, const Component* container = nullptr) {
+        Json fields{{"target", Json(form.id_)}};
+        if (container) fields.set("container", Json(container->id_));
+        return wait_for("show_modal", std::move(fields));
+    }
 
     /// Handler pelo nome usado no layout ("frmClientes.nome": só daquele form).
     void on(const std::string& name, std::function<void(const Event&)> handler) { handlers_[name] = std::move(handler); }
@@ -881,7 +903,13 @@ private:
     /// Os `post` do desktop (sem sessão).
     std::shared_ptr<Inbox> desktop_ = std::make_shared<Inbox>();
 
-    std::string wait_for(const std::string& cmd, Json fields) {
+    /// Os campos opcionais `icon` e `icon_color` do `message_dlg` e do `prompt`.
+    static void dialog_icon(Json& fields, const std::string& icon, const std::string& icon_color) {
+        if (!icon.empty()) fields.set("icon", icon);
+        if (!icon_color.empty()) fields.set("icon_color", icon_color);
+    }
+    std::string wait_for(const std::string& cmd, Json fields) { return wait_for_value(cmd, std::move(fields)).str(); }
+    Json wait_for_value(const std::string& cmd, Json fields) {
         fields.set("wait", true);
         ++waiting_;
         // O que chegou antes (enquanto outro call esperava) roda já.
@@ -897,7 +925,7 @@ private:
         try {
             Json result = call(cmd, std::move(fields));
             --waiting_;
-            return result.str();
+            return result;
         } catch (...) {
             --waiting_;
             throw;

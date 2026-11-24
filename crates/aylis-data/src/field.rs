@@ -713,6 +713,21 @@ impl Component for Field {
         }
     }
 
+    /// Mudou como o campo aparece (largura, título, visível, alinhamento, formato): os
+    /// controles ligados ao dataset refazem (a grade, as colunas). Antes o `display_width` em
+    /// execução não mudava a coluna. Vai por `post`: durante esta chamada o campo está
+    /// emprestado, e a grade o lê ao refazer.
+    fn property_changed(&mut self, ctx: &mut aylis_core::EventCtx<'_>, name: &str) {
+        const SHOWN: &[&str] =
+            &["display_width", "display_label", "visible", "alignment", "display_format", "display_values", "scale", "rounding", "kind"];
+        if !SHOWN.contains(&name) {
+            return;
+        }
+        let Some(ds) = ctx.ui.parent(ctx.id).filter(|&p| ctx.ui.get::<crate::ClientDataSet>(p).is_some()) else { return };
+        let field = if self.field_name.is_empty() { ctx.ui.name(ctx.id).unwrap_or_default().to_string() } else { self.field_name.clone() };
+        ctx.ui.poster().post(move |ui| crate::handle::data_set(ui, ds).notify(crate::DataEvent::FieldChanged(field)));
+    }
+
     fn props(&self) -> &'static [PropInfo] {
         FIELD_PROPS
     }

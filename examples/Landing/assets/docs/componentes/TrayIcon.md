@@ -32,6 +32,7 @@
 | `on_click` | o clique (ou Enter e Espaço com o foco) | — |  |
 | `on_dbl_click` | o duplo clique | — |  |
 | `on_menu` | — | — |  |
+| `on_context` | — | — |  |
 
 ## Em código
 

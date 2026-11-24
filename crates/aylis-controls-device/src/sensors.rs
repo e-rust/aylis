@@ -1008,9 +1008,17 @@ impl aylis_core::Timed for Gamepad {
 /// num monitor, o `monitor` do form; para mudar, o `move_to_monitor` dele. No celular,
 /// `orientation()` (a orientação pedida agora) e `set_orientation(nome)` (a do app todo, a do
 /// projeto em execução; cada form pode ter a sua pela propriedade `orientation`).
+///
+/// Fora das janelas: `cursor_position()` (o mouse na tela, em pixels físicos e em dp no
+/// monitor; `null` no Wayland, no celular e na web), `form_at(x, y)` (o form do app à vista no
+/// ponto da tela, pela ordem real das janelas; vazio fora delas), `system_transparency()` (os
+/// "Efeitos de transparência"; `true` onde o sistema não diz) e o `on_transparency_change`
+/// quando mudam, e `capture_monitor(i, max_width)`, que tira a imagem do monitor (só com o
+/// `allow_screen_capture` do projeto) e responde no `on_capture`.
 #[derive(Default)]
 pub struct Screen {
     version: Option<u64>,
+    transparency: Option<u64>,
 }
 
 // Sem propriedades, só os métodos: o `get_prop` gerado não tem casos.
@@ -1030,11 +1038,15 @@ impl Component for Screen {
 
     properties! {
         ;
-        events: on_change: ()
+        events: on_change: (), on_transparency_change: bool, on_capture: String
     }
 
     fn methods(&self) -> &'static [MethodInfo] {
         const METHODS: &[MethodInfo] = &[
+            MethodInfo::new("cursor_position", &[], Some(PropKind::Record(&aylis_core::monitors::CURSOR_POSITION_RECORD))),
+            MethodInfo::new("form_at", &[PropKind::Int, PropKind::Int], Some(PropKind::Component)).params(&["x", "y"]),
+            MethodInfo::new("system_transparency", &[], Some(PropKind::Bool)),
+            MethodInfo::new("capture_monitor", &[PropKind::Int, PropKind::Int], None).params(&["index", "max_width"]),
             MethodInfo::new("count", &[], Some(PropKind::Int)),
             MethodInfo::new("primary", &[], Some(PropKind::Int)),
             MethodInfo::new("monitors", &[], Some(PropKind::RecordList(&aylis_core::monitors::MONITOR_RECORD))),
@@ -1051,6 +1063,30 @@ impl Component for Screen {
         let monitors = ctx.ui.monitors();
         let index = || args.first().and_then(|v| v.to_i64().ok()).filter(|i| *i >= 0).map(|i| i as usize);
         Ok(match method {
+            "cursor_position" => PropValue::String(ctx.ui.cursor_position().map_or_else(|| "null".into(), |c| c.to_json())),
+            "form_at" => {
+                let int = |i: usize| args.get(i).and_then(|v| v.to_i64().ok()).map(|v| v.clamp(i32::MIN as i64, i32::MAX as i64) as i32);
+                PropValue::Component(match (int(0), int(1)) {
+                    (Some(x), Some(y)) => ctx.ui.form_at_screen(x, y),
+                    _ => None,
+                })
+            }
+            "system_transparency" => PropValue::Bool(ctx.ui.system_transparency()),
+            // A resposta no `on_capture`: `{"monitor", "width", "height", "rgba"}` (os pixels em
+            // base64) ou `{"monitor", "error"}`.
+            "capture_monitor" => {
+                let monitor = index().ok_or("capture_monitor pede o índice do monitor")?;
+                let max_width = args.get(1).and_then(|v| v.to_i64().ok()).unwrap_or(0).clamp(0, u32::MAX as i64) as u32;
+                let id = ctx.id;
+                ctx.ui.capture_monitor(monitor, max_width, move |ui, result| {
+                    let json = match result.and_then(|image| capture_json(&image)) {
+                        Ok(json) => format!("{{\"monitor\":{monitor},{json}}}"),
+                        Err(e) => format!("{{\"monitor\":{monitor},\"error\":{}}}", aylis_core::platform::json_quote(&e)),
+                    };
+                    ui.fire(id, "on_capture", &EventArgs::Text(json));
+                });
+                PropValue::Null
+            }
             "count" => PropValue::Int(monitors.len() as i64),
             "primary" => PropValue::Int(monitors.iter().position(|m| m.primary).map_or(-1, |i| i as i64)),
             "monitors" => PropValue::String(format!("[{}]", monitors.iter().enumerate().map(|(i, m)| m.to_json(i)).collect::<Vec<_>>().join(","))),
@@ -1087,7 +1123,28 @@ impl aylis_core::Timed for Screen {
             ctx.fire("on_change", EventArgs::None);
         }
         self.version = Some(now);
+        let now = ctx.ui.system_transparency_version();
+        if self.transparency.is_some_and(|v| v != now) {
+            let on = ctx.ui.system_transparency();
+            ctx.fire("on_transparency_change", EventArgs::Value(PropValue::Bool(on)));
+        }
+        self.transparency = Some(now);
     }
+}
+
+/// A imagem capturada para o `on_capture`: largura, altura e os pixels RGBA em base64.
+fn capture_json(image: &aylis_core::Image) -> Result<String, String> {
+    use aylis_core::image::ImageSource;
+    let (width, height, rgba) = match image.source() {
+        ImageSource::Rgba { width, height, pixels } => (*width, *height, std::borrow::Cow::Borrowed(pixels)),
+        ImageSource::Bgra { width, height, pixels } => {
+            let mut p = pixels.clone();
+            p.chunks_exact_mut(4).for_each(|px| px.swap(0, 2));
+            (*width, *height, std::borrow::Cow::Owned(p))
+        }
+        ImageSource::Encoded(_) => return Err("a imagem capturada não veio em pixels".into()),
+    };
+    Ok(format!("\"width\":{width},\"height\":{height},\"rgba\":\"{}\"", aylis_core::image::encode_base64(&rgba)))
 }
 
 #[cfg(test)]

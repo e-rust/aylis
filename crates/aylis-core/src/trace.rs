@@ -144,6 +144,13 @@ impl Canvas for TraceCanvas<'_> {
             (None, None) => SizeF::new(text.chars().count() as f32 * style.font.size * 0.55, style.font.size * 1.2),
         }
     }
+    fn measure_text_wrapped(&mut self, text: &str, style: &TextStyle, max_width: f32) -> SizeF {
+        match (self.inner.as_mut(), self.text) {
+            (Some(c), _) => c.measure_text_wrapped(text, style, max_width),
+            (None, Some(service)) => service.measure(text, style, Some(max_width)),
+            (None, None) => crate::canvas::wrapped_size(text, max_width, style.font.size * 1.2, &mut |s| s.chars().count() as f32 * style.font.size * 0.55),
+        }
+    }
     fn draw_image(&mut self, image: &crate::Image, src: RectF, dest: RectF, opacity: f32) {
         self.note(13, (image.id(), src, dest, opacity));
         if let Some(c) = self.inner.as_mut() {
@@ -183,6 +190,12 @@ impl Canvas for TraceCanvas<'_> {
         self.note(19, ());
         if let Some(c) = self.inner.as_mut() {
             c.begin_mask();
+        }
+    }
+    fn begin_luminance_mask(&mut self) {
+        self.note(25, ());
+        if let Some(c) = self.inner.as_mut() {
+            c.begin_luminance_mask();
         }
     }
     fn end_mask(&mut self) {

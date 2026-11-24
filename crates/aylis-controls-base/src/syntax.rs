@@ -1,5 +1,7 @@
 //! Realce de código para o [`Memo`](crate::Memo) (`syntax`): Rust, Python, JSON, Pascal
-//! (Free Pascal e Object Pascal), TypeScript e JavaScript, C#, Java, Go e C/C++.
+//! (Free Pascal e Object Pascal), TypeScript e JavaScript, C#, Java, Go, C/C++ e SQL (o comum
+//! aos dialetos; o que é de um só, como as variáveis `@x` do T-SQL, entra pelos tokens do
+//! controle, [`SyntaxToken`]).
 //!
 //! Lê o texto todo de uma vez e devolve, para cada linha, os trechos com o tipo de cada um.
 //! Comentários de bloco e textos de várias linhas continuam na linha de baixo. Não é um
@@ -92,6 +94,8 @@ struct Def {
     rust_chars: bool,
     /// O texto antes de `:` é chave (JSON).
     json_keys: bool,
+    /// `TNome`, `INome` e `ENome` são tipos (a convenção do Pascal).
+    pascal_types: bool,
 }
 
 const C_BLOCK: &[(&str, &str, bool)] = &[("/*", "*/", false)];
@@ -113,6 +117,7 @@ static RUST: Def = Def {
     pascal_numbers: false,
     rust_chars: true,
     json_keys: false,
+    pascal_types: false,
 };
 
 static PYTHON: Def = Def {
@@ -137,6 +142,7 @@ static PYTHON: Def = Def {
     pascal_numbers: false,
     rust_chars: false,
     json_keys: false,
+    pascal_types: false,
 };
 
 static JSON: Def = Def {
@@ -152,6 +158,7 @@ static JSON: Def = Def {
     pascal_numbers: false,
     rust_chars: false,
     json_keys: true,
+    pascal_types: false,
 };
 
 static PASCAL: Def = Def {
@@ -177,6 +184,7 @@ static PASCAL: Def = Def {
     pascal_numbers: true,
     rust_chars: false,
     json_keys: false,
+    pascal_types: true,
 };
 
 static TYPESCRIPT: Def = Def {
@@ -197,6 +205,7 @@ static TYPESCRIPT: Def = Def {
     pascal_numbers: false,
     rust_chars: false,
     json_keys: false,
+    pascal_types: false,
 };
 
 static CSHARP: Def = Def {
@@ -223,6 +232,7 @@ static CSHARP: Def = Def {
     pascal_numbers: false,
     rust_chars: false,
     json_keys: false,
+    pascal_types: false,
 };
 
 static JAVA: Def = Def {
@@ -243,6 +253,7 @@ static JAVA: Def = Def {
     pascal_numbers: false,
     rust_chars: false,
     json_keys: false,
+    pascal_types: false,
 };
 
 static GO: Def = Def {
@@ -264,6 +275,7 @@ static GO: Def = Def {
     pascal_numbers: false,
     rust_chars: false,
     json_keys: false,
+    pascal_types: false,
 };
 
 static CPP: Def = Def {
@@ -285,6 +297,37 @@ static CPP: Def = Def {
     pascal_numbers: false,
     rust_chars: false,
     json_keys: false,
+    pascal_types: false,
+};
+
+/// SQL: o comum aos dialetos (ANSI, com o que SQL Server, PostgreSQL, MySQL, SQLite e Oracle
+/// compartilham). Sem diferença de maiúsculas; `--` e `/* */`; `'texto'` com a aspa dobrada.
+/// As variações de um dialeto ficam com quem usa ([`SyntaxToken`]).
+static SQL: Def = Def {
+    line_comments: &["--"],
+    blocks: C_BLOCK,
+    quotes: &[q("'", "'", Escape::Doubled, true, "nNeE")],
+    keywords: &[
+        "add", "all", "alter", "and", "any", "as", "asc", "begin", "between", "by", "cascade", "case", "cast", "check", "column", "commit", "constraint",
+        "create", "cross", "current_date", "current_time", "current_timestamp", "database", "declare", "default", "delete", "desc", "distinct", "drop",
+        "else", "end", "except", "exec", "execute", "exists", "false", "fetch", "first", "for", "foreign", "from", "full", "function", "grant", "group",
+        "having", "if", "in", "index", "inner", "insert", "intersect", "into", "is", "join", "key", "left", "like", "limit", "merge", "natural", "next",
+        "not", "null", "of", "offset", "on", "only", "or", "order", "outer", "over", "partition", "primary", "procedure", "references", "replace",
+        "return", "returns", "revoke", "right", "rollback", "row", "rows", "schema", "select", "set", "table", "then", "to", "top", "transaction",
+        "trigger", "true", "truncate", "union", "unique", "update", "using", "values", "view", "when", "where", "while", "with",
+    ],
+    primitives: &[
+        "bigint", "binary", "bit", "blob", "boolean", "char", "character", "clob", "date", "datetime", "decimal", "double", "float", "int", "integer",
+        "interval", "money", "nchar", "numeric", "nvarchar", "real", "smallint", "text", "time", "timestamp", "tinyint", "uuid", "varbinary", "varchar",
+    ],
+    case_insensitive: true,
+    upper_is_type: false,
+    attr: Attr::None,
+    preprocessor: false,
+    pascal_numbers: false,
+    rust_chars: false,
+    json_keys: false,
+    pascal_types: false,
 };
 
 /// A tabela de uma linguagem pelo nome (ou pela extensão do arquivo).
@@ -299,12 +342,19 @@ fn def_of(name: &str) -> Option<&'static Def> {
         "java" => &JAVA,
         "go" | "golang" => &GO,
         "cpp" | "c++" | "cc" | "cxx" | "hpp" | "hh" | "c" | "h" => &CPP,
+        "sql" => &SQL,
         _ => return None,
     })
 }
 
 /// As linguagens que o realce conhece (o primeiro nome de cada uma).
-pub const LANGUAGES: [&str; 9] = ["rust", "python", "json", "pascal", "typescript", "csharp", "java", "go", "cpp"];
+pub const LANGUAGES: [&str; 10] = ["rust", "python", "json", "pascal", "typescript", "csharp", "java", "go", "cpp", "sql"];
+
+/// A linguagem não diferencia maiúsculas nas palavras (Pascal, SQL): os tokens do controle
+/// também não.
+pub fn case_insensitive(language: &str) -> bool {
+    def_of(language).is_some_and(|d| d.case_insensitive)
+}
 
 /// O que continua de uma linha para a outra.
 #[derive(Clone, Copy, Default, PartialEq, Eq)]
@@ -605,7 +655,7 @@ fn line_spans(def: &Def, line: &str, carry: &mut Carry) -> Vec<Span> {
                 TokenKind::Type
             } else if def.upper_is_type && word.chars().next().is_some_and(char::is_uppercase) {
                 TokenKind::Type
-            } else if !def.upper_is_type && def.case_insensitive && is_pascal_type(&word) {
+            } else if def.pascal_types && is_pascal_type(&word) {
                 TokenKind::Type
             } else {
                 TokenKind::Plain
@@ -627,6 +677,103 @@ fn is_pascal_type(word: &str) -> bool {
 
 fn is_ident(c: char) -> bool {
     c.is_alphanumeric() || c == '_'
+}
+
+/// Um token somado à linguagem do realce, sem escrever gramática (o `syntax_tokens` do `Memo`
+/// e do `CodeEditor`): as palavras da lista (`words`) ou o que começa com o prefixo (`prefix`,
+/// como o `@` das variáveis do T-SQL, até o fim da palavra) saem na cor `color` (token do tema
+/// ou `#RRGGBB`). Vale fora dos textos e dos comentários; numa linguagem sem diferença de
+/// maiúsculas (Pascal, SQL), as palavras também não têm.
+#[derive(Clone, Debug, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct SyntaxToken {
+    /// O nome do token (para quem lê o form; não muda o desenho).
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub name: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub words: Vec<String>,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub prefix: String,
+    pub color: String,
+}
+
+/// O registro do [`SyntaxToken`] no acesso tipado.
+pub const SYNTAX_TOKEN: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "SyntaxToken",
+    fields: &[
+        ("name", aylis_core::PropKind::String),
+        ("words", aylis_core::PropKind::List),
+        ("prefix", aylis_core::PropKind::String),
+        ("color", aylis_core::PropKind::Color),
+    ],
+};
+
+/// Os trechos de uma linha (`line`, os caracteres dela) com os tokens do controle: os trechos
+/// de código (não os textos, os comentários e os números) são repartidos onde um token casa, e
+/// cada pedaço leva a cor do token (`None`: a do tipo do trecho). `colors` é a cor já resolvida
+/// de cada token, na ordem de `tokens`. O custo é o da linha pintada.
+pub fn apply_tokens(spans: &[Span], line: &[char], tokens: &[SyntaxToken], colors: &[Color], case_insensitive: bool) -> Vec<(Span, Option<Color>)> {
+    if tokens.is_empty() {
+        return spans.iter().map(|s| (*s, None)).collect();
+    }
+    let same = |a: &str, b: &str| if case_insensitive { a.eq_ignore_ascii_case(b) || a.to_lowercase() == b.to_lowercase() } else { a == b };
+    let mut out = Vec::with_capacity(spans.len());
+    for span in spans {
+        if matches!(span.kind, TokenKind::String | TokenKind::Comment | TokenKind::Number) {
+            out.push((*span, None));
+            continue;
+        }
+        let (a, b) = (span.start.min(line.len()), span.end.min(line.len()));
+        let (mut i, mut done) = (a, a);
+        while i < b {
+            let word_start = i == 0 || !is_ident(line[i - 1]);
+            if !word_start {
+                i += 1;
+                continue;
+            }
+            // Pelo prefixo (o resto da palavra vai junto) ou pela palavra inteira.
+            let found = tokens.iter().enumerate().find_map(|(t, token)| {
+                let prefix: Vec<char> = token.prefix.chars().collect();
+                if !prefix.is_empty() && line[i..b].starts_with(&prefix) {
+                    let end = i + prefix.len() + line[i + prefix.len()..b].iter().take_while(|c| is_ident(**c)).count();
+                    return Some((t, end));
+                }
+                None
+            });
+            let found = found.or_else(|| {
+                if !is_ident(line[i]) {
+                    return None;
+                }
+                let end = i + line[i..b].iter().take_while(|c| is_ident(**c)).count();
+                if end < line.len() && end == b && is_ident(line[end]) {
+                    return None; // a palavra passa do trecho: não é ela inteira
+                }
+                let word: String = line[i..end].iter().collect();
+                tokens.iter().position(|t| t.words.iter().any(|w| same(w.trim(), &word))).map(|t| (t, end))
+            });
+            match found {
+                Some((t, end)) if end > i => {
+                    if i > done {
+                        out.push((Span { start: done, end: i, ..*span }, None));
+                    }
+                    out.push((Span { start: i, end, ..*span }, colors.get(t).copied()));
+                    i = end;
+                    done = end;
+                }
+                _ => {
+                    i += 1;
+                    // Pula o resto da palavra que não casou.
+                    while i < b && is_ident(line[i]) && is_ident(line[i - 1]) {
+                        i += 1;
+                    }
+                }
+            }
+        }
+        if done < span.end {
+            out.push((Span { start: done, ..*span }, None));
+        }
+    }
+    out
 }
 
 /// As cores do realce, conforme o fundo seja claro ou escuro (como o VS Code).

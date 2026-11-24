@@ -7,7 +7,8 @@
 //! só leva o código dos provedores que os forms usam (o `aylis-build` registra por classe).
 //!
 //! Um contrato (trait) por assunto, aqui no núcleo (sem nada de sistema nem de biblioteca):
-//! [`BarcodeProvider`], [`ExportProvider`], [`PdfProvider`] e [`MapTileProvider`]. O
+//! [`BarcodeProvider`], [`ExportProvider`], [`PdfProvider`], [`MapTileProvider`],
+//! [`MediaTagsProvider`], [`HttpProvider`] e [`WebSocketProvider`] (os clientes de rede). O
 //! componente provedor devolve o seu em [`Component::provided`](crate::Component::provided).
 
 use crate::pages::{Page, PageSet};
@@ -22,6 +23,8 @@ pub enum Provided<'a> {
     Pdf(&'a dyn PdfProvider),
     MapTiles(&'a dyn MapTileProvider),
     MediaTags(&'a dyn MediaTagsProvider),
+    Http(&'a dyn HttpProvider),
+    WebSocket(&'a dyn WebSocketProvider),
 }
 
 // ---------------------------------------------------------------------------
@@ -252,4 +255,260 @@ pub type TagReader = std::sync::Arc<dyn Fn(&MediaInput) -> Result<MediaTags, Str
 /// O provedor de tags de mídia: devolve o leitor (que vai para outra thread).
 pub trait MediaTagsProvider {
     fn tag_reader(&self) -> TagReader;
+}
+
+// ---------------------------------------------------------------------------
+// Rede: HTTP e WebSocket
+
+/// Um pedido HTTP: o método, o endereço, os cabeçalhos e o corpo, com os limites que o
+/// provedor respeita (o prazo, o tamanho da resposta e os redirecionamentos).
+#[derive(Clone, Debug, PartialEq)]
+pub struct HttpRequest {
+    /// `GET`, `POST`, `PUT`, `PATCH`, `DELETE`... (em maiúsculas).
+    pub method: String,
+    pub url: String,
+    pub headers: Vec<(String, String)>,
+    pub body: Vec<u8>,
+    /// O prazo do pedido inteiro (conectar, mandar e ler), em milissegundos; 0: sem prazo.
+    pub timeout_ms: u32,
+    /// A maior resposta aceita, em bytes (acima disso, erro); 0: o padrão (16 MB).
+    pub max_response_bytes: u64,
+    /// Quantos redirecionamentos seguir (0: nenhum; a resposta 3xx volta como está).
+    pub max_redirects: u32,
+    /// Aceita `http://` (sem TLS) para fora deste computador, também num redirecionamento.
+    /// Desligado, só `https://`, e `http://` só para `localhost`/`127.0.0.1`/`::1`.
+    pub allow_http: bool,
+}
+
+/// O tamanho padrão da maior resposta aceita (16 MB).
+pub const HTTP_MAX_RESPONSE: u64 = 16 * 1024 * 1024;
+
+impl Default for HttpRequest {
+    fn default() -> Self {
+        Self { method: "GET".into(), url: String::new(), headers: Vec::new(), body: Vec::new(), timeout_ms: 30_000, max_response_bytes: HTTP_MAX_RESPONSE, max_redirects: 5, allow_http: false }
+    }
+}
+
+impl HttpRequest {
+    /// Um pedido com o método e o endereço.
+    pub fn new(method: &str, url: impl Into<String>) -> Self {
+        Self { method: method.trim().to_ascii_uppercase(), url: url.into(), ..Default::default() }
+    }
+
+    pub fn get(url: impl Into<String>) -> Self {
+        Self::new("GET", url)
+    }
+
+    pub fn post(url: impl Into<String>) -> Self {
+        Self::new("POST", url)
+    }
+
+    pub fn put(url: impl Into<String>) -> Self {
+        Self::new("PUT", url)
+    }
+
+    pub fn patch(url: impl Into<String>) -> Self {
+        Self::new("PATCH", url)
+    }
+
+    pub fn delete(url: impl Into<String>) -> Self {
+        Self::new("DELETE", url)
+    }
+
+    /// Põe um cabeçalho (troca o de mesmo nome, sem diferença de maiúsculas).
+    pub fn header(mut self, name: &str, value: impl Into<String>) -> Self {
+        self.set_header(name, value);
+        self
+    }
+
+    /// Como [`header`](Self::header), sem consumir o pedido.
+    pub fn set_header(&mut self, name: &str, value: impl Into<String>) {
+        self.headers.retain(|(k, _)| !k.eq_ignore_ascii_case(name));
+        self.headers.push((name.to_string(), value.into()));
+    }
+
+    /// O valor de um cabeçalho do pedido.
+    pub fn header_value(&self, name: &str) -> Option<&str> {
+        self.headers.iter().find(|(k, _)| k.eq_ignore_ascii_case(name)).map(|(_, v)| v.as_str())
+    }
+
+    /// `Authorization: Bearer <token>`.
+    pub fn bearer(self, token: &str) -> Self {
+        self.header("Authorization", format!("Bearer {token}"))
+    }
+
+    pub fn body(mut self, body: impl Into<Vec<u8>>) -> Self {
+        self.body = body.into();
+        self
+    }
+
+    /// O corpo em texto JSON já montado, com `Content-Type: application/json`.
+    pub fn json_text(self, json: impl Into<String>) -> Self {
+        self.header("Content-Type", "application/json").body(json.into().into_bytes())
+    }
+
+    pub fn timeout_ms(mut self, ms: u32) -> Self {
+        self.timeout_ms = ms;
+        self
+    }
+
+    pub fn max_response_bytes(mut self, bytes: u64) -> Self {
+        self.max_response_bytes = bytes;
+        self
+    }
+
+    pub fn max_redirects(mut self, n: u32) -> Self {
+        self.max_redirects = n;
+        self
+    }
+
+    pub fn allow_http(mut self, allow: bool) -> Self {
+        self.allow_http = allow;
+        self
+    }
+
+    /// O limite da resposta valendo (0 vira o padrão).
+    pub fn response_limit(&self) -> u64 {
+        if self.max_response_bytes == 0 { HTTP_MAX_RESPONSE } else { self.max_response_bytes }
+    }
+
+    /// Confere o esquema de `url` (`https`, ou `http` como diz [`allow_http`](Self::allow_http)).
+    /// Todo provedor chama antes de mandar e a cada redirecionamento.
+    pub fn check_url(&self, url: &str) -> Result<(), String> {
+        check_scheme(url, "https", "http", self.allow_http)
+    }
+}
+
+/// O esquema seguro (`https`/`wss`) sempre; o inseguro (`http`/`ws`) só para este computador
+/// ou com `allow_insecure`.
+pub fn check_scheme(url: &str, secure: &str, insecure: &str, allow_insecure: bool) -> Result<(), String> {
+    let lower = url.trim().to_ascii_lowercase();
+    let (scheme, rest) = lower.split_once("://").ok_or_else(|| format!("endereço sem esquema: '{url}'"))?;
+    if scheme == secure {
+        return Ok(());
+    }
+    if scheme != insecure {
+        return Err(format!("esquema não aceito: '{scheme}' (use {secure}://)"));
+    }
+    if allow_insecure || is_loopback_host(url_host(rest)) {
+        return Ok(());
+    }
+    Err(format!("{insecure}:// sem TLS só para este computador; use {secure}:// (ou ligue o allow_http/allow_insecure do componente)"))
+}
+
+/// O host de `rest` (o endereço sem o `esquema://`): sem usuário, porta e caminho.
+pub fn url_host(rest: &str) -> &str {
+    let rest = rest.split_once("://").map_or(rest, |(_, r)| r);
+    let authority = rest.split(['/', '?', '#']).next().unwrap_or_default();
+    let host = authority.rsplit('@').next().unwrap_or_default();
+    if let Some(v6) = host.strip_prefix('[') {
+        return v6.split(']').next().unwrap_or_default();
+    }
+    host.split(':').next().unwrap_or_default()
+}
+
+fn is_loopback_host(host: &str) -> bool {
+    matches!(host, "localhost" | "::1") || host.starts_with("127.")
+}
+
+/// A resposta: o status, os cabeçalhos (nomes em minúsculas), o corpo e o endereço final
+/// (depois dos redirecionamentos).
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct HttpResponse {
+    pub status: u16,
+    pub headers: Vec<(String, String)>,
+    pub body: Vec<u8>,
+    pub url: String,
+}
+
+impl HttpResponse {
+    /// Status 2xx.
+    pub fn ok(&self) -> bool {
+        (200..300).contains(&self.status)
+    }
+
+    /// O valor de um cabeçalho da resposta.
+    pub fn header(&self, name: &str) -> Option<&str> {
+        self.headers.iter().find(|(k, _)| k.eq_ignore_ascii_case(name)).map(|(_, v)| v.as_str())
+    }
+
+    /// O corpo como texto (UTF-8; o que não for vira `�`).
+    pub fn text(&self) -> String {
+        String::from_utf8_lossy(&self.body).into_owned()
+    }
+}
+
+/// Onde a resposta volta, de qualquer thread (o componente leva para a thread da tela).
+pub type HttpDone = Box<dyn FnOnce(Result<HttpResponse, String>) + Send>;
+
+/// Quem faz os pedidos HTTP (o `ureq` no desktop e no celular, o `fetch` no navegador). Erro
+/// é só falha de transporte (endereço, TLS, prazo, limite); um 404 é resposta.
+pub trait HttpProvider {
+    /// Manda `request` sem travar a tela; `done` recebe a resposta, uma vez só.
+    fn send(&self, request: HttpRequest, done: HttpDone);
+}
+
+/// Um pedido de conexão WebSocket.
+#[derive(Clone, Debug, PartialEq)]
+pub struct WebSocketRequest {
+    pub url: String,
+    /// Os subprotocolos oferecidos (`Sec-WebSocket-Protocol`).
+    pub protocols: Vec<String>,
+    /// Cabeçalhos do pedido de abertura (no navegador não valem: o `WebSocket` não deixa).
+    pub headers: Vec<(String, String)>,
+    /// O prazo para abrir, em milissegundos; 0: sem prazo.
+    pub connect_timeout_ms: u32,
+    /// A maior mensagem aceita, em bytes (acima disso, a conexão fecha com 1009).
+    pub max_message_bytes: u64,
+    /// Aceita `ws://` (sem TLS) para fora deste computador.
+    pub allow_insecure: bool,
+}
+
+impl Default for WebSocketRequest {
+    fn default() -> Self {
+        Self { url: String::new(), protocols: Vec::new(), headers: Vec::new(), connect_timeout_ms: 10_000, max_message_bytes: HTTP_MAX_RESPONSE, allow_insecure: false }
+    }
+}
+
+impl WebSocketRequest {
+    pub fn check_url(&self) -> Result<(), String> {
+        check_scheme(&self.url, "wss", "ws", self.allow_insecure)
+    }
+
+    /// O limite das mensagens valendo (0 vira o padrão).
+    pub fn message_limit(&self) -> u64 {
+        if self.max_message_bytes == 0 { HTTP_MAX_RESPONSE } else { self.max_message_bytes }
+    }
+}
+
+/// O que acontece numa conexão WebSocket.
+#[derive(Clone, Debug, PartialEq)]
+pub enum WebSocketEvent {
+    /// Abriu (com o subprotocolo que o servidor escolheu, vazio se nenhum).
+    Open { protocol: String },
+    Text(String),
+    Binary(Vec<u8>),
+    /// Uma falha (não abriu, caiu); o `Closed` vem depois.
+    Error(String),
+    /// Fechou (o código e o motivo; 1006 quando caiu sem o fechamento do protocolo). É sempre
+    /// o último evento da conexão.
+    Closed { code: u16, reason: String },
+}
+
+/// Onde os eventos chegam, de qualquer thread.
+pub type WebSocketEvents = Box<dyn FnMut(WebSocketEvent) + Send>;
+
+/// Uma conexão aberta por um [`WebSocketProvider`]: mandar e fechar, da thread da tela.
+pub trait WebSocketConnection {
+    fn send_text(&mut self, text: &str) -> Result<(), String>;
+    fn send_binary(&mut self, data: &[u8]) -> Result<(), String>;
+    /// Fecha (o `Closed` chega pelos eventos).
+    fn close(&mut self, code: u16, reason: &str);
+}
+
+/// Quem abre conexões WebSocket (o `tungstenite` no desktop e no celular, o `WebSocket` do
+/// navegador na web).
+pub trait WebSocketProvider {
+    /// Começa a abrir (sem travar): o `Open`, ou o `Error` e o `Closed`, chegam por `events`.
+    fn connect(&self, request: WebSocketRequest, events: WebSocketEvents) -> Box<dyn WebSocketConnection>;
 }

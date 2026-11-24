@@ -13,12 +13,17 @@
 //! - `LoftyTagsProvider` (feature `tags`): as tags de mídia do `MediaInfo` pelo lofty;
 //! - [`OleObject`]: a automação OLE de um programa instalado (Excel, Word...), no Windows;
 //! - [`WmiQuery`]: consultas e eventos do WMI (hardware, discos, processos), no Windows.
+//! - `net` (features `http` e `websocket`): o `HttpClient` e o `WebSocketClient`, com os
+//!   provedores `AylisHttpProvider` e `AylisWebSocketProvider` (o ureq e o tungstenite, ou o
+//!   `fetch` e o `WebSocket` do navegador).
 //!
 //! Os provedores ficam na aba "Providers" da paleta.
 
 mod barcode;
 pub mod barcodes;
 mod export;
+#[cfg(any(feature = "http", feature = "websocket"))]
+pub mod net;
 pub mod ole;
 #[cfg(feature = "pdf")]
 pub mod pdf;
@@ -102,4 +107,6 @@ pub fn register(ui: &mut Ui) {
         }
     }
     ui.register_class::<TileServerProvider>("Providers");
+    #[cfg(any(feature = "http", feature = "websocket"))]
+    net::register(ui);
 }

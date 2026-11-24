@@ -619,7 +619,7 @@ impl DataSet<'_> {
         }
         // As propriedades ligadas a campos ("Ligar a campo…").
         crate::binding::notify(self.ui, &sources, &event);
-        if event != DataEvent::UpdateData {
+        if !matches!(event, DataEvent::UpdateData | DataEvent::FieldChanged(_)) {
             let name = if event == DataEvent::StateChanged { "on_state_change" } else { "on_data_change" };
             for source in sources {
                 self.ui.fire(source, name, &EventArgs::None);

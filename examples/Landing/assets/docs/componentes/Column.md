@@ -10,7 +10,8 @@ Uma coluna do DataGrid: campo, título, largura, alinhamento, cores.
 
 | Propriedade | No Object Inspector | Tipo | O que faz |
 |---|---|---|---|
-| `title` | Título | texto | O título do cabeçalho (vazio = o rótulo do campo). |
+| `title` | Título | texto | O título do cabeçalho (vazio = o rótulo do campo; `None`, o `"title": null` do form = o cabeçalho vazio, para uma coluna de ícone sem título). |
+| `hint` | Dica | texto | A dica do título (o mouse parado sobre ele). |
 | `width` | Largura | número | A largura (0 = a do campo). |
 | `alignment` | Alinhamento do texto | um de: `leading`, `center`, `trailing`, `justify` | O alinhamento do texto (`None` = o do campo). |
 | `color` | Cor | cor | O fundo das células. |

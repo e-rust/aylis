@@ -108,24 +108,101 @@ fn sync_fonts() {
         let ctor: js_sys::Function = js_sys::Reflect::get(&window, &"FontFace".into())?.dyn_into()?;
         for font in aylis_core::fonts::registered() {
             let data = js_sys::Uint8Array::from(&font.data[..]);
-            let args = js_sys::Array::of2(&font.family.as_str().into(), &data.buffer());
-            let face = js_sys::Reflect::construct(&ctor, &args)?;
-            add.call1(&set, &face)?;
-            let load: js_sys::Function = js_sys::Reflect::get(&face, &"load".into())?.dyn_into()?;
-            let promise: js_sys::Promise = load.call0(&face)?.dyn_into()?;
-            let done = Closure::<dyn FnMut(JsValue)>::new(move |_: JsValue| {
-                // A fonte chegou: as larguras medidas com a substituta não valem mais.
-                forget_widths();
-                if let Some(f) = IMAGES.with(|c| c.borrow().on_loaded.clone()) {
-                    f();
-                }
-            });
-            let _ = promise.then(&done);
-            done.forget();
+            let mut faces = vec![js_sys::Array::of2(&font.family.as_str().into(), &data.buffer())];
+            // A fonte de emoji sem cor (`color_glyphs: false`) vale também com outro nome, só nos
+            // trechos de emoji (`unicode-range`): na lista de fontes ela vem antes da pedida, e o
+            // resto do texto (dígitos, `#`) passa direto para a pedida.
+            if font.family == aylis_core::canvas::MONO_EMOJI_FAMILY {
+                let descriptors = js_sys::Object::new();
+                js_sys::Reflect::set(&descriptors, &"unicodeRange".into(), &mono_emoji_unicode_range().into())?;
+                faces.push(js_sys::Array::of3(&MONO_EMOJI_FACE.into(), &data.buffer(), &descriptors));
+            }
+            for args in faces {
+                let face = js_sys::Reflect::construct(&ctor, &args)?;
+                add.call1(&set, &face)?;
+                let load: js_sys::Function = js_sys::Reflect::get(&face, &"load".into())?.dyn_into()?;
+                let promise: js_sys::Promise = load.call0(&face)?.dyn_into()?;
+                let done = Closure::<dyn FnMut(JsValue)>::new(move |_: JsValue| {
+                    // A fonte chegou: as larguras medidas com a substituta não valem mais.
+                    forget_widths();
+                    if let Some(f) = IMAGES.with(|c| c.borrow().on_loaded.clone()) {
+                        f();
+                    }
+                });
+                let _ = promise.then(&done);
+                done.forget();
+            }
         }
         Ok(())
     };
     let _ = add();
+}
+
+/// `color_glyphs: false`: o texto sem o U+FE0F (o pedido de emoji colorido). Com ele, o
+/// navegador escolhe uma fonte colorida para o emoji mesmo com a sem cor antes na lista; o
+/// Direct2D e o Skia já mandam o trecho para a fonte sem cor.
+fn plain_emoji<'t>(text: &'t str, style: &TextStyle) -> std::borrow::Cow<'t, str> {
+    if style.color_glyphs || !text.contains('\u{FE0F}') {
+        return text.into();
+    }
+    text.replace('\u{FE0F}', "").into()
+}
+
+/// O nome da Noto Emoji só nos trechos de emoji (veja [`sync_fonts`]).
+const MONO_EMOJI_FACE: &str = "Aylis Mono Emoji";
+
+/// O `unicode-range` dos trechos de emoji (`aylis_core::canvas::MONO_EMOJI_RANGES`, os mesmos
+/// do Direct2D e do Skia).
+fn mono_emoji_unicode_range() -> String {
+    aylis_core::canvas::MONO_EMOJI_RANGES
+        .iter()
+        .map(|&(a, b)| if a == b { format!("U+{a:X}") } else { format!("U+{a:X}-{b:X}") })
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+thread_local! {
+    /// Se o Canvas 2D tem `letterSpacing` (o Chrome desde a 99, o Firefox desde a 115, o
+    /// Safari desde a 18.4): lido uma vez.
+    static HAS_LETTER_SPACING: std::cell::Cell<Option<bool>> = const { std::cell::Cell::new(None) };
+}
+
+fn has_letter_spacing() -> bool {
+    HAS_LETTER_SPACING.with(|cell| {
+        if let Some(v) = cell.get() {
+            return v;
+        }
+        let global = js_sys::global();
+        let proto = js_sys::Reflect::get(&global, &"CanvasRenderingContext2D".into()).ok().and_then(|c| js_sys::Reflect::get(&c, &"prototype".into()).ok());
+        let v = proto.is_some_and(|p| js_sys::Reflect::has(&p, &"letterSpacing".into()).unwrap_or(false));
+        cell.set(Some(v));
+        v
+    })
+}
+
+/// Põe o `letterSpacing` do contexto (em pixels lógicos; `0` volta ao normal).
+fn set_letter_spacing(ctx: &CanvasRenderingContext2d, spacing: f32) {
+    let _ = js_sys::Reflect::set(ctx, &"letterSpacing".into(), &format!("{spacing}px").into());
+}
+
+/// Desenha uma linha com a ponta esquerda em `x` e o meio em `y`, com o espaço entre letras:
+/// o `letterSpacing` do canvas, ou letra a letra no navegador que não o tem.
+fn fill_spaced(ctx: &CanvasRenderingContext2d, font: &str, spacing: f32, line: &str, x: f32, y: f32) {
+    if spacing == 0.0 {
+        let _ = ctx.fill_text(line, x as f64, y as f64);
+    } else if has_letter_spacing() {
+        set_letter_spacing(ctx, spacing);
+        let _ = ctx.fill_text(line, x as f64, y as f64);
+        set_letter_spacing(ctx, 0.0);
+    } else {
+        let mut at = x;
+        let mut buf = [0u8; 4];
+        for c in line.chars() {
+            let s = c.encode_utf8(&mut buf);
+            let _ = ctx.fill_text(s, at as f64, y as f64);
+            at += text_width(ctx, font, 0.0, s) + spacing;
+        }
+    }
 }
 
 /// Começa a decodificar uma imagem codificada (um `<img>` com um blob).
@@ -302,7 +379,23 @@ pub struct Canvas2d<'a> {
     cached: Vec<Option<WebCache>>,
     /// As camadas de `save_layer` abertas (a opacidade de um contêiner com os filhos).
     layers: Vec<WebLayer>,
+    /// As máscaras abertas (`begin_masked`).
+    masks: Vec<WebMask>,
     _life: std::marker::PhantomData<&'a CanvasRenderingContext2d>,
+}
+
+/// Uma máscara aberta ([`Canvas::begin_masked`]): o conteúdo e depois a máscara num canvas à
+/// parte cada um, do tamanho do de baixo; no `end_mask`, a máscara recorta o conteúdo
+/// (`destination-in`) e ele vai para o canvas de baixo.
+struct WebMask {
+    main: CanvasRenderingContext2d,
+    depth: usize,
+    content: HtmlCanvasElement,
+    content_ctx: CanvasRenderingContext2d,
+    mask: Option<HtmlCanvasElement>,
+    inverse: bool,
+    /// A máscara é de luminância (o `<mask>` do SVG): o brilho vira o alfa antes de recortar.
+    luminance: bool,
 }
 
 /// Uma camada de `save_layer`: o grupo é desenhado num canvas à parte, do tamanho do de
@@ -432,7 +525,7 @@ fn draw_at_device(ctx: &CanvasRenderingContext2d, canvas: &HtmlCanvasElement, at
 
 impl<'a> Canvas2d<'a> {
     pub fn new(ctx: &'a CanvasRenderingContext2d) -> Self {
-        Self { ctx: ctx.clone(), depth: 0, cached: Vec::new(), layers: Vec::new(), _life: std::marker::PhantomData }
+        Self { ctx: ctx.clone(), depth: 0, cached: Vec::new(), layers: Vec::new(), masks: Vec::new(), _life: std::marker::PhantomData }
     }
 
     /// O contexto 2D por baixo, para desenhos que o trait não cobre.
@@ -561,6 +654,48 @@ impl<'a> Canvas2d<'a> {
     }
 }
 
+impl Canvas2d<'_> {
+    /// Passa a desenhar a máscara da [`WebMask`] aberta, num canvas à parte com a mesma
+    /// transformação do conteúdo.
+    fn start_mask(&mut self, luminance: bool) {
+        let Some(state) = self.masks.last_mut() else { return };
+        let Some(main) = state.content_ctx.canvas() else { return };
+        let Some((mask, mask_ctx)) = layer_canvas(main.width(), main.height()) else { return };
+        if let Ok(m) = state.content_ctx.get_transform() {
+            let _ = mask_ctx.set_transform(m.a(), m.b(), m.c(), m.d(), m.e(), m.f());
+        }
+        // Os `save` do conteúdo que ficaram abertos não passam para a máscara.
+        for _ in 0..self.depth {
+            state.content_ctx.restore();
+        }
+        self.depth = 0;
+        state.mask = Some(mask);
+        state.luminance = luminance;
+        self.ctx = mask_ctx;
+    }
+}
+
+/// Troca as cores da máscara pelo brilho delas como alfa (o brilho vezes o alfa, com os pesos
+/// do SVG e do `LumaColorFilter` do Skia), pixel a pixel.
+fn luminance_to_alpha(mask: &HtmlCanvasElement) {
+    let Some(ctx) = mask.get_context("2d").ok().flatten().and_then(|c| c.dyn_into::<CanvasRenderingContext2d>().ok()) else { return };
+    let (w, h) = (mask.width(), mask.height());
+    if w == 0 || h == 0 {
+        return;
+    }
+    let Ok(image) = ctx.get_image_data(0.0, 0.0, w as f64, h as f64) else { return };
+    let mut data = image.data().0;
+    for px in data.chunks_exact_mut(4) {
+        let (r, g, b, a) = (px[0] as f32, px[1] as f32, px[2] as f32, px[3] as f32);
+        let lum = (0.2125 * r + 0.7154 * g + 0.0721 * b) / 255.0;
+        px[..3].fill(0);
+        px[3] = (lum * a).round().clamp(0.0, 255.0) as u8;
+    }
+    if let Ok(out) = ImageData::new_with_u8_clamped_array_and_sh(Clamped(&data), w, h) {
+        let _ = ctx.put_image_data(&out, 0.0, 0.0);
+    }
+}
+
 impl Canvas for Canvas2d<'_> {
     fn save(&mut self) {
         self.depth += 1;
@@ -680,6 +815,51 @@ impl Canvas for Canvas2d<'_> {
         } else {
             self.ctx.fill();
         }
+    }
+
+    fn begin_masked(&mut self, inverse: bool) -> bool {
+        let made = self.ctx.canvas().zip(self.ctx.get_transform().ok()).and_then(|(main, m)| Some((layer_canvas(main.width(), main.height())?, m)));
+        let Some(((content, content_ctx), m)) = made else { return false };
+        let _ = content_ctx.set_transform(m.a(), m.b(), m.c(), m.d(), m.e(), m.f());
+        let main = std::mem::replace(&mut self.ctx, content_ctx.clone());
+        let depth = std::mem::take(&mut self.depth);
+        self.masks.push(WebMask { main, depth, content, content_ctx, mask: None, inverse, luminance: false });
+        true
+    }
+
+    fn begin_mask(&mut self) {
+        self.start_mask(false);
+    }
+
+    fn begin_luminance_mask(&mut self) {
+        self.start_mask(true);
+    }
+
+    fn end_mask(&mut self) {
+        let Some(state) = self.masks.pop() else { return };
+        self.ctx = state.main;
+        self.depth = state.depth;
+        let content_ctx = state.content_ctx;
+        if let Some(mask) = &state.mask {
+            if state.luminance {
+                luminance_to_alpha(mask);
+            }
+            content_ctx.save();
+            let _ = content_ctx.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+            content_ctx.set_global_alpha(1.0);
+            let _ = content_ctx.set_global_composite_operation(if state.inverse { "destination-out" } else { "destination-in" });
+            let _ = content_ctx.draw_image_with_html_canvas_element(mask, 0.0, 0.0);
+            content_ctx.restore();
+        }
+        draw_at_device(&self.ctx, &state.content, (0.0, 0.0));
+        SPARE_LAYERS.with(|s| {
+            let mut spare = s.borrow_mut();
+            for canvas in std::iter::once(state.content).chain(state.mask) {
+                if spare.len() < 4 {
+                    spare.push(canvas);
+                }
+            }
+        });
     }
 
     fn begin_cached(&mut self, key: u64, r: RectF) -> bool {
@@ -833,16 +1013,18 @@ impl Canvas for Canvas2d<'_> {
         if text.is_empty() || rect.width <= 0.0 {
             return;
         }
+        let text = &*plain_emoji(text, style);
         sync_fonts();
         let ctx = &self.ctx.clone();
-        let font = font_css(&style.font);
+        let font = font_css(&style.font, !style.color_glyphs);
+        let spacing = style.letter_spacing;
         ctx.set_font(&font);
         ctx.set_fill_style_str(&css_color(style.color));
         ctx.set_text_baseline("middle");
         // Quebra e reticências pela regra comum (iguais às do Skia).
         let line_height = line_height(&style.font);
         let max_lines = ((rect.height + 1.0) / line_height).floor().max(1.0) as usize;
-        let mut measure = |s: &str| text_width(ctx, &font, s);
+        let mut measure = |s: &str| text_width(ctx, &font, spacing, s);
         let lines = aylis_core::text::layout_lines_marked(text, rect.width, max_lines, style.wrap, style.trimming, &mut measure);
         let total = line_height * lines.len() as f32;
         let top = match style.v_align {
@@ -862,17 +1044,35 @@ impl Canvas for Canvas2d<'_> {
             // esquerda); o sublinhado vai de ponta a ponta.
             let words = (style.h_align == TextAlign::Justify && !end).then(|| aylis_core::text::justify_line(line, rect.width, &mut measure)).flatten();
             if let Some(words) = words {
+                ctx.set_text_align("left");
                 for (wx, word) in &words {
-                    let _ = ctx.fill_text(word, (rect.x + wx) as f64, y as f64);
+                    ctx.set_font(&font);
+                    fill_spaced(ctx, &font, spacing, word, rect.x + wx, y);
                 }
-                let right = words.last().map_or(0.0, |(wx, w)| wx + text_width(ctx, &font, w));
+                ctx.set_text_align(align);
+                let right = words.last().map_or(0.0, |(wx, w)| wx + text_width(ctx, &font, spacing, w));
                 aylis_core::decorate_line(self, &style.font, style.color, rect.x, right, top + line_height * i as f32, line_height);
                 continue;
             }
-            let _ = ctx.fill_text(line, x as f64, y as f64);
+            if spacing == 0.0 {
+                let _ = ctx.fill_text(line, x as f64, y as f64);
+            } else {
+                // Com espaço entre letras, a ponta esquerda pela largura medida (sem o espaço
+                // depois da última letra, que o `letterSpacing` do canvas conta).
+                let w = text_width(ctx, &font, spacing, line);
+                let left = match style.h_align {
+                    TextAlign::Leading | TextAlign::Justify => x,
+                    TextAlign::Center => x - w / 2.0,
+                    TextAlign::Trailing => x - w,
+                };
+                ctx.set_font(&font);
+                ctx.set_text_align("left");
+                fill_spaced(ctx, &font, spacing, line, left, y);
+                ctx.set_text_align(align);
+            }
             // Sublinhado e tachado: o canvas 2D não faz sozinho.
             if style.font.underline || style.font.strikeout {
-                let w = text_width(ctx, &font, line);
+                let w = text_width(ctx, &font, spacing, line);
                 let left = match style.h_align {
                     TextAlign::Leading | TextAlign::Justify => x,
                     TextAlign::Center => x - w / 2.0,
@@ -885,6 +1085,18 @@ impl Canvas for Canvas2d<'_> {
 
     fn measure_text(&mut self, text: &str, style: &TextStyle) -> SizeF {
         measure_line(&self.ctx, text, style)
+    }
+
+    fn measure_text_wrapped(&mut self, text: &str, style: &TextStyle, max_width: f32) -> SizeF {
+        let text = &*plain_emoji(text, style);
+        sync_fonts();
+        let ctx = &self.ctx.clone();
+        let font = font_css(&style.font, !style.color_glyphs);
+        WRAPPED.with(|w| {
+            w.borrow_mut().get_or(text, style, max_width, || {
+                aylis_core::canvas::wrapped_size(text, max_width, line_height(&style.font), &mut |s| text_width(ctx, &font, style.letter_spacing, s))
+            })
+        })
     }
 
     fn device_scale(&self) -> f32 {
@@ -938,6 +1150,75 @@ impl Canvas for Canvas2d<'_> {
     }
 }
 
+/// O desenho fora da tela no navegador: um `<canvas>` solto, desenhado pelo [`Canvas2d`] e lido
+/// pelo `getImageData` (o texto do `PaintCanvas` que vira pixel, o `Ui::render_rgba`, o
+/// `Ui::render_png`). As imagens e as fontes que ainda carregam (o navegador decodifica depois)
+/// ficam de fora desse desenho, como na tela antes do carregamento.
+pub struct WebOffscreen;
+
+/// Um `<canvas>` de `width` × `height` pixels com o fundo, e o contexto dele.
+fn loose_canvas(width: u32, height: u32, background: Color) -> Option<(HtmlCanvasElement, CanvasRenderingContext2d)> {
+    let canvas: HtmlCanvasElement = web_sys::window()?.document()?.create_element("canvas").ok()?.dyn_into().ok()?;
+    canvas.set_width(width.max(1));
+    canvas.set_height(height.max(1));
+    let ctx: CanvasRenderingContext2d = canvas.get_context("2d").ok()??.dyn_into().ok()?;
+    if background.a > 0 {
+        ctx.set_fill_style_str(&css_color(background));
+        ctx.fill_rect(0.0, 0.0, width as f64, height as f64);
+    }
+    Some((canvas, ctx))
+}
+
+/// Desenha `paint` com `scale` pixels por unidade e devolve os pixels RGBA (sem pré-multiplicar,
+/// como o `getImageData` dá).
+fn draw_loose(ctx: &CanvasRenderingContext2d, width: u32, height: u32, scale: f32, paint: &mut dyn FnMut(&mut dyn Canvas)) -> Option<Vec<u8>> {
+    {
+        let mut canvas = Canvas2d::new(ctx);
+        canvas.save();
+        canvas.scale(scale, scale);
+        paint(&mut canvas);
+        canvas.restore();
+    }
+    Some(ctx.get_image_data(0.0, 0.0, width.max(1) as f64, height.max(1) as f64).ok()?.data().0)
+}
+
+impl aylis_core::platform::OffscreenService for WebOffscreen {
+    fn render_png(&self, width: u32, height: u32, scale: f32, background: Color, paint: &mut dyn FnMut(&mut dyn Canvas)) -> Option<Vec<u8>> {
+        let (w, h) = (((width as f32) * scale).round() as u32, ((height as f32) * scale).round() as u32);
+        let (canvas, ctx) = loose_canvas(w, h, background)?;
+        draw_loose(&ctx, w, h, scale, paint)?;
+        // O PNG pelo próprio navegador (`toDataURL`), em base64.
+        let url = canvas.to_data_url().ok()?;
+        let encoded = url.split_once(',')?.1;
+        let binary = web_sys::window()?.atob(encoded).ok()?;
+        Some(binary.chars().map(|c| c as u8).collect())
+    }
+
+    fn render_rgba(&self, width: u32, height: u32, scale: f32, background: Color, paint: &mut dyn FnMut(&mut dyn Canvas)) -> Option<Vec<u8>> {
+        let (_, ctx) = loose_canvas(width, height, background)?;
+        draw_loose(&ctx, width, height, scale, paint)
+    }
+
+    fn render_area_rgba(&self, width: u32, height: u32, background: Color, over: Option<(&[u8], RectF)>, paint: &mut dyn FnMut(&mut dyn Canvas)) -> Option<Vec<u8>> {
+        let Some((previous, area)) = over.filter(|(p, _)| p.len() == (width * height * 4) as usize) else {
+            let (_, ctx) = loose_canvas(width, height, background)?;
+            return draw_loose(&ctx, width, height, 1.0, paint);
+        };
+        // A imagem de antes, e só a área repintada por cima (com o fundo nela).
+        let (_, ctx) = loose_canvas(width, height, Color::TRANSPARENT)?;
+        let image = ImageData::new_with_u8_clamped_array_and_sh(Clamped(previous), width, height).ok()?;
+        ctx.put_image_data(&image, 0.0, 0.0).ok()?;
+        ctx.set_fill_style_str(&css_color(background));
+        ctx.fill_rect(area.x as f64, area.y as f64, area.width as f64, area.height as f64);
+        draw_loose(&ctx, width, height, 1.0, &mut |c| {
+            c.save();
+            c.clip_rect(area);
+            paint(c);
+            c.restore();
+        })
+    }
+}
+
 /// Medição de texto num canvas próprio, fora da tela.
 pub struct WebTextService {
     ctx: CanvasRenderingContext2d,
@@ -954,13 +1235,14 @@ impl WebTextService {
 
 impl TextService for WebTextService {
     fn measure(&self, text: &str, style: &TextStyle, max_width: Option<f32>) -> SizeF {
+        let text = &*plain_emoji(text, style);
         sync_fonts();
         match max_width {
             None => measure_line(&self.ctx, text, style),
             Some(width) => {
-                let font = font_css(&style.font);
-                let lines = wrap_lines(&self.ctx, &font, text, width);
-                let widest = lines.iter().map(|l| text_width(&self.ctx, &font, l)).fold(0.0, f32::max);
+                let font = font_css(&style.font, !style.color_glyphs);
+                let lines = wrap_lines(&self.ctx, &font, style.letter_spacing, text, width);
+                let widest = lines.iter().map(|l| text_width(&self.ctx, &font, style.letter_spacing, l)).fold(0.0, f32::max);
                 SizeF::new(widest.ceil(), line_height(&style.font) * lines.len() as f32)
             }
         }
@@ -1037,7 +1319,9 @@ fn css_color(c: Color) -> String {
     format!("rgba({},{},{},{})", c.r, c.g, c.b, c.a as f32 / 255.0)
 }
 
-fn font_css(font: &FontSpec) -> String {
+/// O `font` do CSS. `mono_emoji` (o `color_glyphs: false`): a Noto Emoji sem cor antes da
+/// fonte pedida, só nos trechos de emoji (veja [`sync_fonts`]).
+fn font_css(font: &FontSpec, mono_emoji: bool) -> String {
     let weight = match font.weight {
         FontWeight::Thin => 100,
         FontWeight::Light => 300,
@@ -1053,7 +1337,8 @@ fn font_css(font: &FontSpec) -> String {
         family => format!("\"{family}\", sans-serif"),
     };
     let style = if font.italic { "italic " } else { "" };
-    format!("{style}{weight} {}px {family}", font.size)
+    let mono = if mono_emoji { format!("\"{MONO_EMOJI_FACE}\", ") } else { String::new() };
+    format!("{style}{weight} {}px {mono}{family}", font.size)
 }
 
 fn line_height(font: &FontSpec) -> f32 {
@@ -1066,6 +1351,8 @@ thread_local! {
     /// Landing no celular: ~300 medidas por quadro de rolagem, cada texto umas 4 vezes).
     static WIDTHS: RefCell<HashMap<String, HashMap<String, f32>>> = RefCell::new(HashMap::new());
     static WIDTH_COUNT: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+    /// Os tamanhos de `measure_text_wrapped` já calculados.
+    static WRAPPED: RefCell<aylis_core::canvas::WrapCache> = RefCell::new(aylis_core::canvas::WrapCache::default());
 }
 
 /// Acima disto, as larguras guardadas recomeçam (um editor com um texto enorme não cresce
@@ -1077,33 +1364,47 @@ fn forget_widths() {
     WIDTH_COUNT.with(|c| c.set(0));
 }
 
-/// A largura de `text` na fonte `font` (o CSS de [`font_css`]). Só mede (e só troca a fonte
-/// do contexto) na primeira vez.
-fn text_width(ctx: &CanvasRenderingContext2d, font: &str, text: &str) -> f32 {
-    if let Some(w) = WIDTHS.with(|w| w.borrow().get(font).and_then(|m| m.get(text)).copied()) {
+/// A largura de `text` na fonte `font` (o CSS de [`font_css`]), com `spacing` entre as letras
+/// (sem o espaço depois da última). Só mede (e só troca a fonte do contexto) na primeira vez.
+fn text_width(ctx: &CanvasRenderingContext2d, font: &str, spacing: f32, text: &str) -> f32 {
+    let key: std::borrow::Cow<str> = if spacing == 0.0 { font.into() } else { format!("{font}|{spacing}").into() };
+    if let Some(w) = WIDTHS.with(|w| w.borrow().get(key.as_ref()).and_then(|m| m.get(text)).copied()) {
         return w;
     }
-    ctx.set_font(font);
-    let width = ctx.measure_text(text).map_or(0.0, |m| m.width() as f32);
+    let width = if spacing == 0.0 || text.is_empty() {
+        ctx.set_font(font);
+        ctx.measure_text(text).map_or(0.0, |m| m.width() as f32)
+    } else if has_letter_spacing() {
+        ctx.set_font(font);
+        set_letter_spacing(ctx, spacing);
+        let w = ctx.measure_text(text).map_or(0.0, |m| m.width() as f32);
+        set_letter_spacing(ctx, 0.0);
+        w - spacing
+    } else {
+        let mut buf = [0u8; 4];
+        let letters: Vec<f32> = text.chars().map(|c| text_width(ctx, font, 0.0, c.encode_utf8(&mut buf))).collect();
+        letters.iter().sum::<f32>() + spacing * (letters.len() as f32 - 1.0)
+    };
     if WIDTH_COUNT.with(|c| c.replace(c.get() + 1)) >= MAX_WIDTHS {
         forget_widths();
     }
-    WIDTHS.with(|w| w.borrow_mut().entry(font.to_string()).or_default().insert(text.to_string(), width));
+    WIDTHS.with(|w| w.borrow_mut().entry(key.into_owned()).or_default().insert(text.to_string(), width));
     width
 }
 
 fn measure_line(ctx: &CanvasRenderingContext2d, text: &str, style: &TextStyle) -> SizeF {
-    SizeF::new(text_width(ctx, &font_css(&style.font), text), line_height(&style.font))
+    let text = &*plain_emoji(text, style);
+    SizeF::new(text_width(ctx, &font_css(&style.font, !style.color_glyphs), style.letter_spacing, text), line_height(&style.font))
 }
 
 /// Quebra por palavras para caber em `width` na fonte `font`.
-fn wrap_lines(ctx: &CanvasRenderingContext2d, font: &str, text: &str, width: f32) -> Vec<String> {
+fn wrap_lines(ctx: &CanvasRenderingContext2d, font: &str, spacing: f32, text: &str, width: f32) -> Vec<String> {
     let mut lines = Vec::new();
     for paragraph in text.split('\n') {
         let mut line = String::new();
         for word in paragraph.split_whitespace() {
             let candidate = if line.is_empty() { word.to_string() } else { format!("{line} {word}") };
-            if !line.is_empty() && text_width(ctx, font, &candidate) > width {
+            if !line.is_empty() && text_width(ctx, font, spacing, &candidate) > width {
                 lines.push(std::mem::take(&mut line));
                 line = word.to_string();
             } else {

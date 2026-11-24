@@ -67,7 +67,8 @@ pub fn install_offscreen_service(ui: &mut Ui, renderer: Renderer) {
     }
 }
 
-/// No navegador não há desenho fora da tela sem o documento: o `render_png` devolve `None`.
+/// No navegador o desenho fora da tela nasce com o `run` (`aylis_web::WebOffscreen`, precisa do
+/// documento).
 #[cfg(web)]
 pub fn install_offscreen_service(_ui: &mut Ui, _renderer: Renderer) {}
 
@@ -361,6 +362,10 @@ pub(crate) fn install_web_services(ui: &mut Ui) {
         if let Ok(text) = aylis_web::WebTextService::new() {
             services.text = Some(Box::new(text));
         }
+    }
+    // O desenho fora da tela por um `<canvas>` solto (o texto do `PaintCanvas` que vira pixel).
+    if services.offscreen.is_none() {
+        services.offscreen = Some(Box::new(aylis_web::WebOffscreen));
     }
     if services.http.is_none() {
         services.http = Some(Box::new(http::WebHttp));

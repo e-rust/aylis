@@ -19,6 +19,8 @@ const ALLOWED: &[(&str, &str)] = &[
     // O literal "Delphi" do filtro acima, que não é texto de tela.
     ("crates/aylis-ide/resources/locales/untranslated.txt", "Delphi"),
     ("crates/aylis/tests/no_delphi.rs", ""),
+    // O nome deste teste na declaração do `aylis-tool test-all`.
+    ("resources/test-inputs.json", "\"aylis/no_delphi\""),
 ];
 
 /// As pastas e os arquivos conferidos (relativos à raiz).

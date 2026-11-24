@@ -254,6 +254,12 @@ fn fill(ui: &mut Ui, id: ComponentId, class: &str) {
                 chat.add_message(message("4", "Você", "Qualquer dúvida, me chama.", "09:16", true));
             }
         }
+        "ToastStack" => {
+            // Dois avisos que ficam (o prazo de uma hora): a pilha sozinha não mostra nada.
+            for (title, message, kind) in [("Salvo", "O cadastro foi gravado.", "success"), ("Sem conexão", "Tentando de novo em 10 s.", "warning")] {
+                let _ = ui.invoke(id, "show", &[PropValue::from(title), PropValue::from(message), PropValue::Enum(kind.into()), PropValue::Int(3_600_000)]);
+            }
+        }
         "TimeAndSales" => {
             let trades = [(38.52, 300.0, true), (38.51, 1200.0, false), (38.52, 500.0, true), (38.53, 4400.0, true), (38.52, 200.0, false), (38.51, 900.0, false), (38.50, 3100.0, false), (38.51, 700.0, true), (38.52, 1500.0, true), (38.53, 600.0, true), (38.52, 2200.0, false), (38.51, 400.0, false)];
             for (n, (price, size, buy)) in trades.into_iter().enumerate() {

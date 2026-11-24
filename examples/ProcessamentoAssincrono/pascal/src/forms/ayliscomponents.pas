@@ -218,6 +218,11 @@ type
     Ctrl: Boolean;
     Shift: Boolean;
     Alt: Boolean;
+    Meta: Boolean;
+    CapsLock: Boolean;
+    NumLock: Boolean;
+    Form: string;
+    FormId: Int64;
   end;
   TKeyEventArray = array of TKeyEvent;
 
@@ -678,6 +683,8 @@ type
     procedure SetOnFilesDrop(Value: string);
     function GetOnViewChange: string;
     procedure SetOnViewChange(Value: string);
+    function GetOnTopmostLost: string;
+    procedure SetOnTopmostLost(Value: string);
     function GetClientWidth: Double;
     procedure SetClientWidth(Value: Double);
     function GetClientHeight: Double;
@@ -853,6 +860,7 @@ type
   public
     procedure MoveToMonitor(AMonitor: Int64);
     procedure RequestAttention(ACritical: Boolean);
+    procedure Place(AMonitor: Int64; AX: Int64; AY: Int64; AWidth: Int64; AHeight: Int64; AActivate: Boolean);
     function GpuAdapter: string;
     function GpuAdapters: TStringArray;
     function DropX: Double;
@@ -921,6 +929,7 @@ type
     property OnUndock: string read GetOnUndock write SetOnUndock;
     property OnFilesDrop: string read GetOnFilesDrop write SetOnFilesDrop;
     property OnViewChange: string read GetOnViewChange write SetOnViewChange;
+    property OnTopmostLost: string read GetOnTopmostLost write SetOnTopmostLost;
     property ClientWidth: Double read GetClientWidth write SetClientWidth;
     property ClientHeight: Double read GetClientHeight write SetClientHeight;
     property Left: Double read GetLeft write SetLeft;
@@ -3234,6 +3243,11 @@ begin
   Result.Ctrl := O.Get('ctrl', False);
   Result.Shift := O.Get('shift', False);
   Result.Alt := O.Get('alt', False);
+  Result.Meta := O.Get('meta', False);
+  Result.CapsLock := O.Get('caps_lock', False);
+  Result.NumLock := O.Get('num_lock', False);
+  Result.Form := O.Get('form', '');
+  Result.FormId := O.Get('form_id', Int64(0));
 end;
 
 function KeyEventToJSON(const R: TKeyEvent): TJSONObject;
@@ -3243,6 +3257,11 @@ begin
   Result.Add('ctrl', R.Ctrl);
   Result.Add('shift', R.Shift);
   Result.Add('alt', R.Alt);
+  Result.Add('meta', R.Meta);
+  Result.Add('caps_lock', R.CapsLock);
+  Result.Add('num_lock', R.NumLock);
+  Result.Add('form', R.Form);
+  Result.Add('form_id', R.FormId);
 end;
 
 function KeyEventListFromJSON(Data: TJSONData): TKeyEventArray;
@@ -5223,6 +5242,16 @@ begin
   SetProp('on_view_change', TJSONString.Create(Value));
 end;
 
+function TForm.GetOnTopmostLost: string;
+begin
+  Result := AsText(GetProp('on_topmost_lost'));
+end;
+
+procedure TForm.SetOnTopmostLost(Value: string);
+begin
+  SetProp('on_topmost_lost', TJSONString.Create(Value));
+end;
+
 function TForm.GetClientWidth: Double;
 begin
   Result := GetProp('client_width').AsFloat;
@@ -6091,6 +6120,11 @@ end;
 procedure TForm.RequestAttention(ACritical: Boolean);
 begin
   Aylis.Send('invoke', TJSONObject.Create(['target', Id, 'method', 'request_attention', 'args', TJSONArray.Create([ACritical])]));
+end;
+
+procedure TForm.Place(AMonitor: Int64; AX: Int64; AY: Int64; AWidth: Int64; AHeight: Int64; AActivate: Boolean);
+begin
+  Aylis.Send('invoke', TJSONObject.Create(['target', Id, 'method', 'place', 'args', TJSONArray.Create([AMonitor, AX, AY, AWidth, AHeight, AActivate])]));
 end;
 
 function TForm.GpuAdapter: string;

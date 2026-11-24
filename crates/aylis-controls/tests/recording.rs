@@ -23,7 +23,7 @@ fn at(x: f32, y: f32) -> PointerEvent {
 }
 
 fn key(c: char, ctrl: bool, shift: bool) -> KeyEvent {
-    KeyEvent { key: Key::Char(c), modifiers: Modifiers { ctrl, shift, ..Default::default() }, repeat: false }
+    KeyEvent { key: Key::Char(c), modifiers: Modifiers { ctrl, shift, ..Default::default() }, repeat: false, form: None }
 }
 
 #[test]

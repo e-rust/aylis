@@ -84,6 +84,9 @@ pub struct CellEditor {
     /// O campo ligado é dado pessoal (`sensitive` do Field): conta como `sensitive` para as
     /// gravações. Acompanha o campo (só leitura).
     pub field_sensitive: bool,
+    /// Só leitura mesmo com o campo editável (a célula `read_only` do `DataGrid`): o texto de
+    /// exibição fica selecionável e copiável, sem entrar em edição.
+    pub(crate) locked: bool,
     modified: bool,
     error: Option<String>,
 }
@@ -114,9 +117,11 @@ impl CellEditor {
     /// Carrega o texto do campo (de edição se tiver foco).
     fn load(&mut self, ui: &Ui) {
         let link = self.link();
-        let text = if self.focused() { link.edit_text(ui) } else { link.display_text(ui) };
+        let read_only = self.locked || !link.can_modify(ui);
+        // Só leitura: o texto como aparece na grade (o que o usuário quer copiar).
+        let text = if self.focused() && !read_only { link.edit_text(ui) } else { link.display_text(ui) };
         let _ = self.base.set_prop("text", PropValue::String(text));
-        self.base.read_only = !link.can_modify(ui);
+        self.base.read_only = read_only;
         self.base.max_length = link.field(ui).map_or(0, |f| f.size);
         self.field_sensitive = link.field(ui).is_some_and(|f| f.sensitive);
         self.modified = false;

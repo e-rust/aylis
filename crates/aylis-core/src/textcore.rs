@@ -51,6 +51,12 @@ pub fn measure(text: &str, style: &TextStyle, max_width: Option<f32>) -> Option<
     Some(SizeF::new(width, line_height * lines.len().max(1) as f32))
 }
 
+/// O núcleo mede e desenha este estilo? O espaço entre letras (`letter_spacing`) e os emoji sem
+/// cor (`color_glyphs: false`) ficam com o renderizador, como um texto que o núcleo não cobre.
+fn core_handles(style: &TextStyle) -> bool {
+    style.letter_spacing == 0.0 && style.color_glyphs
+}
+
 /// O canvas que põe o texto no modo do app: repassa tudo a `inner`, menos medir e desenhar
 /// texto (veja o módulo).
 pub(crate) struct TextCanvas<'a> {
@@ -128,7 +134,7 @@ impl Canvas for TextCanvas<'_> {
         if text.is_empty() || rect.width <= 0.0 {
             return;
         }
-        let Some(face) = (self.mode != TextMode::Native).then(|| engine_face(text, &style.font)).flatten() else {
+        let Some(face) = (self.mode != TextMode::Native && core_handles(style)).then(|| engine_face(text, &style.font)).flatten() else {
             self.inner.draw_text(text, rect, style);
             return;
         };
@@ -173,12 +179,20 @@ impl Canvas for TextCanvas<'_> {
         }
     }
     fn measure_text(&mut self, text: &str, style: &TextStyle) -> SizeF {
-        if self.mode != TextMode::Native {
+        if self.mode != TextMode::Native && core_handles(style) {
             if let Some(size) = measure(text, style, None) {
                 return size;
             }
         }
         self.inner.measure_text(text, style)
+    }
+    fn measure_text_wrapped(&mut self, text: &str, style: &TextStyle, max_width: f32) -> SizeF {
+        if self.mode != TextMode::Native && core_handles(style) {
+            if let Some(size) = measure(text, style, Some(max_width)) {
+                return size;
+            }
+        }
+        self.inner.measure_text_wrapped(text, style, max_width)
     }
     fn draw_image(&mut self, image: &crate::Image, src: RectF, dest: RectF, opacity: f32) {
         self.inner.draw_image(image, src, dest, opacity);
@@ -203,6 +217,9 @@ impl Canvas for TextCanvas<'_> {
     }
     fn begin_mask(&mut self) {
         self.inner.begin_mask();
+    }
+    fn begin_luminance_mask(&mut self) {
+        self.inner.begin_luminance_mask();
     }
     fn end_mask(&mut self) {
         self.inner.end_mask();

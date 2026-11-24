@@ -122,7 +122,14 @@ pub fn delta_to_json(data_set: &str, changes: &[Change]) -> String {
 impl DataSet<'_> {
     /// Substitui os dados por uma lista de objetos JSON (um por registro, chaves = nomes
     /// dos campos; campos ausentes ficam `Null`).
+    ///
+    /// Sem nenhum `Field` declarado, os campos saem dos próprios dados (o resultado de uma
+    /// consulta cujas colunas só se conhecem na resposta): um por chave, na ordem em que
+    /// aparecem, e o tipo olhando várias linhas (todas, até 1.000) — lógico, inteiro, número,
+    /// data, hora, data e hora; na dúvida (tipos misturados, decimal em texto, só nulos),
+    /// texto. Uma carga seguinte com outras colunas troca esses campos; com as mesmas, ficam.
     pub fn load_json(&mut self, rows: &Json) -> DataResult {
+        self.infer_fields(rows)?;
         self.open()?;
         let loaded = self.rows_from_json(rows)?;
         self.load_rows(loaded)
@@ -173,6 +180,43 @@ impl DataSet<'_> {
         self.load_rows(loaded)
     }
 
+    /// Cria os campos pelos dados quando o dataset não tem nenhum declarado (veja
+    /// [`load_json`](Self::load_json)); os criados antes por aqui são trocados se as colunas
+    /// mudaram.
+    fn infer_fields(&mut self, rows: &Json) -> DataResult {
+        let Some(list) = rows.as_array() else { return Ok(()) };
+        let id = self.view().id();
+        let ui = self.ui();
+        let inferred = ui.get::<crate::ClientDataSet>(id).map(|c| c.inferred_fields.clone()).unwrap_or_default();
+        let declared = ui.children(id).iter().any(|&c| ui.get::<Field>(c).is_some() && !inferred.contains(&c));
+        if declared {
+            return Ok(());
+        }
+        let wanted = infer_columns(list);
+        if wanted.is_empty() {
+            return Ok(());
+        }
+        if !inferred.is_empty() {
+            let same = inferred.len() == wanted.len()
+                && inferred.iter().zip(&wanted).all(|(&f, (name, kind))| ui.get::<Field>(f).is_some_and(|f| f.field_name == *name && f.field_type == *kind));
+            if same {
+                return Ok(());
+            }
+        }
+        if self.is_active() {
+            self.close()?;
+        }
+        let ui = self.ui();
+        for f in inferred {
+            ui.free(f);
+        }
+        let created: Vec<aylis_core::ComponentId> = wanted.into_iter().map(|(name, kind)| ui.add(Field::new(name, kind), id)).collect();
+        if let Some(cds) = ui.get_mut::<crate::ClientDataSet>(id) {
+            cds.inferred_fields = created;
+        }
+        Ok(())
+    }
+
     /// Os registros de uma lista de objetos JSON, convertidos pelos campos (cada campo é achado
     /// uma vez, não a cada valor).
     fn rows_from_json(&self, rows: &Json) -> DataResult<Vec<Vec<Value>>> {
@@ -219,5 +263,84 @@ impl DataSet<'_> {
             results.push(result);
         }
         Ok(results)
+    }
+}
+
+/// Quantas linhas o `load_json` olha para escolher o tipo de cada campo criado pelos dados.
+const INFER_ROWS: usize = 1000;
+
+/// As colunas (nome e tipo) de uma lista de objetos sem campos declarados: as chaves na ordem
+/// em que aparecem, e o tipo que serve a todas as linhas olhadas (até [`INFER_ROWS`],
+/// espalhadas pela lista); na dúvida, texto.
+fn infer_columns(list: &[Json]) -> Vec<(String, FieldType)> {
+    let step = list.len().div_ceil(INFER_ROWS).max(1);
+    let mut columns: Vec<(String, Option<FieldType>, bool)> = Vec::new();
+    // Espalhadas pela lista, e a última sempre (o que muda no fim também conta).
+    let last = list.len().checked_sub(1).filter(|l| l % step != 0);
+    for item in (0..list.len()).step_by(step).chain(last).map(|i| &list[i]) {
+        let Some(obj) = item.as_object() else { continue };
+        for (name, value) in obj {
+            let at = match columns.iter().position(|(n, _, _)| n == name) {
+                Some(i) => i,
+                None => {
+                    columns.push((name.clone(), None, false));
+                    columns.len() - 1
+                }
+            };
+            let Some(kind) = kind_of(value) else { continue };
+            let slot = &mut columns[at];
+            if slot.2 {
+                continue;
+            }
+            slot.1 = match slot.1 {
+                None => Some(kind),
+                Some(old) => match merge_kinds(old, kind) {
+                    Some(k) => Some(k),
+                    None => {
+                        slot.2 = true;
+                        Some(FieldType::String)
+                    }
+                },
+            };
+        }
+    }
+    columns.into_iter().map(|(n, k, _)| (n, k.unwrap_or(FieldType::String))).collect()
+}
+
+/// O tipo de um valor JSON (`None`: nulo, não decide nada).
+fn kind_of(value: &Json) -> Option<FieldType> {
+    Some(match value {
+        Json::Null => return None,
+        Json::Bool(_) => FieldType::Boolean,
+        Json::Number(n) if n.is_i64() || n.is_u64() && n.as_i64().is_some() => FieldType::Integer,
+        Json::Number(_) => FieldType::Float,
+        Json::String(s) => {
+            let s = s.trim();
+            let has_time = s.len() > 10 && s.as_bytes().get(10).is_some_and(|c| *c == b'T' || *c == b' ');
+            if s.len() == 10 && Date::parse_iso(s).is_some() {
+                FieldType::Date
+            } else if has_time && DateTime::parse_iso(s).is_some() {
+                // Com o fuso (`Z`, `-03:00`), um instante; sem ele, a data e a hora locais.
+                let time = &s[11..];
+                if time.ends_with(['Z', 'z']) || time.contains(['+', '-']) { FieldType::Timestamp } else { FieldType::DateTime }
+            } else if (5..=12).contains(&s.len()) && s.as_bytes().get(2) == Some(&b':') && Time::parse_iso(s).is_some() {
+                FieldType::Time
+            } else {
+                FieldType::String
+            }
+        }
+        Json::Array(items) if !items.is_empty() && items.iter().all(|b| b.as_u64().is_some_and(|b| b <= 255)) => FieldType::Blob,
+        _ => FieldType::String,
+    })
+}
+
+/// O tipo que serve aos dois (`None`: nenhum, fica texto).
+fn merge_kinds(a: FieldType, b: FieldType) -> Option<FieldType> {
+    use FieldType::*;
+    match (a, b) {
+        _ if a == b => Some(a),
+        (Integer, Float) | (Float, Integer) => Some(Float),
+        (Date, DateTime) | (DateTime, Date) => Some(DateTime),
+        _ => None,
     }
 }

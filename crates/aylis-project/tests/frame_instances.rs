@@ -172,3 +172,37 @@ fn create_in_cost_per_card() {
         }
     }
 }
+
+/// Um form com um `Frame` no layout (`form: "fraMenu"`) abre mais de uma vez (várias janelas
+/// principais, a aba que vira janela): cada instância ganha a sua cópia do form embutido. Dentro
+/// de um mesmo form, o mesmo frame continua entrando uma vez só.
+#[test]
+fn each_instance_of_a_form_gets_its_own_embedded_frame() {
+    let base = std::env::temp_dir().join(format!("aylis_project_frames_twice_{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&base);
+    std::fs::create_dir_all(&base).unwrap();
+    let mut project = create(&base, "Janelas", Language::Rust).unwrap();
+    project.add_form("fraMenu", "Menu").unwrap();
+    project.add_form("frmDobrado", "Dobrado").unwrap();
+    for f in project.forms.iter_mut().filter(|f| f.name != "frmPrincipal") {
+        f.auto_create = false;
+    }
+    project.save().unwrap();
+    let write = |name: &str, root: serde_json::Value| std::fs::write(project.file(&project.form(name).unwrap().file), json!({ "aylis": 1, "root": root }).to_string()).unwrap();
+    write("fraMenu", json!({ "class": "Form", "name": "fraMenu", "children": [ { "class": "Button", "name": "btnAbrir" } ] }));
+    write("frmPrincipal", json!({ "class": "Form", "name": "frmPrincipal", "children": [ { "class": "Frame", "name": "frmMenu", "form": "fraMenu" } ] }));
+    write("frmDobrado", json!({ "class": "Form", "name": "frmDobrado", "children": [
+        { "class": "Frame", "name": "frmA", "form": "fraMenu" }, { "class": "Frame", "name": "frmB", "form": "fraMenu" } ] }));
+    let mut ui = Ui::new();
+    aylis_controls::register(&mut ui);
+    let first = install(&mut ui, &project).unwrap();
+    let second = ui.create_form_instance("frmPrincipal").expect("a segunda instância monta");
+    assert_eq!(ui.name(second), Some("frmPrincipal2"));
+    let (menu1, menu2) = (ui.find_in(first, "fraMenu").unwrap(), ui.find_in(second, "fraMenu").expect("o frame da segunda tem o form"));
+    assert_ne!(menu1, menu2, "cada instância com a sua cópia");
+    assert_ne!(ui.find_in(menu1, "btnAbrir"), ui.find_in(menu2, "btnAbrir"));
+    assert!(ui.find_in(menu2, "btnAbrir").is_some());
+    let err = ui.create_form("frmDobrado").unwrap_err().to_string();
+    assert!(err.contains("já está em outro frame"), "{err}");
+    std::fs::remove_dir_all(&base).unwrap();
+}

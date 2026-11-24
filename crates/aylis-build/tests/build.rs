@@ -177,3 +177,109 @@ fn the_page_registers_only_the_light_families() {
     let classes = source.matches("::aylis::classes::").count();
     assert!(classes > 20, "{classes} classes");
 }
+
+/// Um ícone citado só no código (`set_icon(ui, "material:info")`) entra no pacote embutido
+/// mesmo sem o "Gerar código" da IDE: o `cargo build` sozinho acrescenta ao subconjunto do
+/// projeto os que faltam, sem mexer no arquivo do projeto.
+#[test]
+fn icons_cited_only_in_the_code_go_into_the_bundle() {
+    let dir = std::env::temp_dir().join(format!("aylis_build_icons_{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("assets/icons")).unwrap();
+    std::fs::create_dir_all(dir.join("rust/src/forms")).unwrap();
+    std::fs::write(dir.join("Loja.aylisproj"), "{}").unwrap();
+    let full = std::fs::read_to_string(icon_packs_dir().expect("os pacotes do Aylis").join("material.txt")).unwrap();
+    let (subset, absent) = add_icons(None, &full, &["home"]);
+    assert!(absent.is_empty());
+    std::fs::write(dir.join("assets/icons/material.txt"), &subset).unwrap();
+    std::fs::write(dir.join("rust/src/forms/principal.rs"), "fn f() { btn.set_icon(ui, \"material:info\"); let _ = \"xmaterial:close\"; }").unwrap();
+
+    let names = |text: &str| text.lines().filter(|l| !l.starts_with('#')).filter_map(|l| l.split_once('\t')).map(|(n, _)| n.to_string()).collect::<Vec<_>>();
+    let bundle = pack_for_build(&dir, &dir.join("rust/src")).unwrap();
+    let files = unpack(&bundle).unwrap();
+    let packed = files.iter().find(|(n, _)| n == "assets/icons/material.txt").expect("o pacote de ícones");
+    let packed = String::from_utf8(packed.1.to_vec()).unwrap();
+    assert_eq!(names(&packed), ["home", "info"], "o do código entra; \"xmaterial:\" não é citação");
+    assert!(packed.starts_with("# aylis-icons 1"), "com o cabeçalho e a licença");
+    assert_eq!(std::fs::read_to_string(dir.join("assets/icons/material.txt")).unwrap(), subset, "o projeto fica como está");
+    // Já no subconjunto: o pacote vai como está.
+    std::fs::write(dir.join("rust/src/forms/principal.rs"), "\"material:home\"").unwrap();
+    assert_eq!(pack_for_build(&dir, &dir.join("rust/src")).unwrap(), pack(&dir).unwrap());
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// A descrição e os direitos do projeto (`publish.description`, `publish.copyright`) nos dados
+/// de versão; sem eles, o nome do app e "© empresa".
+#[test]
+fn the_version_info_takes_the_description_and_the_copyright_of_the_project() {
+    let info = VersionInfo::of_value(&serde_json::json!({
+        "name": "Loja",
+        "publish": { "version": "3.1.0", "publisher": "Empresa Ltda", "description": "Ponto de venda", "copyright": "© 2026 Empresa Ltda. Todos os direitos reservados." }
+    }));
+    assert_eq!(info.description, "Ponto de venda");
+    assert_eq!(info.copyright, "© 2026 Empresa Ltda. Todos os direitos reservados.");
+    let (_, strings) = read_version_data(&version_data(&info)).unwrap();
+    let get = |k: &str| strings.iter().find(|(key, _)| key == k).map(|(_, v)| v.clone());
+    assert_eq!(get("FileDescription").as_deref(), Some("Ponto de venda"));
+    assert_eq!(get("LegalCopyright").as_deref(), Some("© 2026 Empresa Ltda. Todos os direitos reservados."));
+    assert_eq!(get("ProductName").as_deref(), Some("Loja"), "o produto continua o nome do app");
+    // Em branco vale como vazio.
+    let info = VersionInfo::of_value(&serde_json::json!({ "name": "Loja", "publish": { "publisher": "ACME", "description": "  ", "copyright": "" } }));
+    assert_eq!((info.description.as_str(), info.copyright.as_str()), ("Loja", "© ACME"));
+}
+
+/// O `git` com os argumentos separados, sem configuração da máquina (nome, assinatura).
+fn git(dir: &std::path::Path, args: &[&str]) -> bool {
+    std::process::Command::new("git")
+        .arg("-C")
+        .arg(dir)
+        .args(["-c", "user.name=Aylis", "-c", "user.email=teste@aylis.invalid", "-c", "commit.gpgsign=false", "-c", "tag.gpgsign=false"])
+        .args(args)
+        .output()
+        .is_ok_and(|o| o.status.success())
+}
+
+/// A versão da última tag do git (`git describe --tags --abbrev=0`, sem o `v`), e o motivo
+/// quando não há: sem repositório, sem tag, tag que não é versão.
+#[test]
+fn the_version_comes_from_the_latest_git_tag() {
+    if std::process::Command::new("git").arg("--version").output().is_err() {
+        eprintln!("sem o git: pulado");
+        return;
+    }
+    let dir = std::env::temp_dir().join(format!("aylis_build_git_tag_{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    // A pasta temporária fora de um repositório (o `GIT_CEILING_DIRECTORIES` não vale para o
+    // `-C`, então só confere quando o temp não está dentro de um).
+    if !git(&dir, &["rev-parse", "--is-inside-work-tree"]) {
+        assert_eq!(git_tag(&dir), Err(GitTagError::NotRepository));
+    }
+    assert!(git(&dir, &["init", "-q"]));
+    std::fs::write(dir.join("a.txt"), "1").unwrap();
+    assert!(git(&dir, &["add", "a.txt"]));
+    assert!(git(&dir, &["commit", "-q", "-m", "um"]));
+    assert_eq!(git_tag(&dir), Err(GitTagError::NoTag));
+    assert!(git(&dir, &["tag", "v1.4.0"]));
+    assert_eq!(git_tag(&dir), Ok("1.4.0".to_string()));
+    // A última alcançável do commit atual, e com pré-release.
+    std::fs::write(dir.join("a.txt"), "2").unwrap();
+    assert!(git(&dir, &["commit", "-q", "-am", "dois"]));
+    assert!(git(&dir, &["tag", "-a", "2.0.0-beta.1", "-m", "beta"]));
+    assert_eq!(git_tag(&dir), Ok("2.0.0-beta.1".to_string()));
+    // O build: o `.aylisproj` embutido e os dados de versão saem com a versão da tag; sem a
+    // opção, o projeto fica como está.
+    let project = dir.join("App.aylisproj");
+    std::fs::write(&project, r#"{"aylis_project": 1, "name": "App", "publish": {"version": "1.0.0", "version_from_git_tag": true}}"#).unwrap();
+    let tagged = tagged_project(&project).expect("a versão da tag");
+    assert_eq!(tagged["publish"]["version"], "2.0.0-beta.1");
+    assert_eq!(VersionInfo::of_value(&tagged).version, "2.0.0-beta.1");
+    std::fs::write(&project, r#"{"aylis_project": 1, "name": "App", "publish": {"version": "1.0.0"}}"#).unwrap();
+    assert!(tagged_project(&project).is_none());
+    std::fs::remove_file(&project).unwrap();
+    std::fs::write(dir.join("a.txt"), "3").unwrap();
+    assert!(git(&dir, &["commit", "-q", "-am", "três"]));
+    assert!(git(&dir, &["tag", "release-final"]));
+    assert_eq!(git_tag(&dir), Err(GitTagError::Invalid("release-final".into())));
+    let _ = std::fs::remove_dir_all(&dir);
+}

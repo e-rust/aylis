@@ -113,30 +113,6 @@ impl aylis::prelude::PropEnum for FlowLayoutStyle {
 
 /// Os valores de um enum do acesso tipado.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
-pub enum FontWeight {
-    #[default]
-    Default,
-    Thin,
-    Light,
-    Normal,
-    Medium,
-    Semibold,
-    Bold,
-    Black,
-}
-
-impl aylis::prelude::PropEnum for FontWeight {
-    const NAMES: &'static [&'static str] = &["default", "thin", "light", "normal", "medium", "semibold", "bold", "black"];
-    fn from_index(index: usize) -> Option<Self> {
-        [Self::Default, Self::Thin, Self::Light, Self::Normal, Self::Medium, Self::Semibold, Self::Bold, Self::Black].get(index).copied()
-    }
-    fn index(self) -> usize {
-        self as usize
-    }
-}
-
-/// Os valores de um enum do acesso tipado.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum FormStyle {
     #[default]
     Default,
@@ -458,7 +434,7 @@ impl TreeNode {
         m.insert("text".into(), aylis::json::serde_json::Value::from(self.text.clone()));
         m.insert("icon".into(), aylis::json::serde_json::Value::from(self.icon.clone()));
         m.insert("data".into(), aylis::json::serde_json::Value::from(self.data.clone()));
-        m.insert("expanded".into(), aylis::json::serde_json::Value::from(self.expanded.clone()));
+        m.insert("expanded".into(), aylis::json::serde_json::Value::from(self.expanded));
         m.insert("children".into(), aylis::json::serde_json::Value::Array(self.children.iter().map(|r| r.to_json()).collect()));
         aylis::json::serde_json::Value::Object(m)
     }

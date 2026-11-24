@@ -9,30 +9,6 @@ use aylis::prelude::{ComponentId, PropValue, Ui};
 
 /// Os valores de um enum do acesso tipado.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
-pub enum FontWeight {
-    #[default]
-    Default,
-    Thin,
-    Light,
-    Normal,
-    Medium,
-    Semibold,
-    Bold,
-    Black,
-}
-
-impl aylis::prelude::PropEnum for FontWeight {
-    const NAMES: &'static [&'static str] = &["default", "thin", "light", "normal", "medium", "semibold", "bold", "black"];
-    fn from_index(index: usize) -> Option<Self> {
-        [Self::Default, Self::Thin, Self::Light, Self::Normal, Self::Medium, Self::Semibold, Self::Bold, Self::Black].get(index).copied()
-    }
-    fn index(self) -> usize {
-        self as usize
-    }
-}
-
-/// Os valores de um enum do acesso tipado.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum FormStyle {
     #[default]
     Default,
@@ -153,14 +129,14 @@ impl aylis::prelude::PropEnum for ThemeName {
 
 /// Um registro do acesso tipado (no fio, um objeto JSON com os mesmos campos).
 #[derive(Clone, Debug, PartialEq)]
-pub struct TabItem {
+pub struct TabStripItem {
     pub title: String,
     pub icon: String,
     pub hint: String,
     pub modified: bool,
 }
 
-impl TabItem {
+impl TabStripItem {
     /// O registro lido do JSON.
     pub fn from_json(v: &aylis::json::serde_json::Value) -> Self {
         Self {
@@ -177,7 +153,7 @@ impl TabItem {
         m.insert("title".into(), aylis::json::serde_json::Value::from(self.title.clone()));
         m.insert("icon".into(), aylis::json::serde_json::Value::from(self.icon.clone()));
         m.insert("hint".into(), aylis::json::serde_json::Value::from(self.hint.clone()));
-        m.insert("modified".into(), aylis::json::serde_json::Value::from(self.modified.clone()));
+        m.insert("modified".into(), aylis::json::serde_json::Value::from(self.modified));
         aylis::json::serde_json::Value::Object(m)
     }
 
@@ -192,7 +168,7 @@ impl TabItem {
     }
 }
 
-impl Default for TabItem {
+impl Default for TabStripItem {
     fn default() -> Self {
         Self::from_json(&aylis::json::serde_json::Value::Null)
     }

@@ -586,7 +586,7 @@ impl Component for Form {
         orientation: aylis_core::FormOrientation => "Layout",
         host: Option<ComponentId> => "Behavior",
         dockable: bool => "Behavior";
-        events: on_show: (), on_window_created: (), on_close: (), on_close_query, on_back, on_activate: (), on_deactivate: (), on_minimize: (), on_restore: (), on_navigate: String, on_gpu_change: String, on_dock: Option<ComponentId>, on_undock: (), on_files_drop: Vec<String>, on_view_change: String;
+        events: on_show: (), on_window_created: (), on_close: (), on_close_query, on_back, on_activate: (), on_deactivate: (), on_minimize: (), on_restore: (), on_navigate: String, on_gpu_change: String, on_dock: Option<ComponentId>, on_undock: (), on_files_drop: Vec<String>, on_view_change: String, on_topmost_lost: ();
         computed: client_width: f32 => client_width / set_client_width, client_height: f32 => client_height / set_client_height
     }
 
@@ -595,6 +595,8 @@ impl Component for Form {
         const METHODS: &[MethodInfo] = &[
             MethodInfo::new("move_to_monitor", &[PropKind::Int], None).params(&["monitor"]),
             MethodInfo::new("request_attention", &[PropKind::Bool], None).params(&["critical"]),
+            MethodInfo::new("place", &[PropKind::Int, PropKind::Int, PropKind::Int, PropKind::Int, PropKind::Int, PropKind::Bool], None)
+                .params(&["monitor", "x", "y", "width", "height", "activate"]),
             MethodInfo::new("gpu_adapter", &[], Some(PropKind::String)),
             MethodInfo::new("gpu_adapters", &[], Some(PropKind::List)),
             // Onde caíram os arquivos do `on_files_drop` (nas coordenadas do form).
@@ -618,6 +620,21 @@ impl Component for Form {
                 // O `monitor` acompanha: a tela cheia ligada depois vai para este monitor.
                 self.monitor = index;
                 ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::MoveToMonitor(index as usize));
+                Ok(aylis_core::PropValue::Null)
+            }
+            // Lugar e tamanho em pixels físicos, a partir do canto do monitor.
+            "place" => {
+                let int = |i: usize| args.get(i).and_then(|v| v.to_i64().ok());
+                let (Some(monitor), Some(x), Some(y), Some(width), Some(height)) = (int(0), int(1), int(2), int(3), int(4)) else {
+                    return Err("place pede monitor, x, y, largura e altura".into());
+                };
+                if monitor < 0 || width <= 0 || height <= 0 {
+                    return Err("place pede o monitor (0 ou mais) e largura e altura maiores que zero".into());
+                }
+                let activate = args.get(5).and_then(|v| v.to_bool().ok()).unwrap_or(false);
+                let (x, y) = (x.clamp(i32::MIN as i64, i32::MAX as i64) as i32, y.clamp(i32::MIN as i64, i32::MAX as i64) as i32);
+                let (width, height) = (width.min(u32::MAX as i64) as u32, height.min(u32::MAX as i64) as u32);
+                ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::Place { monitor: monitor as usize, x, y, width, height, activate });
                 Ok(aylis_core::PropValue::Null)
             }
             "request_attention" => {
@@ -876,6 +893,9 @@ pub struct Rectangle {
     pub stroke: Option<Color>,
     /// Espessura da borda, em pontos (0 = sem borda); vazio: a do tema.
     pub stroke_width: Option<f32>,
+    /// O tracejado da borda: traço e vão em pontos, alternados (`"6;4"`, `"1.5;3"`); `"0"` é
+    /// contínua; vazio: o do tema (`border_style`).
+    pub stroke_dash: String,
     /// Raio dos cantos: um número, ou `[cima-esquerda, cima-direita, baixo-direita, baixo-esquerda]`. Negativo curva o canto para fora (a aba que se funde no painel). Vazio: o do tema.
     pub radius: Option<Bounds>,
 }
@@ -883,6 +903,21 @@ pub struct Rectangle {
 impl Rectangle {
     pub fn new(width: f32, height: f32) -> Self {
         Self { base: ControlBase::new(width, height), ..Default::default() }
+    }
+
+    /// O `stroke_dash` lido: `None` sem ele (vale o tema); vazio para contínua.
+    fn dash(&self) -> Option<Vec<f32>> {
+        let text = self.stroke_dash.trim();
+        if text.is_empty() {
+            return None;
+        }
+        let values: Vec<f32> = text.split([';', ',', ' ']).filter_map(|v| v.trim().parse::<f32>().ok()).filter(|v| v.is_finite() && *v > 0.0).collect();
+        // Um número só é traço e vão iguais; um número de valores ímpar se repete (como o CSS).
+        Some(match values.len() {
+            1 => vec![values[0], values[0]],
+            n if n % 2 == 1 => values.iter().chain(values.iter()).copied().collect(),
+            _ => values,
+        })
     }
 }
 
@@ -966,6 +1001,7 @@ impl Component for Rectangle {
         gradient_radial: bool => "Appearance",
         stroke: Option<Color> => "Appearance",
         stroke_width: Option<f32> => "Appearance",
+        stroke_dash: String as NumberList => "Appearance",
         radius: Option<Bounds> => "Appearance",
     }
 
@@ -978,6 +1014,15 @@ impl Rectangle {
     /// A pintura com outro fundo no lugar do `fill` (`None`: o de sempre): o `Panel` com o
     /// mouse em cima.
     pub fn paint_filled(&self, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, fill_over: Option<Color>) {
+        // O `stroke_dash` do próprio retângulo no lugar do traço do tema.
+        let dashed;
+        let style = match self.dash() {
+            Some(dash) => {
+                dashed = aylis_core::ResolvedStyle { border_dash: dash, ..ctx.style.clone() };
+                &dashed
+            }
+            None => ctx.style,
+        };
         let corners = self.radius.unwrap_or(aylis_core::Bounds::all(ctx.style.radius));
         let fill = fill_over.or(self.fill).unwrap_or(ctx.style.fill);
         // Um raio por canto (`radius: [8, 8, 0, 0]`, negativo curva para fora): pelo contorno.
@@ -994,7 +1039,7 @@ impl Rectangle {
             let width = self.stroke_width.unwrap_or(ctx.style.border_width);
             let stroke = self.stroke.unwrap_or(ctx.style.border_color);
             if width > 0.0 && !stroke.is_transparent() {
-                canvas.stroke_path(&path, &ctx.style.border_stroke(stroke, width));
+                canvas.stroke_path(&path, &style.border_stroke(stroke, width));
             }
             return;
         }
@@ -1017,7 +1062,7 @@ impl Rectangle {
         }
         let width = self.stroke_width.unwrap_or(ctx.style.border_width);
         let stroke = self.stroke.unwrap_or(ctx.style.border_color);
-        stroke_style_border(canvas, ctx.rect, radius, stroke, width, ctx.style);
+        stroke_style_border(canvas, ctx.rect, radius, stroke, width, style);
     }
 }
 
@@ -1182,7 +1227,10 @@ pub struct Label {
     /// O texto traz marcas simples no meio, que viram estilo em vez de aparecer (os textos com
     /// HTML simples de um app web): `<b>` negrito, `<sb>` seminegrito, `<i>` itálico, `<u>`
     /// sublinhado, `<code>` fonte mono, `<small>` e `<big>` (85% e 120%), `<size=18>`,
-    /// `<color=text_muted>` (token do tema ou `#rrggbb`) e `<br>` (quebra). Ver [`markup_spans`].
+    /// `<color=text_muted>` (token do tema ou `#rrggbb`), `<br>` (quebra) e
+    /// `<tag=fundo,borda>` (a etiqueta: fundo e borda, cada um token ou `#rrggbb`, a borda
+    /// opcional; o raio `sm` e o espaçamento `xs` do tema; não quebra no meio). Ver
+    /// [`markup_spans`].
     pub markup: bool,
     /// Contorno em volta das letras (a legenda sobre vídeo: legível em qualquer fundo).
     pub outline: Option<Color>,
@@ -1243,7 +1291,9 @@ impl Label {
     /// 0: a da fonte). As linhas param na altura da área e em `max_lines` (0: sem limite), e o
     /// `trimming` entra na última (antes descia além da altura, por cima dos vizinhos; o
     /// relatório do player de música, 21/11).
-    fn paint_lines(canvas: &mut dyn Canvas, text: &str, area: RectF, style: &TextStyle, line_height: f32, max_lines: u32) {
+    /// `highlight`: a busca e a cor do fundo marcado em cada ocorrência (o `highlight` do
+    /// Label, que este caminho não desenhava).
+    fn paint_lines(canvas: &mut dyn Canvas, text: &str, area: RectF, style: &TextStyle, line_height: f32, max_lines: u32, highlight: Option<(&str, Color)>) {
         let mut one = style.clone();
         one.wrap = false;
         one.v_align = TextAlign::Center;
@@ -1259,6 +1309,21 @@ impl Label {
             TextAlign::Trailing => area.y + (area.height - total).max(0.0),
         };
         for line in &lines {
+            if let Some((query, mark)) = highlight {
+                let width = canvas.measure_text(line, &one).width;
+                let x = match style.h_align {
+                    TextAlign::Leading | TextAlign::Justify => area.x,
+                    TextAlign::Center => area.x + (area.width - width) / 2.0,
+                    TextAlign::Trailing => area.right() - width,
+                };
+                for (a, b) in find_matches(line, query) {
+                    let prefix: String = line.chars().take(a).collect();
+                    let part: String = line.chars().skip(a).take(b - a).collect();
+                    let x0 = x + canvas.measure_text(&prefix, &one).width;
+                    let w = canvas.measure_text(&part, &one).width;
+                    canvas.fill_rect(RectF::new(x0 - 1.0, y + 1.0, w + 2.0, step - 2.0), 3.0, &Brush::Solid(mark));
+                }
+            }
             canvas.draw_text(line, RectF::new(area.x, y, area.width, step), &one);
             y += step;
         }
@@ -1399,7 +1464,9 @@ impl Component for Label {
         }
         if (line_height > 0.0 || self.max_lines > 0) && self.wrap && !self.markup && letter_spacing == 0.0 {
             let (text, _) = crate::mnemonic::caption(&text_case.apply(&self.text));
-            Self::paint_lines(canvas, &text, area, &style, line_height, self.max_lines);
+            let query = self.highlight.trim();
+            let highlight = (!query.is_empty()).then(|| (query, highlight_color(ctx.theme)));
+            Self::paint_lines(canvas, &text, area, &style, line_height, self.max_lines, highlight);
         } else if self.markup {
             paint_runs(canvas, markup_spans(&self.text), area, &style, letter_spacing, ctx.theme);
         } else if letter_spacing != 0.0 && self.wrap {
@@ -1476,7 +1543,8 @@ impl aylis_core::LayoutHooks for Label {
         let pad = add_bounds(ui.style_padding(id), self.base.padding());
         let style = TextStyle { font, ..Default::default() };
         // O negrito do markup é um pouco mais largo que o texto puro: mede com folga.
-        Some((ui.measure_text(&text, &style).width * if self.markup { 1.04 } else { 1.0 } + pad.horizontal() + 2.0).ceil())
+        let tags = if self.markup { markup_tag_room(&self.text, ui.theme_of(id)) } else { 0.0 };
+        Some((ui.measure_text(&text, &style).width * if self.markup { 1.04 } else { 1.0 } + tags + pad.horizontal() + 2.0).ceil())
     }
 }
 
@@ -1496,11 +1564,25 @@ pub struct MarkupSpan {
     pub size: Option<f32>,
     /// ...ou proporcional à fonte (`<small>` 0,85, `<big>` 1,2).
     pub scale: f32,
+    /// A etiqueta em volta (`<tag=fundo,borda>`): os trechos da mesma etiqueta têm o mesmo
+    /// [`MarkupTag::id`] e são desenhados juntos, sem quebrar.
+    pub tag: Option<MarkupTag>,
+}
+
+/// A etiqueta de um trecho (`<tag=fundo,borda>`).
+#[derive(Clone, Debug, PartialEq)]
+pub struct MarkupTag {
+    /// O fundo: token do tema ou `#rrggbb`.
+    pub fill: String,
+    /// A borda (`None`: sem borda).
+    pub border: Option<String>,
+    /// Qual etiqueta do texto (a ordem em que abriu), para juntar os trechos dela.
+    pub id: usize,
 }
 
 impl MarkupSpan {
     fn plain(text: impl Into<String>) -> Self {
-        Self { text: text.into(), weight: None, italic: false, underline: false, mono: false, color: None, size: None, scale: 1.0 }
+        Self { text: text.into(), weight: None, italic: false, underline: false, mono: false, color: None, size: None, scale: 1.0, tag: None }
     }
 }
 
@@ -1514,6 +1596,7 @@ pub fn markup_spans(text: &str) -> Vec<MarkupSpan> {
     let mut cur = MarkupSpan::plain("");
     let mut rest = text;
     let mut buf = String::new();
+    let mut tags = 0;
     let flush = |buf: &mut String, cur: &MarkupSpan, spans: &mut Vec<MarkupSpan>| {
         if !buf.is_empty() {
             spans.push(MarkupSpan { text: std::mem::take(buf), ..cur.clone() });
@@ -1532,7 +1615,7 @@ pub fn markup_spans(text: &str) -> Vec<MarkupSpan> {
             Some((n, a)) => (n.trim(), Some(a.trim().trim_matches('"'))),
             None => (body.trim(), None),
         };
-        let known = matches!(name, "b" | "sb" | "i" | "u" | "code" | "small" | "big" | "size" | "color" | "br");
+        let known = matches!(name, "b" | "sb" | "i" | "u" | "code" | "small" | "big" | "size" | "color" | "br" | "tag");
         if !known {
             buf.push_str(&rest[..=gt]);
             rest = &rest[gt + 1..];
@@ -1561,6 +1644,19 @@ pub fn markup_spans(text: &str) -> Vec<MarkupSpan> {
             "small" => cur.scale *= 0.85,
             "big" => cur.scale *= 1.2,
             "size" => cur.size = arg.and_then(|a| a.parse().ok()).or(cur.size),
+            "tag" => {
+                // `<tag=fundo,borda>`; sem cor, o fundo marcado do tema. Etiqueta dentro de
+                // etiqueta fica na de fora (a de dentro não abre outra).
+                if cur.tag.is_none() {
+                    let (fill, border) = match arg.map(|a| a.split_once(',').map_or((a, None), |(f, b)| (f, Some(b)))) {
+                        Some((fill, border)) => (fill.trim(), border.map(str::trim).filter(|b| !b.is_empty())),
+                        None => ("", None),
+                    };
+                    let fill = if fill.is_empty() { "surface_2" } else { fill };
+                    cur.tag = Some(MarkupTag { fill: fill.to_string(), border: border.map(str::to_string), id: tags });
+                    tags += 1;
+                }
+            }
             _ => cur.color = arg.map(str::to_string).or(cur.color.take()),
         }
     }
@@ -1624,20 +1720,48 @@ fn paint_runs(canvas: &mut dyn Canvas, runs: Vec<MarkupSpan>, area: RectF, style
     // Primeiro as posições (linha e x); depois o desenho, com a altura de cada linha e o
     // alinhamento vertical.
     let mut placed: Vec<(String, TextStyle, f32, usize, f32, f32)> = Vec::new();
-    for span in runs {
-        let mut st = one.clone();
-        if let Some(weight) = span.weight {
-            st.font.weight = weight;
+    // As etiquetas: o fundo, a borda, a linha e o x de onde começam e a largura, desenhadas
+    // antes do texto.
+    let mut boxes: Vec<(Color, Option<Color>, usize, f32, f32, f32)> = Vec::new();
+    let pad = theme.spacing.get("xs").copied().unwrap_or(4.0);
+    let tag_radius = theme.radius.get("sm").copied().unwrap_or(4.0);
+    let color_of = |name: &str| theme.colors.get(name).copied().or_else(|| theme.resolve_color(name));
+    let mut runs = runs.into_iter().peekable();
+    while let Some(span) = runs.next() {
+        if let Some(tag) = span.tag.clone() {
+            // A etiqueta inteira: os trechos dela, sem quebrar, numa caixa só.
+            let mut parts = vec![span];
+            while runs.peek().is_some_and(|s| s.tag.as_ref().is_some_and(|t| t.id == tag.id) && s.text != "\n") {
+                parts.extend(runs.next());
+            }
+            let styled: Vec<(String, TextStyle)> = parts.into_iter().map(|p| {
+                let st = markup_style(&one, &p, theme);
+                (p.text, st)
+            }).collect();
+            let widths: Vec<f32> = styled.iter().map(|(t, st)| spaced_width(canvas, t, st, spacing)).collect();
+            let h = styled.iter().map(|(_, st)| if st.font.size == one.font.size { base_h } else { canvas.measure_text("Ág", st).height.max(1.0) }).fold(base_h, f32::max);
+            let total = widths.iter().sum::<f32>() + pad * 2.0;
+            if x > area.x {
+                // O espaço antes da etiqueta é o do texto de fora (já somado); ela não cabe: desce.
+                if x + total > area.right() + 0.5 {
+                    x = area.x;
+                    line += 1;
+                    heights.push(base_h);
+                }
+            }
+            heights[line] = heights[line].max(h);
+            let fill = color_of(&tag.fill).unwrap_or(Color::TRANSPARENT);
+            let border = tag.border.as_deref().and_then(color_of);
+            boxes.push((fill, border, line, x, total, h));
+            let mut tx = x + pad;
+            for ((text, st), w) in styled.into_iter().zip(widths) {
+                placed.push((text, st, tx, line, w, h));
+                tx += w;
+            }
+            x += total;
+            continue;
         }
-        if span.mono {
-            st.font.family = "Cascadia Code".into();
-        }
-        st.font.italic |= span.italic;
-        st.font.underline |= span.underline;
-        st.font.size = span.size.unwrap_or(st.font.size) * span.scale;
-        if let Some(color) = span.color.as_deref() {
-            st.color = theme.colors.get(color).copied().or_else(|| aylis_core::Color::from_hex(color)).unwrap_or(st.color);
-        }
+        let st = markup_style(&one, &span, theme);
         if span.text == "\n" {
             x = area.x;
             line += 1;
@@ -1680,6 +1804,13 @@ fn paint_runs(canvas: &mut dyn Canvas, runs: Vec<MarkupSpan>, area: RectF, style
         *y += h;
         Some(top)
     }).collect();
+    for (fill, border, line, x, w, h) in boxes {
+        let r = RectF::new(x, tops[line] + (heights[line] - h) * 0.8, w, h);
+        canvas.fill_rect(r, tag_radius, &Brush::Solid(fill));
+        if let Some(border) = border {
+            canvas.stroke_rect(r.inflate(-0.5), tag_radius, &aylis_core::Stroke::new(border, 1.0));
+        }
+    }
     for (word, st, x, line, w, h) in placed {
         // Na base da linha: o trecho menor desce o que falta da altura dela.
         let y = tops[line] + (heights[line] - h) * 0.8;
@@ -1689,6 +1820,31 @@ fn paint_runs(canvas: &mut dyn Canvas, runs: Vec<MarkupSpan>, area: RectF, style
             draw_spaced(canvas, &word, RectF::new(x, y, w + 2.0, h), &st, spacing);
         }
     }
+}
+
+/// O estilo de um trecho com marcas sobre o estilo `one` do texto.
+fn markup_style(one: &TextStyle, span: &MarkupSpan, theme: &aylis_core::Theme) -> TextStyle {
+    let mut st = one.clone();
+    if let Some(weight) = span.weight {
+        st.font.weight = weight;
+    }
+    if span.mono {
+        st.font.family = "Cascadia Code".into();
+    }
+    st.font.italic |= span.italic;
+    st.font.underline |= span.underline;
+    st.font.size = span.size.unwrap_or(st.font.size) * span.scale;
+    if let Some(color) = span.color.as_deref() {
+        st.color = theme.colors.get(color).copied().or_else(|| aylis_core::Color::from_hex(color)).unwrap_or(st.color);
+    }
+    st
+}
+
+/// O espaço que as etiquetas (`<tag>`) somam à largura do texto: o espaçamento `xs` do tema
+/// dos dois lados de cada uma.
+fn markup_tag_room(text: &str, theme: &aylis_core::Theme) -> f32 {
+    let tags = markup_spans(text).iter().filter_map(|s| s.tag.as_ref().map(|t| t.id)).max().map_or(0, |n| n + 1);
+    tags as f32 * 2.0 * theme.spacing.get("xs").copied().unwrap_or(4.0)
 }
 
 /// Uma linha com `spacing` pixels a mais entre as letras, alinhada como o estilo pede.
@@ -1752,6 +1908,11 @@ pub fn find_matches(line: &str, query: &str) -> Vec<(usize, usize)> {
     out
 }
 
+/// O fundo do trecho destacado: a cor `highlight` do tema, ou `warning` clara.
+fn highlight_color(theme: &aylis_core::Theme) -> Color {
+    theme.colors.get("highlight").copied().unwrap_or_else(|| theme.color("warning").with_opacity(0.35))
+}
+
 /// O texto linha a linha, com o fundo marcado onde aparece a busca (o `v-highlight`).
 fn paint_highlighted(canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, text: &str, query: &str, area: RectF, style: &aylis_core::TextStyle) {
     let line_h = (style.font.size * 1.35).round();
@@ -1766,7 +1927,7 @@ fn paint_highlighted(canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, text: &str, qu
         TextAlign::Center => area.y + (area.height - total) / 2.0,
         TextAlign::Trailing => area.bottom() - total,
     };
-    let mark = ctx.theme.colors.get("highlight").copied().unwrap_or_else(|| ctx.theme.color("warning").with_opacity(0.35));
+    let mark = highlight_color(ctx.theme);
     let mut one = style.clone();
     one.wrap = false;
     one.trimming = Trimming::None;

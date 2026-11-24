@@ -21,6 +21,10 @@
 //!    só essas classes (`aylis::classes::Button(ui)`...). O `include_project!()` liga essa
 //!    função ao app publicado. Como só os tipos usados são citados, o linker descarta o
 //!    código dos outros componentes: um app com 4 tipos de componente leva só esses 4.
+//! 4. **Os ícones citados só no código** (`"material:info"` num `set_icon`): o app leva só o
+//!    subconjunto de cada pacote (`assets/icons/<pacote>.txt`, que o "Gerar código" da IDE
+//!    refaz); compilado sem a IDE (`cargo build`), o pacote embutido ganha aqui os ícones que
+//!    o código cita e o subconjunto ainda não tem ([`code_icons`]), sem mexer no projeto.
 //!
 //! O formato do pacote é simples ([`pack`] e [`unpack`]): o `aylis-project` lê com
 //! [`unpack`].
@@ -74,6 +78,7 @@ pub const CLASSES: &[(&str, &str)] = &[
     ("ListView", ""),
     ("TreeView", ""),
     ("Chart", ""),
+    ("ChartSync", ""),
     ("TabControl", ""),
     ("TabItem", ""),
     ("Expander", ""),
@@ -172,6 +177,7 @@ pub const CLASSES: &[(&str, &str)] = &[
     ("SkeletonLoader", ""),
     ("ProgressCircle", ""),
     ("EmptyState", ""),
+    ("ToastStack", ""),
     ("Pagination", ""),
     ("Stepper", ""),
     ("Timeline", ""),
@@ -286,6 +292,12 @@ pub const CLASSES: &[(&str, &str)] = &[
     ("Model3D", "3d"),
     ("McpServer", "mcp"),
     ("McpTool", "mcp"),
+    ("McpResource", "mcp"),
+    ("McpPrompt", "mcp"),
+    ("HttpClient", "http"),
+    ("AylisHttpProvider", "http"),
+    ("WebSocketClient", "websocket"),
+    ("AylisWebSocketProvider", "websocket"),
 ];
 
 /// Onde funcionam as classes que dependem da plataforma (a paleta da IDE mostra os ícones).
@@ -312,6 +324,8 @@ pub const CLASS_PLATFORMS: &[(&str, &[Platform])] = {
         ("SystemBars", &[Android, Ios, Web]),
         ("McpServer", &[Windows, MacOs, Linux]),
         ("McpTool", &[Windows, MacOs, Linux]),
+        ("McpResource", &[Windows, MacOs, Linux]),
+        ("McpPrompt", &[Windows, MacOs, Linux]),
     ]
 };
 
@@ -423,7 +437,16 @@ pub fn project_at(dir: &Path) {
             println!("cargo:rerun-if-changed={}", path.display());
         }
     }
-    let bundle = pack(&dir).unwrap_or_else(|e| panic!("não consegui empacotar o projeto: {e}"));
+    let src = std::env::var("CARGO_MANIFEST_DIR").ok().map(|m| Path::new(&m).join("src")).filter(|s| s.exists());
+    // Os ícones que só o código cita, se o subconjunto do projeto ainda não os tem.
+    let mut icons = src.as_deref().map(|src| code_icon_packs(&dir, src)).unwrap_or_default();
+    // A versão da última tag do git, quando o projeto pede (`publish.version_from_git_tag`): vai
+    // no `.aylisproj` embutido (o app lê em execução) e nos dados de versão do `.exe`.
+    let tagged = tagged_project(&project);
+    if let (Some(value), Some(name)) = (&tagged, project.file_name().and_then(|n| n.to_str())) {
+        icons.insert(name.to_string(), serde_json::to_vec_pretty(value).expect("o JSON do projeto"));
+    }
+    let bundle = pack_with(&dir, &icons).unwrap_or_else(|e| panic!("não consegui empacotar o projeto: {e}"));
     std::fs::write(out.join(BUNDLE_FILE), bundle).expect("gravar o pacote do projeto");
     let mut used = used_classes(&dir.join("forms"));
     // As classes dos forms dos pacotes de componente (`packages/`).
@@ -434,14 +457,11 @@ pub fn project_at(dir: &Path) {
     }
     // As classes que o código cria pelo nome (`ui.create("MediaCard", ...)`) também:
     // sem elas, o release (que só registra as usadas) criaria nada em silêncio.
-    if let Ok(manifest) = std::env::var("CARGO_MANIFEST_DIR") {
-        let src = Path::new(&manifest).join("src");
-        if src.exists() {
-            println!("cargo:rerun-if-changed={}", src.display());
-            for class in code_classes(&src) {
-                if !used.contains(&class) {
-                    used.push(class);
-                }
+    if let Some(src) = &src {
+        println!("cargo:rerun-if-changed={}", src.display());
+        for class in code_classes(src) {
+            if !used.contains(&class) {
+                used.push(class);
             }
         }
     }
@@ -483,7 +503,7 @@ pub fn project_at(dir: &Path) {
         }
         // Os dados de versão (empresa, produto, versão): sem eles, o Cortex XDR, o Defender e
         // o SmartScreen tratam o executável como de origem desconhecida com mais rigor.
-        if let Some(info) = VersionInfo::of_project(&project) {
+        if let Some(info) = tagged.as_ref().map(VersionInfo::of_value).or_else(|| VersionInfo::of_project(&project)) {
             add_version(&mut res, &info);
         }
         if !res.is_empty() {
@@ -579,6 +599,122 @@ fn quoted_names(text: &str) -> (std::collections::HashSet<&str>, std::collection
     (quoted, created)
 }
 
+/// A pasta dos pacotes de ícones completos do Aylis (`resources/icons`): o projeto usa o
+/// `aylis-build` pela pasta do Aylis (o repositório ou a instalação da IDE), e os pacotes
+/// ficam dois níveis acima deste crate.
+pub fn icon_packs_dir() -> Option<PathBuf> {
+    let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../resources/icons");
+    dir.is_dir().then_some(dir)
+}
+
+/// Os ícones de pacote citados no código Rust da pasta (e subpastas), para os pacotes dados:
+/// `"material:info"` → `material` → `{info}`. A mesma regra do "Gerar código" da IDE: o
+/// prefixo começa uma palavra, e o nome são letras, números, `-` e `_`.
+pub fn code_icons(src: &Path, packs: &[String]) -> std::collections::BTreeMap<String, std::collections::BTreeSet<String>> {
+    let mut used: std::collections::BTreeMap<String, std::collections::BTreeSet<String>> = Default::default();
+    let mut list = Vec::new();
+    rust_files(src, &mut list);
+    for f in list {
+        let Ok(text) = std::fs::read_to_string(&f) else { continue };
+        for pack in packs {
+            let needle = format!("{pack}:");
+            for (i, _) in text.match_indices(&needle) {
+                let before = text[..i].chars().last();
+                let name: String = text[i + needle.len()..].chars().take_while(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_').collect();
+                if !name.is_empty() && before.is_none_or(|c| !c.is_ascii_alphanumeric() && c != '-' && c != '_') {
+                    used.entry(pack.clone()).or_default().insert(name);
+                }
+            }
+        }
+    }
+    used
+}
+
+fn rust_files(dir: &Path, out: &mut Vec<PathBuf>) {
+    let Ok(entries) = std::fs::read_dir(dir) else { return };
+    for e in entries.flatten() {
+        let p = e.path();
+        if p.is_dir() {
+            rust_files(&p, out);
+        } else if p.extension().is_some_and(|x| x == "rs") {
+            out.push(p);
+        }
+    }
+}
+
+/// Os nomes dos ícones de um pacote (`nome<TAB>caminho`, as linhas sem `#`).
+fn pack_icon_names(text: &str) -> std::collections::BTreeSet<&str> {
+    text.lines().filter(|l| !l.starts_with('#')).filter_map(|l| l.split_once('\t')).map(|(n, _)| n).collect()
+}
+
+/// O pacote do app (`subset`; sem ele, o cabeçalho e a licença de `full`) com os ícones
+/// `names` tirados do pacote completo. Devolve o texto e os nomes que nem o completo tem.
+pub fn add_icons(subset: Option<&str>, full: &str, names: &[&str]) -> (String, Vec<String>) {
+    let mut out: String = match subset {
+        Some(s) => s.to_string(),
+        None => full.lines().take_while(|l| l.starts_with('#')).map(|l| format!("{l}\n")).collect(),
+    };
+    if !out.is_empty() && !out.ends_with('\n') {
+        out.push('\n');
+    }
+    let have = subset.map(pack_icon_names).unwrap_or_default();
+    let mut found = std::collections::BTreeSet::new();
+    for line in full.lines().filter(|l| !l.starts_with('#')) {
+        if let Some((n, _)) = line.split_once('\t') {
+            if names.contains(&n) && !have.contains(n) && found.insert(n) {
+                out.push_str(line);
+                out.push('\n');
+            }
+        }
+    }
+    let absent = names.iter().filter(|n| !found.contains(**n) && !have.contains(**n)).map(|n| n.to_string()).collect();
+    (out, absent)
+}
+
+/// Os pacotes de ícones do projeto (`assets/icons/<pacote>.txt`) que precisam de ícones citados
+/// no código de `src` e ainda fora deles, já com esses ícones: o nome no pacote → o texto. O
+/// ícone que nenhum pacote tem vira um aviso do cargo.
+fn code_icon_packs(dir: &Path, src: &Path) -> std::collections::BTreeMap<String, Vec<u8>> {
+    let assets = dir.join("assets/icons");
+    let full_dir = icon_packs_dir();
+    let names_in = |d: &Path| -> Vec<String> {
+        std::fs::read_dir(d).map(|e| e.flatten().filter_map(|e| e.file_name().to_string_lossy().strip_suffix(".txt").map(str::to_string)).collect()).unwrap_or_default()
+    };
+    let mut packs: Vec<String> = names_in(&assets);
+    for p in full_dir.as_deref().map(names_in).unwrap_or_default() {
+        if !packs.contains(&p) {
+            packs.push(p);
+        }
+    }
+    let mut out = std::collections::BTreeMap::new();
+    for (pack, names) in code_icons(src, &packs) {
+        let subset = std::fs::read_to_string(assets.join(format!("{pack}.txt"))).ok();
+        let have = subset.as_deref().map(pack_icon_names).unwrap_or_default();
+        let missing: Vec<&str> = names.iter().map(String::as_str).filter(|n| !have.contains(n)).collect();
+        if missing.is_empty() {
+            continue;
+        }
+        let Some(full) = full_dir.as_ref().and_then(|d| std::fs::read_to_string(d.join(format!("{pack}.txt"))).ok()) else {
+            for n in missing {
+                println!("cargo:warning=o ícone {pack}:{n} é citado no código e não está em assets/icons/{pack}.txt");
+            }
+            continue;
+        };
+        let (text, absent) = add_icons(subset.as_deref(), &full, &missing);
+        for n in absent {
+            println!("cargo:warning=o pacote de ícones {pack} não tem o ícone {n} (citado no código)");
+        }
+        out.insert(format!("assets/icons/{pack}.txt"), text.into_bytes());
+    }
+    out
+}
+
+/// O pacote do projeto como o `build.rs` embute: [`pack`] com os ícones que só o código de
+/// `src` cita (veja [`code_icons`]).
+pub fn pack_for_build(dir: &Path, src: &Path) -> Result<Vec<u8>, String> {
+    pack_with(dir, &code_icon_packs(dir, src))
+}
+
 /// As classes que aparecem nos forms da pasta (e subpastas), sem repetir, em ordem. Um
 /// subtipo (`"Button.icon"`) conta como a classe (`"Button"`). O `Form` sempre entra.
 pub fn used_classes(forms: &Path) -> Vec<String> {
@@ -667,6 +803,118 @@ pub fn find_project(dir: &Path) -> Option<PathBuf> {
 /// O `.ico` do Windows que a IDE gera do ícone do projeto (todos os tamanhos).
 pub const APP_ICON: &str = ".aylis/app-icon.ico";
 
+/// O `.aylisproj` com a `publish.version` trocada pela última tag do git, quando o projeto
+/// pede (`publish.version_from_git_tag`). `None`: a versão é a escrita no projeto. Sem git ou
+/// sem tag, o build segue com a do projeto e avisa; quem para é a publicação (o `aylis-tool`
+/// confere antes de compilar).
+pub fn tagged_project(project: &Path) -> Option<serde_json::Value> {
+    let text = std::fs::read_to_string(project).ok()?;
+    let mut value: serde_json::Value = serde_json::from_str(text.trim_start_matches('\u{feff}')).ok()?;
+    if value["publish"]["version_from_git_tag"] != serde_json::Value::Bool(true) {
+        return None;
+    }
+    let dir = project.parent().unwrap_or(Path::new("."));
+    // Refaz o build quando uma tag nasce ou o HEAD muda de ramo.
+    for watched in git_watched(dir) {
+        println!("cargo:rerun-if-changed={}", watched.display());
+    }
+    match git_tag(dir) {
+        Ok(version) => {
+            value["publish"]["version"] = serde_json::Value::String(version);
+            Some(value)
+        }
+        Err(e) => {
+            println!("cargo:warning=a versão do projeto, e não a da tag do git: {e}");
+            None
+        }
+    }
+}
+
+/// Por que a última tag do git não deu uma versão ([`git_tag`]).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum GitTagError {
+    /// O `git` não está instalado (ou não está no PATH).
+    NoGit,
+    /// A pasta do projeto não está num repositório do git.
+    NotRepository,
+    /// O repositório não tem tag nenhuma antes do commit atual.
+    NoTag,
+    /// A tag não é uma versão ([`is_valid_version`]); vem o nome dela.
+    Invalid(String),
+}
+
+impl std::fmt::Display for GitTagError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GitTagError::NoGit => f.write_str("o git não foi encontrado"),
+            GitTagError::NotRepository => f.write_str("a pasta do projeto não está num repositório do git"),
+            GitTagError::NoTag => f.write_str("o repositório não tem tag"),
+            GitTagError::Invalid(tag) => write!(f, "a tag {tag} não é uma versão (1.2.0, v1.2.0-beta.1)"),
+        }
+    }
+}
+
+/// A versão da última tag do git alcançável do commit atual (`git describe --tags --abbrev=0`),
+/// sem o `v` do começo (`v1.4.0` → `1.4.0`). O `git` roda como processo, com os argumentos
+/// separados (nunca por shell).
+pub fn git_tag(dir: &Path) -> Result<String, GitTagError> {
+    let output = git(dir, &["describe", "--tags", "--abbrev=0"]).map_err(|_| GitTagError::NoGit)?;
+    if !output.status.success() {
+        // O `rev-parse` separa "sem repositório" de "sem tag" sem ler o texto do git (que muda
+        // com o idioma).
+        let inside = git(dir, &["rev-parse", "--is-inside-work-tree"]).is_ok_and(|o| o.status.success());
+        return Err(if inside { GitTagError::NoTag } else { GitTagError::NotRepository });
+    }
+    let tag = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    let version = tag.strip_prefix(['v', 'V']).unwrap_or(&tag);
+    if is_valid_version(version) { Ok(version.to_string()) } else { Err(GitTagError::Invalid(tag)) }
+}
+
+/// Os arquivos do git que mudam quando a última tag pode mudar: o `HEAD` (troca de ramo), as
+/// tags soltas e as empacotadas. Só os que existem (o cargo refaria o build sempre por um que
+/// não existe).
+fn git_watched(dir: &Path) -> Vec<PathBuf> {
+    let Ok(output) = git(dir, &["rev-parse", "--absolute-git-dir", "--git-common-dir"]) else { return Vec::new() };
+    if !output.status.success() {
+        return Vec::new();
+    }
+    let text = String::from_utf8_lossy(&output.stdout).to_string();
+    let mut lines = text.lines().map(|l| dir.join(l.trim()));
+    let (Some(git_dir), Some(common)) = (lines.next(), lines.next()) else { return Vec::new() };
+    [git_dir.join("HEAD"), common.join("refs").join("tags"), common.join("packed-refs")].into_iter().filter(|p| p.exists()).collect()
+}
+
+/// O `git` na pasta, sem janela de console no Windows (a IDE chama pela publicação).
+fn git(dir: &Path, args: &[&str]) -> std::io::Result<std::process::Output> {
+    let mut command = std::process::Command::new("git");
+    command.arg("-C").arg(dir).args(args).stdin(std::process::Stdio::null());
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+    command.output()
+}
+
+/// Uma versão de app que a publicação aceita: números separados por ponto (`1.2.0`) e,
+/// opcional, a pré-release depois do `-` (`1.2.0-beta.1`, `2.0.0-rc.2`) e o build depois do
+/// `+`, com letras, números, `.` e `-`, como no versionamento semântico (pedido do autor em
+/// 17/11: o NoOBS usa `x.y.z-beta`). Onde o sistema só aceita números (o `.msi`, o iOS, os
+/// dados de versão do `.exe`), vai a parte de antes do `-`.
+pub fn is_valid_version(version: &str) -> bool {
+    let (rest, build) = match version.split_once('+') {
+        Some((r, b)) => (r, Some(b)),
+        None => (version, None),
+    };
+    let (core, pre) = match rest.split_once('-') {
+        Some((c, p)) => (c, Some(p)),
+        None => (rest, None),
+    };
+    let label = |s: &str| !s.is_empty() && s.split('.').all(|p| !p.is_empty() && p.chars().all(|c| c.is_ascii_alphanumeric() || c == '-'));
+    !core.is_empty() && core.split('.').count() <= 4 && core.split('.').all(|p| !p.is_empty() && p.len() <= 5 && p.chars().all(|c| c.is_ascii_digit())) && pre.is_none_or(label) && build.is_none_or(label)
+}
+
 /// O ícone declarado no `.aylisproj` (`publish.icon`).
 fn icon_of(project: &Path) -> Option<String> {
     let text = std::fs::read_to_string(project).ok()?;
@@ -680,6 +928,12 @@ fn icon_of(project: &Path) -> Option<String> {
 /// Empacota o `.aylisproj` e as pastas [`PACKED_DIRS`] de `dir`. Os nomes ficam relativos
 /// à pasta, com `/` (`forms/clientes.json`); o `.aylisproj` vai como está.
 pub fn pack(dir: &Path) -> Result<Vec<u8>, String> {
+    pack_with(dir, &std::collections::BTreeMap::new())
+}
+
+/// Como [`pack`], com alguns arquivos trocados (ou acrescentados) por `replaced`: o nome no
+/// pacote (`assets/icons/material.txt`) → o conteúdo.
+pub fn pack_with(dir: &Path, replaced: &std::collections::BTreeMap<String, Vec<u8>>) -> Result<Vec<u8>, String> {
     let mut files = Vec::new();
     if let Some(project) = find_project(dir) {
         let name = project.file_name().and_then(|n| n.to_str()).ok_or("nome do .aylisproj")?.to_string();
@@ -688,11 +942,16 @@ pub fn pack(dir: &Path) -> Result<Vec<u8>, String> {
     for sub in PACKED_DIRS {
         collect(&dir.join(sub), sub, &mut files)?;
     }
+    let added: Vec<String> = replaced.keys().filter(|n| !files.iter().any(|(f, _)| f == *n)).cloned().collect();
+    files.extend(added.into_iter().map(|name| (name, PathBuf::new())));
     files.sort_by(|a, b| a.0.cmp(&b.0));
     let mut out = Vec::from(&MAGIC[..]);
     out.extend_from_slice(&(files.len() as u32).to_le_bytes());
     for (name, path) in files {
-        let data = std::fs::read(&path).map_err(|e| format!("{}: {e}", path.display()))?;
+        let data = match replaced.get(&name) {
+            Some(data) => data.clone(),
+            None => std::fs::read(&path).map_err(|e| format!("{}: {e}", path.display()))?,
+        };
         out.extend_from_slice(&(name.len() as u32).to_le_bytes());
         out.extend_from_slice(name.as_bytes());
         out.extend_from_slice(&(data.len() as u64).to_le_bytes());
@@ -930,8 +1189,8 @@ pub struct VersionInfo {
 }
 
 impl VersionInfo {
-    /// Do `.aylisproj` (o nome do app, a versão e o `publish.publisher`), como o instalador:
-    /// sem fabricante, o nome do app. `None` se o projeto não puder ser lido.
+    /// Do `.aylisproj` (o nome do app, a versão, o `publish.publisher`, a `publish.description`
+    /// e o `publish.copyright`), como o instalador: sem fabricante, o nome do app. `None` se o projeto não puder ser lido.
     pub fn of_project(project: &Path) -> Option<VersionInfo> {
         let text = std::fs::read_to_string(project).ok()?;
         let value: serde_json::Value = serde_json::from_str(text.trim_start_matches('\u{feff}')).ok()?;
@@ -947,10 +1206,13 @@ impl VersionInfo {
         let locale = value["locale"].as_str().unwrap_or("");
         let language = if locale.is_empty() || locale.to_ascii_lowercase().starts_with("pt") { 0x0416 } else { 0x0409 };
         let exe = format!("{}.exe", file_name(&app));
+        // A descrição e os direitos do projeto; sem eles, o nome do app e "© empresa".
+        let description = text(&value["publish"]["description"]).unwrap_or_else(|| app.clone());
+        let copyright = text(&value["publish"]["copyright"]).unwrap_or_else(|| format!("© {company}"));
         VersionInfo {
-            copyright: format!("© {company}"),
+            copyright,
             company,
-            description: app.clone(),
+            description,
             version,
             product: app,
             original_filename: exe.clone(),

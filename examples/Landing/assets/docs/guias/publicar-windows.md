@@ -15,16 +15,37 @@ O Aylis cuida de duas partes disso ao publicar para o Windows:
 ## Dados de versão (VERSIONINFO)
 
 Todo app compilado pelo Aylis no Windows leva os dados que o Explorer mostra em
-Propriedades → Detalhes, tirados do `publish` do projeto (o nome do app e a versão no diálogo
-Projeto → Publicar; o fabricante, `publish.publisher`, no `.aylisproj` ou pelo
-`set_project_setting` do MCP):
+Propriedades → Detalhes, tirados do `publish` do projeto (o nome do app, a versão, a descrição
+e os direitos no diálogo Projeto → Publicar; o fabricante, `publish.publisher`, no `.aylisproj`
+ou pelo `set_project_setting` do MCP):
 
 | Campo | De onde vem |
 |---|---|
-| CompanyName, LegalCopyright | `publish.publisher` (vazio: o nome do app) |
-| FileDescription, ProductName | `publish.app_name` (vazio: o nome do projeto) |
-| FileVersion, ProductVersion | `publish.version` (vazio: `1.0.0`); a parte numérica tem 4 números (`1.2.0-beta` → `1.2.0.0`) |
+| CompanyName | `publish.publisher` (vazio: o nome do app) |
+| LegalCopyright | `publish.copyright` (vazio: `© ` e o fabricante) |
+| FileDescription | `publish.description` (vazio: o nome do app) |
+| ProductName | `publish.app_name` (vazio: o nome do projeto) |
+| FileVersion, ProductVersion | `publish.version` (vazio: `1.0.0`) ou a última tag do git (abaixo); a parte numérica tem 4 números (`1.2.0-beta` → `1.2.0.0`) |
 | OriginalFilename, InternalName | o nome do `.exe` publicado (`Vendas.exe`) |
+
+### A versão da tag do git
+
+Com `publish.version_from_git_tag: true` (a caixa "Versão da tag do git" em Publicar), a versão
+publicada é a da última tag do git alcançável do commit atual (`git describe --tags --abbrev=0`,
+sem o `v` do começo: `v1.4.0` → `1.4.0`), e não a `publish.version`. Vale em todas as
+plataformas: o `.exe` e os instaladores do Windows, o Android (`versionName` e o `versionCode`
+que sai dela), o iOS, o `.deb`, o `.rpm` e o AppImage. Não há variável de ambiente: o que manda
+é o projeto.
+
+- Sem o git, fora de um repositório, sem tag ou com uma tag que não é versão (`release-final`),
+  a **publicação para** com o motivo e o que fazer. O build comum (Executar, `cargo build`)
+  segue com a `publish.version` e avisa (`cargo:warning`).
+- O `git` roda como processo, com os argumentos separados (nunca por shell). O build refaz
+  quando nasce uma tag ou o ramo muda.
+- O app lê em execução a versão gravada: `aylis::app_version()` em qualquer handler (ou
+  `app.project.version()` no `Application`). Com a tag, o `.aylisproj` embutido no executável
+  já sai com ela.
+- O `Cargo.toml` gerado continua com a `publish.version` (a tag não muda arquivo do projeto).
 
 O idioma da tabela segue o `locale` do projeto (português do Brasil, `0416`, ou inglês,
 `0409`). O `aylis-build` grava esses dados no mesmo arquivo de recursos do ícone, sem precisar

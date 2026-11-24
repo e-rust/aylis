@@ -32,8 +32,11 @@ impl PropEnum for ColumnKind {
 pub struct Column {
     /// O campo do dataset que a coluna mostra.
     pub field_name: String,
-    /// O título do cabeçalho (vazio = o rótulo do campo).
-    pub title: String,
+    /// O título do cabeçalho (vazio = o rótulo do campo; `None`, o `"title": null` do form =
+    /// o cabeçalho vazio, para uma coluna de ícone sem título).
+    pub title: Option<String>,
+    /// A dica do título (o mouse parado sobre ele).
+    pub hint: String,
     /// A largura (0 = a do campo).
     pub width: f32,
     /// O alinhamento do texto (`None` = o do campo).
@@ -52,7 +55,7 @@ pub struct Column {
 
 impl Default for Column {
     fn default() -> Self {
-        Self { field_name: String::new(), title: String::new(), width: 0.0, alignment: None, visible: true, read_only: false, color: None, text_color: None, kind: ColumnKind::Text }
+        Self { field_name: String::new(), title: Some(String::new()), hint: String::new(), width: 0.0, alignment: None, visible: true, read_only: false, color: None, text_color: None, kind: ColumnKind::Text }
     }
 }
 
@@ -62,7 +65,18 @@ impl Column {
     }
 
     pub fn title(mut self, title: &str) -> Self {
-        self.title = title.to_string();
+        self.title = Some(title.to_string());
+        self
+    }
+
+    /// O cabeçalho vazio (o `"title": null`).
+    pub fn no_title(mut self) -> Self {
+        self.title = None;
+        self
+    }
+
+    pub fn hint(mut self, hint: &str) -> Self {
+        self.hint = hint.to_string();
         self
     }
 
@@ -79,6 +93,7 @@ pub(crate) struct ColumnsChanged(pub ComponentId, pub Column);
 const COLUMN_PROPS: &[PropInfo] = &[
     PropInfo::new("field_name", PropKind::String, "Data"),
     PropInfo::new("title", PropKind::String, "Appearance"),
+    PropInfo::new("hint", PropKind::String, "Appearance"),
     PropInfo::new("width", PropKind::Float, "Appearance"),
     PropInfo::new("alignment", PropKind::Enum(<TextAlign as PropEnum>::NAMES), "Appearance").rust_type("TextAlign"),
     PropInfo::new("color", PropKind::Color, "Appearance"),
@@ -101,7 +116,8 @@ impl Component for Column {
         let color = |c: Option<Color>| c.map_or(PropValue::Null, PropValue::Color);
         Some(match name {
             "field_name" => self.field_name.clone().into(),
-            "title" => self.title.clone().into(),
+            "title" => self.title.clone().map_or(PropValue::Null, PropValue::String),
+            "hint" => self.hint.clone().into(),
             "width" => self.width.into(),
             "alignment" => self.alignment.map_or(PropValue::Null, PropValue::enum_value),
             "color" => color(self.color),
@@ -122,7 +138,13 @@ impl Component for Column {
         };
         match name {
             "field_name" => self.field_name = value.to_str()?.to_string(),
-            "title" => self.title = value.to_str()?.to_string(),
+            "title" => {
+                self.title = match value {
+                    PropValue::Null => None,
+                    v => Some(v.to_str()?.to_string()),
+                }
+            }
+            "hint" => self.hint = value.to_str()?.to_string(),
             "width" => self.width = value.to_f32()?.max(0.0),
             "alignment" => {
                 self.alignment = match value {

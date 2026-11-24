@@ -202,13 +202,18 @@ impl App {
             }
         }
         self.ui.set_window_placement(form, p);
+        self.recorded_placements.insert(form, p);
         // O monitor dela agora e, com `remember_placement`, a posição para reabrir igual.
         let monitor = w.window.current_monitor();
         self.ui.set_form_monitor(form, monitor.as_ref().and_then(|m| monitors::index_of(self.ui.monitors(), m)));
         #[cfg(not(any(web, mobile)))]
         if let Some(m) = monitor.filter(|_| matches!(self.ui.get_prop(form, "remember_placement"), Ok(PropValue::Bool(true)))) {
             let name = self.ui.name(form).unwrap_or_default().to_string();
-            self.placements.set(&name, aylis_core::monitors::SavedPlacement { monitor: monitors::device(&m), placement: p });
+            // A identidade do aparelho, quando o sistema dá (sobrevive à troca de porta); senão, o
+            // nome do sistema.
+            let known = monitors::index_of(self.ui.monitors(), &m).map(|i| self.ui.monitors()[i].device_path.clone()).filter(|p| !p.is_empty());
+            let monitor = known.unwrap_or_else(|| monitors::device(&m));
+            self.placements.set(&name, aylis_core::monitors::SavedPlacement { monitor, placement: p });
         }
     }
 

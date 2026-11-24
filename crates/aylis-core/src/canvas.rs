@@ -316,6 +316,17 @@ pub struct TextStyle {
     pub wrap: bool,
     /// Reticências quando não couber (por caractere, por palavra ou nenhuma).
     pub trimming: crate::text::Trimming,
+    /// Espaço a mais entre as letras, em unidades lógicas (como o `letter_spacing` do
+    /// `Label`; negativo aperta). Vale no desenho e nas medidas (`measure_text`,
+    /// `measure_text_wrapped`): a largura de um texto ganha `letter_spacing` por letra, menos
+    /// a última.
+    pub letter_spacing: f32,
+    /// Emoji coloridos (o padrão). Desligado, os emoji saem na cor do texto, com a fonte
+    /// [`MONO_EMOJI_FAMILY`] (Noto Emoji) quando o app a registrou (o projeto com ela em
+    /// `assets/fonts/`): assim o desenho é igual nos três renderizadores. Sem a fonte, cada
+    /// renderizador faz o que pode (o Direct2D tira a cor da fonte de emoji do sistema; o
+    /// navegador continua colorido).
+    pub color_glyphs: bool,
 }
 
 impl Default for TextStyle {
@@ -327,7 +338,144 @@ impl Default for TextStyle {
             v_align: TextAlign::Center,
             wrap: false,
             trimming: crate::text::Trimming::Character,
+            letter_spacing: 0.0,
+            color_glyphs: true,
         }
+    }
+}
+
+/// A família da fonte de emoji sem cor do Aylis (Noto Emoji, SIL OFL 1.1, nos recursos da IDE:
+/// `resources/fonts/notoemoji`). Veja [`TextStyle::color_glyphs`].
+pub const MONO_EMOJI_FAMILY: &str = "Noto Emoji";
+
+/// Os trechos do Unicode que o `color_glyphs: false` manda para a [`MONO_EMOJI_FAMILY`]: os
+/// blocos de emoji e os símbolos que viram emoji (sem o ASCII: `#`, `*` e os dígitos ficam na
+/// fonte pedida), com o seletor de variação, o ZWJ, a tecla e as marcas de bandeira. Os três
+/// renderizadores usam a mesma lista (o navegador, como `unicode-range` da fonte).
+pub const MONO_EMOJI_RANGES: &[(u32, u32)] = &[
+    (0x00A9, 0x00A9),
+    (0x00AE, 0x00AE),
+    (0x200D, 0x200D),
+    (0x203C, 0x203C),
+    (0x2049, 0x2049),
+    (0x20E3, 0x20E3),
+    (0x2122, 0x2122),
+    (0x2139, 0x2139),
+    (0x2194, 0x2199),
+    (0x21A9, 0x21AA),
+    (0x231A, 0x231B),
+    (0x2328, 0x2328),
+    (0x23CF, 0x23CF),
+    (0x23E9, 0x23F3),
+    (0x23F8, 0x23FA),
+    (0x24C2, 0x24C2),
+    (0x25AA, 0x25AB),
+    (0x25B6, 0x25B6),
+    (0x25C0, 0x25C0),
+    (0x25FB, 0x25FE),
+    (0x2600, 0x27BF),
+    (0x2934, 0x2935),
+    (0x2B05, 0x2B07),
+    (0x2B1B, 0x2B1C),
+    (0x2B50, 0x2B50),
+    (0x2B55, 0x2B55),
+    (0x3030, 0x3030),
+    (0x303D, 0x303D),
+    (0x3297, 0x3297),
+    (0x3299, 0x3299),
+    (0xFE0E, 0xFE0F),
+    (0x1F000, 0x1FAFF),
+    (0xE0020, 0xE007F),
+];
+
+/// O caractere vai para a fonte de emoji sem cor? (Veja [`MONO_EMOJI_RANGES`].)
+pub fn is_mono_emoji(c: char) -> bool {
+    let c = c as u32;
+    MONO_EMOJI_RANGES.iter().any(|&(a, b)| c >= a && c <= b)
+}
+
+/// Os trechos (em bytes) de `text` que vão para a fonte de emoji sem cor.
+pub fn mono_emoji_ranges(text: &str) -> Vec<(usize, usize)> {
+    let mut out: Vec<(usize, usize)> = Vec::new();
+    for (i, c) in text.char_indices() {
+        if !is_mono_emoji(c) {
+            continue;
+        }
+        let end = i + c.len_utf8();
+        match out.last_mut() {
+            Some(last) if last.1 == i => last.1 = end,
+            _ => out.push((i, end)),
+        }
+    }
+    out
+}
+
+/// A fonte de emoji sem cor está registrada (`aylis_core::fonts`)?
+pub fn mono_emoji_available() -> bool {
+    crate::fonts::registered().iter().any(|f| f.family == MONO_EMOJI_FAMILY)
+}
+
+/// O tamanho de `text` quebrado em `max_width` pela regra do `draw_text` (palavras; palavra
+/// maior que a largura, no caractere), com a altura de linha `line_height`: a largura da linha
+/// mais larga e a altura de todas. É o [`Canvas::measure_text_wrapped`] de cada renderizador,
+/// com `measure` a largura de uma linha.
+pub fn wrapped_size(text: &str, max_width: f32, line_height: f32, measure: &mut dyn FnMut(&str) -> f32) -> SizeF {
+    if text.is_empty() {
+        return SizeF::new(0.0, 0.0);
+    }
+    let lines = crate::text::layout_lines(text, max_width.max(1.0), usize::MAX, true, crate::text::Trimming::None, measure);
+    let widest = lines.iter().map(|l| measure(l)).fold(0.0f32, f32::max);
+    SizeF::new(widest, line_height * lines.len().max(1) as f32)
+}
+
+/// Guarda o resultado de [`Canvas::measure_text_wrapped`] por texto, estilo e largura: o
+/// layout de uma tela mede os mesmos textos a cada quadro. Cada renderizador tem o seu (as
+/// fontes são dele); recomeça quando as fontes do app mudam e quando passa do limite.
+#[derive(Default)]
+pub struct WrapCache {
+    generation: u64,
+    sizes: std::collections::HashMap<(String, WrapKey), SizeF>,
+}
+
+/// O que do estilo muda a quebra: a fonte, o espaço entre letras, as cores dos emoji e a
+/// largura.
+#[derive(Clone, PartialEq, Eq, Hash)]
+struct WrapKey {
+    family: String,
+    size: u32,
+    weight: u8,
+    italic: bool,
+    letter_spacing: u32,
+    color_glyphs: bool,
+    width: u32,
+}
+
+impl WrapCache {
+    /// Quantos tamanhos guarda antes de recomeçar.
+    const MAX: usize = 4096;
+
+    /// O tamanho guardado, ou o calculado por `compute` (e guardado).
+    pub fn get_or(&mut self, text: &str, style: &TextStyle, max_width: f32, compute: impl FnOnce() -> SizeF) -> SizeF {
+        let generation = crate::fonts::generation();
+        if generation != self.generation || self.sizes.len() >= Self::MAX {
+            self.sizes.clear();
+            self.generation = generation;
+        }
+        let key = WrapKey {
+            family: style.font.family.clone(),
+            size: style.font.size.to_bits(),
+            weight: style.font.weight as u8,
+            italic: style.font.italic,
+            letter_spacing: style.letter_spacing.to_bits(),
+            color_glyphs: style.color_glyphs,
+            width: max_width.to_bits(),
+        };
+        if let Some(size) = self.sizes.get(&(text.to_string(), key.clone())) {
+            return *size;
+        }
+        let size = compute();
+        self.sizes.insert((text.to_string(), key), size);
+        size
     }
 }
 
@@ -369,6 +517,15 @@ pub trait Canvas {
     fn draw_text(&mut self, text: &str, rect: RectF, style: &TextStyle);
     /// Tamanho do texto numa linha só (sem quebra), com a mesma fonte usada no desenho.
     fn measure_text(&mut self, text: &str, style: &TextStyle) -> SizeF;
+
+    /// Tamanho do texto quebrado em `max_width`, com a mesma quebra do
+    /// [`draw_text`](Self::draw_text) com `wrap` (a largura da linha mais larga e a altura de
+    /// todas as linhas). Os renderizadores guardam o resultado por texto, estilo e largura
+    /// ([`WrapCache`]); o padrão mede pelo [`measure_text`](Self::measure_text).
+    fn measure_text_wrapped(&mut self, text: &str, style: &TextStyle, max_width: f32) -> SizeF {
+        let line_height = self.measure_text("Ag", style).height;
+        wrapped_size(text, max_width, line_height, &mut |s| self.measure_text(s, style).width)
+    }
 
     /// Desenha a parte `src` da imagem (em pixels da imagem) no retângulo `dest`. O padrão
     /// não desenha nada (canvases de teste).
@@ -420,6 +577,13 @@ pub trait Canvas {
 
     /// Veja [`begin_masked`](Canvas::begin_masked).
     fn begin_mask(&mut self) {}
+
+    /// Como [`begin_mask`](Canvas::begin_mask), com a máscara de luminância (o `<mask>` do
+    /// SVG): o que recorta o conteúdo é o brilho da máscara vezes o alfa dela (branco mostra,
+    /// preto esconde), e não só o alfa. O padrão usa o alfa.
+    fn begin_luminance_mask(&mut self) {
+        self.begin_mask();
+    }
 
     /// Veja [`begin_masked`](Canvas::begin_masked).
     fn end_mask(&mut self) {}
