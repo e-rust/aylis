@@ -355,6 +355,11 @@ pub fn catalog(ui: &Ui) -> String {
         let instance = (class.create)();
         for info in prop_infos_of(instance.as_ref()) {
             collect_record(info.kind, &mut records);
+            // O registro que um evento leva (`event:record(TopmostLost)`): as outras linguagens
+            // geram a classe dele para o handler tipado.
+            if let aylis_core::EventArg::Value(kind) = info.event_arg {
+                collect_record(kind, &mut records);
+            }
         }
         for m in instance.methods() {
             for k in m.args.iter().copied().chain(m.returns) {

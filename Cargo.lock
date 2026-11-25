@@ -935,6 +935,7 @@ dependencies = [
  "aylis-json",
  "aylis-providers",
  "aylis-skia",
+ "aylis-tray-icon",
  "aylis-web",
  "aylis-webview",
  "block2 0.5.1",
@@ -959,7 +960,6 @@ dependencies = [
  "serde_json",
  "softbuffer",
  "tokio",
- "tray-icon",
  "ureq",
  "uuid",
  "wasm-bindgen",
@@ -1086,6 +1086,23 @@ dependencies = [
  "tungstenite",
  "ureq",
  "zip",
+]
+
+[[package]]
+name = "aylis-tray-icon"
+version = "0.25.1"
+dependencies = [
+ "crossbeam-channel",
+ "muda",
+ "objc2 0.6.5",
+ "objc2-app-kit 0.3.2",
+ "objc2-core-foundation",
+ "objc2-core-graphics",
+ "objc2-foundation 0.3.2",
+ "once_cell",
+ "png",
+ "thiserror 2.0.21",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -7062,25 +7079,6 @@ dependencies = [
  "scopeguard",
  "urlencoding",
  "windows",
-]
-
-[[package]]
-name = "tray-icon"
-version = "0.25.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2b9c52859a94554803ccd4a24b98f74148ebc73b90676d783f3490b1bff9d72"
-dependencies = [
- "crossbeam-channel",
- "muda",
- "objc2 0.6.5",
- "objc2-app-kit 0.3.2",
- "objc2-core-foundation",
- "objc2-core-graphics",
- "objc2-foundation 0.3.2",
- "once_cell",
- "png",
- "thiserror 2.0.21",
- "windows-sys 0.61.2",
 ]
 
 [[package]]

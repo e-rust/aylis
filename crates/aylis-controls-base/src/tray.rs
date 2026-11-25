@@ -40,6 +40,16 @@ pub struct TrayIcon {
     /// Escolher um item dispara o `on_click` dele (e o `on_item_click` do menu) e o `on_menu`
     /// daqui, com o texto. Vence o `menu_items`. O relatório do Tabernáculo, C26.
     pub popup_menu: Option<ComponentId>,
+    /// O GUID fixo do ícone (`{0F8A1B2C-3D4E-5F60-7182-93A4B5C6D7E8}`); vazio = sem. O Windows
+    /// lembra se o ícone fica na barra ou no "^" por ele, entre execuções e versões do app.
+    /// Preso ao caminho do exe: se o exe mudar de pasta, o ícone não aparece até usar outro
+    /// GUID (o exe assinado pelo mesmo editor não tem essa trava). Um por ícone. Só no Windows.
+    pub guid: String,
+    /// O número fixo do ícone no Windows (o `uID`); 0 = o que o Aylis escolher. Sem GUID, o
+    /// Windows lembra o lugar do ícone pelo caminho do exe mais este número: o mesmo número do
+    /// programa que o app substitui, no mesmo caminho, herda o lugar dele. Um por ícone. Só no
+    /// Windows.
+    pub tray_uid: u32,
     loaded: RefCell<(String, Vec<Arc<Vec<u8>>>)>,
     menu: Cell<Option<ComponentId>>,
 }
@@ -56,6 +66,8 @@ impl Default for TrayIcon {
             menu_items: String::new(),
             menu_theme: "light".into(),
             popup_menu: None,
+            guid: String::new(),
+            tray_uid: 0,
             loaded: RefCell::default(),
             menu: Cell::new(None),
         }
@@ -246,7 +258,9 @@ impl Component for TrayIcon {
         visible: bool => "Behavior",
         menu_items: String as RecordList(&TRAY_MENU_ITEM) => "Behavior",
         menu_theme: String => "Appearance",
-        popup_menu: Option<ComponentId> => "Behavior";
+        popup_menu: Option<ComponentId> => "Behavior",
+        guid: String => "Behavior",
+        tray_uid: u32 => "Behavior";
         events: on_click: (), on_dbl_click: (), on_menu: String, on_context: PointerEvent
     }
 
@@ -557,6 +571,8 @@ impl aylis_core::PlatformHooks for TrayIcon {
             badge: self.badge.clone(),
             badge_color: self.badge_color,
             visible: self.visible,
+            guid: aylis_core::parse_guid(&self.guid),
+            uid: self.tray_uid,
         })
     }
 }

@@ -156,7 +156,7 @@ pub mod prelude {
         SplitButton, Splitter, StatusBar, Stepper, Suggestion, SwipeAction, Switch, Symbol, SyncEvent,
         SyncKind, syntax, SystemBars, Tab, TabControl, TabDrop, TabItem, TableSeparator, TabMove, TabPosition,
         TabStrip, TankLevel, Taskbar, TEXT_EFFECT, textmate, textmate_theme, Thermometer, TimeEdit, Timeline,
-        TimePicker, Timer, TimingEditor, TitleAlign, TitleBar, toast, ToastKind, ToastStack, ToolBar,
+        TimePicker, Timer, TimingEditor, TitleAlign, TitleBar, toast, ToastKind, ToastStack, ToolBar, TOPMOST_LOST, TopmostLost,
         TrackBar, trader, TrayIcon, TREE_NODE, TreeLeafLayout, TreeNodeRects, TreeView, unproject, UpDown,
         Uploader, UrlScheme, validate_form, ValueFormat, Valve, ValveState, Vibration, VirtualList,
         WakeAppAction, Waveform, WheelPicker, window_state_commands, WindowCorners, WindowSettings,

@@ -13,6 +13,63 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Ajustes de 25/11/2026: a bandeja e o sempre por cima com o shell**
+
+Decididos pelo autor em 25/11 (histórico, seção 21). Feitos, para o Windows (roteiro, item 199):
+
+- **O identificador fixo do ícone da bandeja.** O Windows 11 lembra se o ícone fica na barra
+  ou no "^" pelo caminho do exe mais o `uID`, ou pelo GUID (`NIF_GUID`). O `TrayIcon` ganhou:
+  - `guid` (texto; vazio = sem): o `with_guid` do `tray-icon`. Preso ao caminho do exe
+    (documentado no campo e em funcionamento.md);
+  - `tray_uid` (número; 0 = o de antes): o `uID` fixo, para herdar o lugar do ícone de um
+    programa que o app substitui no mesmo caminho. O `tray-icon` 0.25 numera pelo contador
+    interno (o primeiro ícone sai com o 2, porque o `TrayIconBuilder::new` gasta o 1 no
+    `TrayIconId`) e não deixa escolher: a cópia em `third_party/tray_icon` (publicável como
+    `aylis-tray-icon`, como a `aylis-accesskit-android`) tem o `with_uid(u32)`. Fica fora do
+    workspace (`exclude`): como membro, as features opcionais dela (o GTK 4 do `muda`, o `ksni`)
+    entravam todas no `Cargo.lock`.
+  - Trocar o `guid` ou o `tray_uid` com o app rodando refaz o ícone; dois ícones com o mesmo
+    valor dão um aviso no console.
+  - *Achado no original:* o `set_tooltip` não põe o `NIF_GUID`, e num ícone com GUID a dica
+    nunca mudava. Corrigido na cópia. O texto das duas mudanças para o projeto original está
+    em `third_party/tray_icon/UPSTREAM.md` (sem PR aberto).
+  - *Conferido nesta máquina* (`desktop_checks tray_id`, Windows 11 26300): com `tray_uid` 1, o
+    `Shell_NotifyIconGetRect` acha o ícone por `(hWnd, 1)` e o
+    `HKCU\Control Panel\NotifyIconSettings` grava `UID = 1` para o exe; com o GUID, grava
+    `IconGuid`. A dica trocada aparece no "^" (lida pela automação da interface) nos dois, o
+    indicador troca, e os dois saem ao liberar o componente. Também com um ícone de `tray_uid` 7
+    e outro sem identidade (o contador deu o 3).
+  - *Não conferido:* o lugar herdado de um programa de verdade (é o que o app que pediu vai ver
+    na estação dele); marcar `IsPromoted` no registro por fora não vale até o Explorer reiniciar.
+- **O `on_topmost_lost` diz quem cobriu.** O evento leva o registro `TopmostLost` (`process`, o
+  nome do exe; `window_class`; `title`; `system`, verdadeiro para o shell do Windows). O padrão continua
+  avisando sempre; o app decide (o `desktop_checks topmost` não volta ao topo com `system`). O campo da classe é
+  `window_class`, e não `class`: o `class` é palavra reservada em Java, C#, C++, Python e Pascal
+  (o registro gerado não compilava; o `language_projects` pegou).
+  - O shell: pelo processo (`explorer.exe`, `StartMenuExperienceHost.exe`,
+    `ShellExperienceHost.exe`, `ShellHost.exe`, `SearchHost.exe`/`SearchApp.exe`/`SearchUI.exe`,
+    `TextInputHost.exe`, `Widgets.exe`/`WidgetBoard.exe`, `LockApp.exe`) ou, se o processo não
+    pode ser lido, pela classe (`Shell_TrayWnd`, `Shell_SecondaryTrayWnd`,
+    `NotifyIconOverflowWindow`, `TopLevelWindowForOverflowXamlIsland`,
+    `XamlExplorerHostIslandWindow` e o `_WASDK`, `MultitaskingViewFrame`, `TaskSwitcherWnd`,
+    `ForegroundStaging`). Levantado nesta máquina pelo `GetClassName` das janelas do shell.
+  - Sem o `WS_EX_TOPMOST` (outro programa tirou o topo do form), quem cobriu é a janela de
+    primeiro plano, se for de outro processo; senão, o registro vem vazio.
+  - O catálogo passou a ter, no `$records`, os registros que só os eventos levam (o
+    `TopmostLost`, e também o `CalendarEventClick` e o `BluetoothValue`, que faltavam): sem
+    isso, o handler tipado em Python, C#, Java, Go, C++, TypeScript e Pascal citava uma classe
+    que o gerador não escrevia. O `GENERATOR_VERSION` não sobe: o carimbo do catálogo já faz os
+    projetos regenerarem.
+  - *Conferido nesta máquina* (`desktop_checks topmost`): o "^" aberto por cima do form dá
+    `process "explorer.exe" window_class "TopLevelWindowForOverflowXamlIsland" system true`; as
+    configurações rápidas (o botão de rede), `explorer.exe`, `Xaml_WindowedPopupClass`, `system
+    true`; o `desktop_checks cover` (outro processo sempre por cima), `process
+    "desktop_checks.exe"`, `system false`, e o form volta ao topo.
+  - *Não conferido na tela:* o Iniciar, a pesquisa, a central de notificações e o Alt+Tab não
+    abriram por automação nesta máquina (havia uma janela de tela cheia sempre por cima de outro
+    programa aberta); ficam pela lista de processos e classes, no roteiro. O Windows 10 (o "^"
+    é o `NotifyIconOverflowWindow`) em testes-em-dispositivos.
+
 **Ajustes de 25/11/2026: o vídeo na placa integrada (uma parede de vídeos no Direct2D)**
 
 Uma parede de 16 a 64 vídeos (`GpuFrame` no `VideoPlayer`), cada célula com uma marca d'água

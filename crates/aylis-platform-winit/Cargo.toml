@@ -112,7 +112,9 @@ windows-core = "0.62"
 wry = { version = "0.57", optional = true }
 
 [target.'cfg(any(windows, target_os = "macos"))'.dependencies]
-tray-icon = { version = "0.25", optional = true, default-features = false }
+# Cópia com o `with_uid` (o uID fixo do ícone no Windows; third_party/tray_icon/AYLIS.md). No
+# crates.io, publicada como `aylis-tray-icon` (o nome do original é do Tauri).
+tray-icon = { package = "aylis-tray-icon", version = "0.25.1", path = "../../third_party/tray_icon", optional = true, default-features = false }
 
 # Linux: o WebKitGTK do wry roda no laço do GTK, que o aylis avança junto com o dele.
 [target.'cfg(target_os = "linux")'.dependencies]

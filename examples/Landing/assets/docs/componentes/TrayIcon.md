@@ -24,6 +24,8 @@
 | `visible` | Visível | lógico | O ícone aparece na bandeja; desligado, sai dela. |
 | `menu_items` | Itens do menu | lista de `TrayMenuItem` | O menu do clique direito, em JSON (o registro `TRAY_MENU_ITEM`): `[{"text": "Abrir"}, {"separator": true}, {"text": "Sair"}]`. |
 | `popup_menu` | Menu de contexto | componente | O menu do clique direito por um `PopupMenu`: os `MenuItem` dele, com `enabled`, `checked`, `header`, divisória e submenu (recuado). Escolher um item dispara o `on_click` dele (e o `on_item_click` do menu) e o `on_menu` daqui, com o texto. Vence o `menu_items`. O relatório do Tabernáculo, C26. |
+| `guid` | GUID | texto | O GUID fixo do ícone (`{0F8A1B2C-3D4E-5F60-7182-93A4B5C6D7E8}`); vazio = sem. O Windows lembra se o ícone fica na barra ou no "^" por ele, entre execuções e versões do app. Preso ao caminho do exe: se o exe mudar de pasta, o ícone não aparece até usar outro GUID (o exe assinado pelo mesmo editor não tem essa trava). Um por ícone. Só no Windows. |
+| `tray_uid` | Número na bandeja | inteiro | O número fixo do ícone no Windows (o `uID`); 0 = o que o Aylis escolher. Sem GUID, o Windows lembra o lugar do ícone pelo caminho do exe mais este número: o mesmo número do programa que o app substitui, no mesmo caminho, herda o lugar dele. Um por ícone. Só no Windows. |
 
 ## Eventos
 

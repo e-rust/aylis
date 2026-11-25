@@ -485,3 +485,12 @@ corrigidos sem decisão). Decidido pelo autor em 25/11:
 |---|---|
 | Uma opção no form para juntar os quadros dos vídeos numa pintura, a um ritmo menor que o do monitor | "Aprovo que seja feito com opção por padrão desligado" (a recomendação era esperar a cópia parcial e medir). |
 | Um modo de mistura `Invert` (o `MASK_INVERT` do Direct2D), mais barato que o `difference` de uma camada branca | Não, como recomendado: a `exclusion` com o caminho rápido dá o mesmo pixel para texto branco, sem modo novo na API e igual nos três renderizadores; a documentação do `save_layer_blend` diz o custo e recomenda a `exclusion`. |
+
+## 21. A bandeja e o "sempre por cima" que convivem com o shell do Windows (25/11)
+
+Decididos pelo autor em 25/11, como recomendado:
+
+| Pedido | Decisão |
+|---|---|
+| Fixar o identificador do ícone da bandeja (o Windows 11 lembra o lugar do ícone, na barra ou no "^", pelo exe e pelo uID, ou pelo GUID) | Os dois, no `TrayIcon`: o `guid` (que o `tray-icon` já aceita; preso ao caminho do exe, documentado) e o `tray_uid` (o número fixo, para herdar o lugar de um programa anterior), com o ajuste no `tray-icon` levado também ao projeto original. |
+| O `on_topmost_lost` sai também quando quem cobre é o próprio Windows (o "^" da bandeja, o Iniciar, a central de notificações) | O evento traz quem cobriu: o processo, a classe da janela e `system` (o shell do Windows). O app decide; o padrão continua avisando sempre. |

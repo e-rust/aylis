@@ -1879,11 +1879,12 @@ impl ApplicationHandler for App {
                 }
             }
         }
-        // Outra janela sempre por cima passou à frente de um form `topmost`.
+        // Outra janela sempre por cima passou à frente de um form `topmost`: o evento leva quem
+        // cobriu (o registro `TopmostLost`, em JSON).
         #[cfg(windows)]
-        for form in win32::take_topmost_lost() {
+        for (form, by) in win32::take_topmost_lost() {
             if self.ui.contains(form) {
-                self.ui.fire(form, "on_topmost_lost", &aylis_core::EventArgs::None);
+                self.ui.fire(form, "on_topmost_lost", &aylis_core::EventArgs::Text(by));
                 self.ui.process_events();
             }
         }

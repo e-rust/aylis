@@ -209,6 +209,7 @@ type
   PKeyEvent = ^TKeyEvent;
   PPointerEvent = ^TPointerEvent;
   PSwipeEvent = ^TSwipeEvent;
+  PTopmostLost = ^TTopmostLost;
   PWheelEvent = ^TWheelEvent;
   { Um registro do acesso tipado (no fio, um objeto JSON com os mesmos campos). }
   TGestureEvent = record
@@ -261,6 +262,15 @@ type
     Vy: Double;
   end;
   TSwipeEventArray = array of TSwipeEvent;
+
+  { Um registro do acesso tipado (no fio, um objeto JSON com os mesmos campos). }
+  TTopmostLost = record
+    Process: string;
+    WindowClass: string;
+    Title: string;
+    System: Boolean;
+  end;
+  TTopmostLostArray = array of TTopmostLost;
 
   { Um registro do acesso tipado (no fio, um objeto JSON com os mesmos campos). }
   TWheelEvent = record
@@ -1816,6 +1826,14 @@ function SwipeEventToJSON(const R: TSwipeEvent): TJSONObject;
 function SwipeEventListToJSON(const A: array of TSwipeEvent): TJSONArray;
 function SwipeEventText(const R: TSwipeEvent): TJSONData;
 function SwipeEventListText(const A: TSwipeEventArray): TJSONData;
+function TopmostLostFromJSON(Data: TJSONData): TTopmostLost;
+function TopmostLostListFromJSON(Data: TJSONData): TTopmostLostArray;
+function TopmostLostFromText(Data: TJSONData): TTopmostLost;
+function TopmostLostListFromText(Data: TJSONData): TTopmostLostArray;
+function TopmostLostToJSON(const R: TTopmostLost): TJSONObject;
+function TopmostLostListToJSON(const A: array of TTopmostLost): TJSONArray;
+function TopmostLostText(const R: TTopmostLost): TJSONData;
+function TopmostLostListText(const A: TTopmostLostArray): TJSONData;
 function WheelEventFromJSON(Data: TJSONData): TWheelEvent;
 function WheelEventListFromJSON(Data: TJSONData): TWheelEventArray;
 function WheelEventFromText(Data: TJSONData): TWheelEvent;
@@ -3661,6 +3679,106 @@ begin
   end;
   try
     Result := SwipeEventListFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function TopmostLostFromJSON(Data: TJSONData): TTopmostLost;
+var
+  O: TJSONObject;
+begin
+  Result := Default(TTopmostLost);
+  if (Data = nil) or (Data.JSONType <> jtObject) then
+    Exit;
+  O := TJSONObject(Data);
+  Result.Process := O.Get('process', '');
+  Result.WindowClass := O.Get('window_class', '');
+  Result.Title := O.Get('title', '');
+  Result.System := O.Get('system', False);
+end;
+
+function TopmostLostToJSON(const R: TTopmostLost): TJSONObject;
+begin
+  Result := TJSONObject.Create;
+  Result.Add('process', R.Process);
+  Result.Add('window_class', R.WindowClass);
+  Result.Add('title', R.Title);
+  Result.Add('system', R.System);
+end;
+
+function TopmostLostListFromJSON(Data: TJSONData): TTopmostLostArray;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  SetLength(Result, Data.Count);
+  for I := 0 to Data.Count - 1 do
+    Result[I] := TopmostLostFromJSON(Data.Items[I]);
+end;
+
+function TopmostLostListToJSON(const A: array of TTopmostLost): TJSONArray;
+var
+  I: Integer;
+begin
+  Result := TJSONArray.Create;
+  for I := 0 to High(A) do
+    Result.Add(TopmostLostToJSON(A[I]));
+end;
+
+function TopmostLostText(const R: TTopmostLost): TJSONData;
+var
+  J: TJSONObject;
+begin
+  J := TopmostLostToJSON(R);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function TopmostLostListText(const A: TTopmostLostArray): TJSONData;
+var
+  J: TJSONArray;
+begin
+  J := TopmostLostListToJSON(A);
+  try
+    Result := TJSONString.Create(J.AsJSON);
+  finally
+    J.Free;
+  end;
+end;
+
+function TopmostLostFromText(Data: TJSONData): TTopmostLost;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := TopmostLostFromJSON(J);
+  finally
+    J.Free;
+  end;
+end;
+
+function TopmostLostListFromText(Data: TJSONData): TTopmostLostArray;
+var
+  J: TJSONData;
+begin
+  try
+    J := GetJSON(AsText(Data));
+  except
+    J := nil;
+  end;
+  try
+    Result := TopmostLostListFromJSON(J);
   finally
     J.Free;
   end;

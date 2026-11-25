@@ -815,3 +815,5 @@ arguments	Argumentos	Arguments	Argumentos	Arguments	Argumente	Аргументы
 user_agent	Identificação do cliente (User-Agent)	User agent	Agente de usuario	Agent utilisateur	User-Agent	User-Agent	用户代理	ユーザーエージェント	وكيل المستخدم	ইউজার এজেন্ট	यूज़र एजेंट	Agen pengguna
 request_timeout	Prazo do pedido	Request timeout	Tiempo límite de la solicitud	Délai de la requête	Anfrage-Zeitlimit	Тайм-аут запроса	请求超时	リクエストのタイムアウト	مهلة الطلب	অনুরোধের সময়সীমা	अनुरोध टाइमआउट	Batas waktu permintaan
 blend_compositor	Compositor da mistura	Blend compositor	Compositor de fusión	Compositeur de fusion	Mischungs-Compositor	Компоновщик наложения	混合合成器	合成処理（ブレンド）	مُركِّب المزج	ব্লেন্ড কম্পোজিটর	मिश्रण कम्पोज़िटर	Kompositor campuran
+guid	GUID	GUID	GUID	GUID	GUID	GUID	GUID	GUID	المعرّف GUID	GUID	GUID	GUID
+tray_uid	Número na bandeja	Tray ID	Número en la bandeja	Numéro dans la zone de notification	Nummer im Infobereich	Номер в трее	托盘编号	トレイ番号	الرقم في علبة النظام	ট্রে নম্বর	ट्रे नंबर	Nomor di baki

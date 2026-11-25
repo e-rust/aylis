@@ -227,6 +227,28 @@ clique maximiza. Por baixo, `ui.window_command(form, WindowCommand::…)` (minim
 maximizar, fechar, arrastar, redimensionar por uma borda, sempre por cima) vale para
 qualquer controle; o exemplo `titlebar` mostra.
 
+### Sempre por cima e quem cobriu (`on_topmost_lost`)
+
+Um form `topmost` recebe o `on_topmost_lost` quando uma janela sempre por cima de outro
+processo passa à frente dele (Windows; nas outras plataformas o evento não sai). O evento leva
+o registro `TopmostLost`: `process` (o nome do exe), `window_class` (a classe da janela), `title` e
+`system`, verdadeiro quando quem cobriu é o shell do Windows (o Explorer, que tem a barra de
+tarefas, a bandeja e o "^" e as configurações rápidas; o Iniciar, a central de notificações, a
+pesquisa, o alternador de tarefas, o teclado virtual e o painel de emoji, os widgets e a tela de
+bloqueio). O evento sai sempre: o app decide. Para não cobrir o "^" da bandeja ou o Iniciar
+aberto por cima do form, volte ao topo só quando `system` for falso:
+
+```rust
+pub fn form_topmost_lost(&mut self, ui: &mut Ui, sender: Form, value: TopmostLost) {
+    if !value.system {
+        ui.window_command(sender.id, WindowCommand::UpdateLevel);
+    }
+}
+```
+
+O exemplo `desktop_checks topmost` mostra (e `desktop_checks cover` faz outra janela sempre por
+cima).
+
 ### A janela no Linux: Wayland e GNOME
 
 O que muda no Wayland (conferido num Ubuntu com GNOME e no WSLg em 24/11):
@@ -271,6 +293,20 @@ padrão, também as cores e a fonte; veja docs/temas.md). O menu é um form do A
 tudo e fora da barra de tarefas, e fecha ao perder o foco. Eventos: `on_click`,
 `on_dbl_click`, `on_menu` (o item). Para isso os forms ganharam `topmost`,
 `show_in_taskbar`, `on_activate` e `on_deactivate`. Exemplo `tray`.
+
+O lugar do ícone (na barra ou no "^"), que o Windows lembra entre execuções, segue a identidade
+do ícone, que o `TrayIcon` pode fixar (só no Windows; nas outras plataformas, sem efeito):
+
+- `guid`: o texto de um GUID (`{0F8A1B2C-3D4E-5F60-7182-93A4B5C6D7E8}`), vazio = sem. O
+  Windows prende o GUID ao caminho do exe: se o exe mudar de pasta, o ícone não aparece até
+  usar outro GUID (o exe assinado pelo mesmo editor não tem essa trava);
+- `tray_uid`: o número do ícone (o `uID`), 0 = o que o Aylis escolher. Sem GUID, o Windows
+  lembra pelo caminho do exe mais este número: um app que substitui outro programa no mesmo
+  caminho herda o lugar do ícone dele com o mesmo número.
+
+Um valor por ícone: dois ícones do app com o mesmo `guid` ou `tray_uid` dão um aviso no console.
+A cópia do `tray-icon` com o `uID` fixo fica em `third_party/tray_icon` (veja o `AYLIS.md` de
+lá).
 
 ### Notificações do sistema
 

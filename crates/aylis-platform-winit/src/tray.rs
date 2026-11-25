@@ -18,6 +18,9 @@ struct Hosted {
     shown: (usize, String, aylis_core::Color, usize, u32),
     tooltip: String,
     visible: bool,
+    /// O GUID e o `uID` com que o ícone foi registrado: mudou, o ícone é refeito (o Windows
+    /// não troca a identidade de um ícone registrado).
+    identity: (Option<u128>, u32),
 }
 
 #[derive(Default)]
@@ -89,6 +92,13 @@ impl Trays {
         }
         let specs = ui.trays();
         let mut next: Option<f64> = None;
+        // Um GUID por ícone: o Windows recusa o segundo com o mesmo (e o mesmo `uID` em dois
+        // ícones mistura o lugar lembrado dos dois).
+        for (i, (_, a)) in specs.iter().enumerate() {
+            if specs[..i].iter().any(|(_, b)| (a.guid.is_some() && a.guid == b.guid) || (a.uid != 0 && a.uid == b.uid)) {
+                aylis_core::stderr_line!("aylis: TrayIcon: dois ícones com o mesmo guid ou tray_uid");
+            }
+        }
         for (id, spec) in &specs {
             let frames = spec.icons.len().max(1);
             let interval = (spec.interval_ms.max(16) as f64) / 1000.0;
@@ -98,6 +108,10 @@ impl Trays {
                 next = Some(next.map_or(at, |n: f64| n.min(at)));
             }
             let key = (frame, spec.badge.clone(), spec.badge_color, spec.icons.get(frame).map_or(0, |b| b.len()), tray_pixels(scale));
+            if self.hosted.get(id).is_some_and(|h| h.identity != (spec.guid, spec.uid)) {
+                // Sai antes de registrar o novo: o mesmo GUID não pode estar em dois ícones.
+                self.hosted.remove(id);
+            }
             match self.hosted.get_mut(id) {
                 Some(h) => {
                     if h.shown != key {
@@ -121,10 +135,18 @@ impl Trays {
                     if !spec.tooltip.is_empty() {
                         builder = builder.with_tooltip(&spec.tooltip);
                     }
+                    // A identidade fixa (o lugar na barra ou no "^" que o Windows lembra); o
+                    // macOS ignora as duas.
+                    if let Some(guid) = spec.guid {
+                        builder = builder.with_guid(guid);
+                    }
+                    if spec.uid != 0 {
+                        builder = builder.with_uid(spec.uid);
+                    }
                     match builder.build() {
                         Ok(icon) => {
                             let _ = icon.set_visible(spec.visible);
-                            self.hosted.insert(*id, Hosted { icon, shown: key, tooltip: spec.tooltip.clone(), visible: spec.visible });
+                            self.hosted.insert(*id, Hosted { icon, shown: key, tooltip: spec.tooltip.clone(), visible: spec.visible, identity: (spec.guid, spec.uid) });
                         }
                         Err(e) => aylis_core::stderr_line!("aylis: TrayIcon: {e}"),
                     }

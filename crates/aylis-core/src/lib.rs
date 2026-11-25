@@ -138,7 +138,7 @@ pub use orientation::{FormOrientation, ScreenOrientation};
 pub use system_bars::{BarIcons, SystemBarsStyle};
 pub use transition::{TRANSITION_MS, Transition};
 pub use taskbar::{JumpTask, TaskbarEvent, TaskbarProgress, TaskbarSpec, ThumbButton};
-pub use tray::{TrayEvent, TrayEventKind, TraySpec};
+pub use tray::{TrayEvent, TrayEventKind, TraySpec, parse_guid};
 pub use window::{BorderColor, ResizeEdge, WINDOW_SETTINGS_CLASS, WindowBackdrop, WindowCommand, WindowOptions};
 pub use geometry::{Bounds, PointF, RectF, SizeF};
 pub use icons::Icon;

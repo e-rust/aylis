@@ -6,8 +6,10 @@
 //! ```
 //!
 //! - `topmost` (item 6): um form `topmost` com `no_activate`, no canto; escreve
-//!   `on_topmost_lost` quando outra janela sempre por cima passa à frente (o Gerenciador de
-//!   Tarefas com "Sempre visível") e volta ao topo 1 s depois (`UpdateLevel`). Aos 2 s, o
+//!   `on_topmost_lost` com quem cobriu quando outra janela sempre por cima passa à frente (o
+//!   Gerenciador de Tarefas com "Sempre visível", o cenário `cover`) e volta ao topo 1 s depois
+//!   (`UpdateLevel`), menos quando quem cobriu é o shell do Windows (`system`: o "^" da bandeja,
+//!   o Iniciar, a central de notificações). Aos 2 s, o
 //!   `place` (pixels físicos, no monitor 0, sem o foco) e o lugar que ficou;
 //! - `cover`: outra janela sempre por cima, que ativa e cobre o canto (para o `topmost`);
 //! - `border` (item 7): tela cheia sem moldura com `border_color: none`; aos 2 s tira a imagem do
@@ -27,6 +29,9 @@
 //!   aos 2 s e a cada 5 s, o `ui.lock_keys()` fora de um evento;
 //! - `tray` (item 18, com `--features tray`): o clique direito no ícone escreve `on_context`; o
 //!   primeiro é recusado, o segundo abre; aos 3 s o `open_menu` abre por código no mouse;
+//! - `tray_id [uid] [guid]` (25/11, com `--features tray`): dois ícones, um com o `tray_uid`
+//!   (padrão 1) e outro com o `guid`; aos 2 s trocam a dica e o indicador, aos 4 s o do GUID
+//!   sai e aos 6 s o do número;
 //! - `transparency` (item 21): os "Efeitos de transparência" agora e cada mudança (desligue e
 //!   ligue em Configurações → Personalização → Cores).
 //! - `session`: a sessão agora (bloqueada, conectada) e cada mudança (`on_session_change`):
@@ -76,8 +81,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ui.set_prop(form, "height", 160.0)?;
             let settings = ui.create("WindowSettings", Some(form))?;
             ui.set_prop(settings, "no_activate", true)?;
-            ui.on(form, "on_topmost_lost", move |ui, f, _| {
-                say("on_topmost_lost".into());
+            ui.on(form, "on_topmost_lost", move |ui, f, args| {
+                // Quem cobriu: o shell do Windows (o "^" da bandeja, o Iniciar) não é tirado da
+                // frente; outro programa sempre por cima, sim.
+                let by = <aylis_controls::TopmostLost as aylis_core::EventValue>::from_args(args).unwrap_or_default();
+                say(format!("on_topmost_lost: process {:?} window_class {:?} title {:?} system {}", by.process, by.window_class, by.title, by.system));
+                if by.system {
+                    return;
+                }
                 ui.set_timeout(1000, move |ui| {
                     ui.window_command(f, WindowCommand::UpdateLevel);
                     say("UpdateLevel".into());
@@ -264,6 +275,35 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ui.set_timeout(3000, move |ui| {
                 let _ = ui.invoke(tray, "open_menu", &[(-1).into(), (-1).into()]);
                 say("open_menu".into());
+            });
+        }
+        // A identidade fixa dos ícones: um com o `tray_uid` e outro com o `guid` (os dados na
+        // linha de comando; vazio = sem); aos 2 s trocam a dica e o indicador, aos 4 s o do GUID
+        // sai e aos 6 s o do número também.
+        "tray_id" => {
+            let uid: u32 = args.get(2).and_then(|t| t.parse().ok()).unwrap_or(1);
+            let guid = args.get(3).cloned().unwrap_or_else(|| "{6B1C3F5A-2D4E-4F60-8A9B-0C1D2E3F4A5B}".into());
+            let by_uid = ui.create("TrayIcon", Some(form))?;
+            ui.set_prop(by_uid, "hint", format!("desktop_checks uid {uid}"))?;
+            ui.set_prop(by_uid, "tray_uid", uid as i64)?;
+            let by_guid = ui.create("TrayIcon", Some(form))?;
+            ui.set_prop(by_guid, "hint", "desktop_checks guid")?;
+            ui.set_prop(by_guid, "guid", guid.clone())?;
+            say(format!("tray_id: uid {uid} e guid {guid}"));
+            ui.set_timeout(2000, move |ui| {
+                let _ = ui.set_prop(by_uid, "hint", format!("desktop_checks uid {uid} trocado"));
+                let _ = ui.set_prop(by_uid, "badge", "3");
+                let _ = ui.set_prop(by_guid, "hint", "desktop_checks guid trocado");
+                let _ = ui.set_prop(by_guid, "badge", "•");
+                say("trocados".into());
+            });
+            ui.set_timeout(4000, move |ui| {
+                let _ = ui.free(by_guid);
+                say("guid removido".into());
+            });
+            ui.set_timeout(6000, move |ui| {
+                let _ = ui.free(by_uid);
+                say("uid removido".into());
             });
         }
         "transparency" => {

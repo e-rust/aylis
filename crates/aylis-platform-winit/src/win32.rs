@@ -1781,8 +1781,9 @@ thread_local! {
     /// Os forms que pedem estar sempre por cima (`topmost`), e se já foram dados como cobertos
     /// (o `on_topmost_lost` sai uma vez por vez que perdem o topo).
     static TOPMOST: RefCell<HashMap<ComponentId, bool>> = RefCell::new(HashMap::new());
-    /// Os forms que perderam o topo desde a última vez (o `App` dispara o evento).
-    static TOPMOST_LOST: RefCell<Vec<ComponentId>> = const { RefCell::new(Vec::new()) };
+    /// Os forms que perderam o topo desde a última vez, com o JSON de quem cobriu (o registro
+    /// `TopmostLost`; o `App` dispara o evento).
+    static TOPMOST_LOST: RefCell<Vec<(ComponentId, String)>> = const { RefCell::new(Vec::new()) };
     /// Os ganchos de eventos do sistema (a janela em primeiro plano mudou; uma janela apareceu,
     /// mudou de ordem ou de lugar), enquanto há algum form por cima.
     static TOPMOST_HOOKS: std::cell::Cell<(isize, isize)> = const { std::cell::Cell::new((0, 0)) };
@@ -1840,16 +1841,19 @@ unsafe extern "system" fn windows_changed(_hook: windows::Win32::UI::Accessibili
 }
 
 /// Confere cada form que pede o topo: coberto por uma janela sempre por cima de outro processo
-/// (ou sem o próprio `WS_EX_TOPMOST`), entra na fila do `on_topmost_lost`; de volta à frente,
-/// pode avisar de novo na próxima vez.
+/// (ou sem o próprio `WS_EX_TOPMOST`), entra na fila do `on_topmost_lost` com quem cobriu; de
+/// volta à frente, pode avisar de novo na próxima vez.
 pub(crate) fn check_topmost() {
     let forms: Vec<(ComponentId, bool)> = TOPMOST.with(|t| t.borrow().iter().map(|(f, c)| (*f, *c)).collect());
     let mut lost = Vec::new();
     for (form, was_covered) in forms {
         let Some(handle) = hwnd(form) else { continue };
-        let covered = topmost_covered(HWND(handle as *mut _));
-        if covered && !was_covered {
-            lost.push(form);
+        let cover = topmost_cover(HWND(handle as *mut _));
+        let covered = cover.is_some();
+        if let Some(by) = cover
+            && !was_covered
+        {
+            lost.push((form, covering_window(by).to_json()));
         }
         TOPMOST.with(|t| {
             if let Some(c) = t.borrow_mut().get_mut(&form) {
@@ -1863,29 +1867,33 @@ pub(crate) fn check_topmost() {
     }
 }
 
-/// A janela perdeu o topo: sem o `WS_EX_TOPMOST`, ou com uma janela sempre por cima, visível,
-/// de outro processo, acima dela e por cima de parte dela.
-fn topmost_covered(hwnd: HWND) -> bool {
+/// A janela perdeu o topo: sem o `WS_EX_TOPMOST` (quem cobriu é a janela de primeiro plano, se
+/// for de outro processo), ou com uma janela sempre por cima, visível, de outro processo, acima
+/// dela e por cima de parte dela (essa). `None`: não perdeu.
+fn topmost_cover(hwnd: HWND) -> Option<Option<HWND>> {
     use windows::Win32::Foundation::RECT;
     use windows::Win32::UI::WindowsAndMessaging::{
-        GW_HWNDPREV, GWL_EXSTYLE, GetWindow, GetWindowLongW, GetWindowRect, GetWindowThreadProcessId, IsIconic, IsWindowVisible, WS_EX_TOPMOST,
+        GW_HWNDPREV, GWL_EXSTYLE, GetForegroundWindow, GetWindow, GetWindowLongW, GetWindowRect, GetWindowThreadProcessId, IsIconic, IsWindowVisible, WS_EX_TOPMOST,
     };
+    let pid = std::process::id();
     // SAFETY: só lê o estado e a ordem das janelas; os HWND são só comparados.
     unsafe {
         if !IsWindowVisible(hwnd).as_bool() || IsIconic(hwnd).as_bool() {
-            return false;
+            return None;
         }
         if GetWindowLongW(hwnd, GWL_EXSTYLE) as u32 & WS_EX_TOPMOST.0 == 0 {
-            return true;
+            let front = GetForegroundWindow();
+            let mut owner = 0u32;
+            GetWindowThreadProcessId(front, Some(&mut owner));
+            return Some((!front.is_invalid() && owner != pid).then_some(front));
         }
         let mut mine = RECT::default();
         if GetWindowRect(hwnd, &mut mine).is_err() {
-            return false;
+            return None;
         }
-        let pid = std::process::id();
         let mut cur = hwnd;
         for _ in 0..4096 {
-            let Ok(above) = GetWindow(cur, GW_HWNDPREV) else { return false };
+            let Ok(above) = GetWindow(cur, GW_HWNDPREV) else { return None };
             cur = above;
             if !IsWindowVisible(cur).as_bool() || IsIconic(cur).as_bool() || GetWindowLongW(cur, GWL_EXSTYLE) as u32 & WS_EX_TOPMOST.0 == 0 {
                 continue;
@@ -1897,14 +1905,104 @@ fn topmost_covered(hwnd: HWND) -> bool {
             }
             let mut r = RECT::default();
             if GetWindowRect(cur, &mut r).is_ok() && r.left < mine.right && r.right > mine.left && r.top < mine.bottom && r.bottom > mine.top {
-                return true;
+                return Some(Some(cur));
             }
         }
     }
-    false
+    None
+}
+
+/// Quem cobriu (o registro `TopmostLost` do `on_topmost_lost`).
+#[derive(Clone, Debug, Default, PartialEq)]
+pub(crate) struct Covering {
+    pub process: String,
+    pub window_class: String,
+    pub title: String,
+    pub system: bool,
+}
+
+impl Covering {
+    pub(crate) fn to_json(&self) -> String {
+        serde_json::json!({"process": self.process, "window_class": self.window_class, "title": self.title, "system": self.system}).to_string()
+    }
+}
+
+/// Os processos do shell do Windows: o Explorer (a barra de tarefas, a bandeja e o "^", o
+/// alternador de tarefas e, no Windows 11 recente, os painéis em ilha XAML), o Iniciar, a
+/// central de notificações e as configurações rápidas, a pesquisa, o teclado virtual e o painel
+/// de emoji, os widgets e a tela de bloqueio.
+const SHELL_PROCESSES: &[&str] = &[
+    "explorer.exe",
+    "startmenuexperiencehost.exe",
+    "shellexperiencehost.exe",
+    "shellhost.exe",
+    "searchhost.exe",
+    "searchapp.exe",
+    "searchui.exe",
+    "textinputhost.exe",
+    "widgets.exe",
+    "widgetboard.exe",
+    "lockapp.exe",
+];
+
+/// As classes das janelas do shell, para quando o nome do processo não pode ser lido: a barra de
+/// tarefas (`Shell_TrayWnd`, e a dos outros monitores), o "^" da bandeja (o do Windows 10 e o do
+/// 11), as ilhas XAML do Explorer (o alternador de tarefas, os painéis novos) e a visão de
+/// tarefas. Conferidas no Windows 11 (26300) pelo `GetClassName`.
+const SHELL_CLASSES: &[&str] = &[
+    "Shell_TrayWnd",
+    "Shell_SecondaryTrayWnd",
+    "NotifyIconOverflowWindow",
+    "TopLevelWindowForOverflowXamlIsland",
+    "XamlExplorerHostIslandWindow",
+    "XamlExplorerHostIslandWindow_WASDK",
+    "MultitaskingViewFrame",
+    "TaskSwitcherWnd",
+    "ForegroundStaging",
+];
+
+/// A janela é do shell do Windows, pelo processo (o nome do exe) ou pela classe.
+pub(crate) fn is_shell_window(process: &str, class: &str) -> bool {
+    SHELL_PROCESSES.contains(&process.to_ascii_lowercase().as_str()) || SHELL_CLASSES.contains(&class)
+}
+
+/// O processo, a classe e o título de uma janela de outro processo.
+fn covering_window(hwnd: Option<HWND>) -> Covering {
+    use windows::Win32::Foundation::CloseHandle;
+    use windows::Win32::System::Threading::{OpenProcess, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION, QueryFullProcessImageNameW};
+    use windows::Win32::UI::WindowsAndMessaging::{GetClassNameW, GetWindowTextW, GetWindowThreadProcessId};
+    let Some(hwnd) = hwnd else { return Covering::default() };
+    let mut class = [0u16; 256];
+    let mut title = [0u16; 512];
+    let mut pid = 0u32;
+    let mut path = [0u16; 1024];
+    let mut path_len = path.len() as u32;
+    // SAFETY: os buffers são locais e do tamanho passado; o processo é aberto só para ler o
+    // caminho do exe e fechado em seguida. Uma janela que sumiu no meio só devolve vazio.
+    let (class_len, title_len, path_ok) = unsafe {
+        let class_len = GetClassNameW(hwnd, &mut class);
+        let title_len = GetWindowTextW(hwnd, &mut title);
+        GetWindowThreadProcessId(hwnd, Some(&mut pid));
+        let mut ok = false;
+        if let Ok(process) = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid) {
+            ok = QueryFullProcessImageNameW(process, PROCESS_NAME_WIN32, windows::core::PWSTR(path.as_mut_ptr()), &mut path_len).is_ok();
+            let _ = CloseHandle(process);
+        }
+        (class_len, title_len, ok)
+    };
+    let text = |b: &[u16], n: i32| String::from_utf16_lossy(&b[..(n.max(0) as usize).min(b.len())]);
+    let process = if path_ok {
+        let full = String::from_utf16_lossy(&path[..(path_len as usize).min(path.len())]);
+        full.rsplit(['\\', '/']).next().unwrap_or_default().to_string()
+    } else {
+        String::new()
+    };
+    let class = text(&class, class_len);
+    let system = is_shell_window(&process, &class);
+    Covering { process, window_class: class, title: text(&title, title_len), system }
 }
 
 /// Os forms que perderam o topo desde a última vez.
-pub(crate) fn take_topmost_lost() -> Vec<ComponentId> {
+pub(crate) fn take_topmost_lost() -> Vec<(ComponentId, String)> {
     TOPMOST_LOST.with(|l| std::mem::take(&mut *l.borrow_mut()))
 }

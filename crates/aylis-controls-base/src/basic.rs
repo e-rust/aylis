@@ -152,6 +152,37 @@ impl PropEnum for BorderStyle {
     }
 }
 
+/// Quem cobriu um form `topmost` (o `on_topmost_lost`): a janela sempre por cima de outro
+/// processo que passou à frente dele. O app decide o que fazer: por exemplo, não voltar ao topo
+/// quando `system` é verdadeiro, para não cobrir o "^" da bandeja ou o Iniciar.
+#[derive(Clone, Debug, Default, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
+pub struct TopmostLost {
+    /// O nome do exe do dono da janela (`explorer.exe`, `Taskmgr.exe`); vazio se o sistema não
+    /// deixa ler (o processo de outro usuário ou de administrador).
+    pub process: String,
+    /// A classe da janela (`NotifyIconOverflowWindow`, `Windows.UI.Core.CoreWindow`).
+    pub window_class: String,
+    /// O título da janela, quando ela tem um.
+    pub title: String,
+    /// A janela é do shell do Windows: a bandeja e o "^", o Iniciar, a central de notificações,
+    /// a pesquisa, o alternador de tarefas (Alt+Tab, Win+Tab) e a barra de tarefas.
+    pub system: bool,
+}
+
+/// O registro do [`TopmostLost`] no acesso tipado.
+pub const TOPMOST_LOST: aylis_core::RecordInfo = aylis_core::RecordInfo {
+    name: "TopmostLost",
+    fields: &[("process", aylis_core::PropKind::String), ("window_class", aylis_core::PropKind::String), ("title", aylis_core::PropKind::String), ("system", aylis_core::PropKind::Bool)],
+};
+
+impl aylis_core::EventValue for TopmostLost {
+    const ARG: aylis_core::EventArg = aylis_core::EventArg::Value(aylis_core::PropKind::Record(&TOPMOST_LOST));
+    fn from_args(args: &EventArgs) -> Option<Self> {
+        crate::records::from_event(args)
+    }
+}
+
 /// Janela. Pinta o fundo com o estilo `Form` do tema.
 ///
 /// Abrir e fechar: [`Ui::show`](aylis_core::Ui::show), [`Ui::show_modal`](aylis_core::Ui::show_modal)
@@ -216,7 +247,8 @@ pub struct Form {
     /// cria; acima de 32768, ajustado. Vale no Direct2D (Windows), no quadro seguinte à troca;
     /// no Skia e no navegador, sem efeito (eles não reaproveitam).
     pub frame_reuse_kb: i64,
-    /// Sempre por cima das outras janelas.
+    /// Sempre por cima das outras janelas. Quando outra janela sempre por cima passa à frente,
+    /// sai o `on_topmost_lost` com quem cobriu ([`TopmostLost`]; Windows).
     pub topmost: bool,
     /// Sempre por baixo das outras janelas, como um fundo de tela (com `topmost` também, vale
     /// o `topmost`).
@@ -602,7 +634,7 @@ impl Component for Form {
         orientation: aylis_core::FormOrientation => "Layout",
         host: Option<ComponentId> => "Behavior",
         dockable: bool => "Behavior";
-        events: on_show: (), on_window_created: (), on_close: (), on_close_query, on_back, on_activate: (), on_deactivate: (), on_minimize: (), on_restore: (), on_navigate: String, on_gpu_change: String, on_dock: Option<ComponentId>, on_undock: (), on_files_drop: Vec<String>, on_view_change: String, on_topmost_lost: (), on_scale_change: f64, on_resize_end: ();
+        events: on_show: (), on_window_created: (), on_close: (), on_close_query, on_back, on_activate: (), on_deactivate: (), on_minimize: (), on_restore: (), on_navigate: String, on_gpu_change: String, on_dock: Option<ComponentId>, on_undock: (), on_files_drop: Vec<String>, on_view_change: String, on_topmost_lost: TopmostLost, on_scale_change: f64, on_resize_end: ();
         computed: client_width: f32 => client_width / set_client_width, client_height: f32 => client_height / set_client_height
     }
 

@@ -1041,6 +1041,16 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     nos botões, clicar em "Pausar" e digitar no texto da marca respondem na hora, sem esperar a
     vez. Com `--paint-rate 0` (ou sem a opção), como antes. No Object Inspector da IDE, o `Form`
     mostra "Pinturas por segundo (sem entrada)" em Comportamento.
+199. **A bandeja e o sempre por cima com o shell** (pedidos de 25/11). No Windows:
+    - `cargo run -p aylis-platform-winit --example desktop_checks --features tray,cpu --
+      tray_id 1`. *Esperado:* dois ícones no "^"; aos 2 s as dicas terminam em "trocado" e os
+      indicadores aparecem; aos 4 s sai o do GUID e aos 6 s o do número. Arraste o do número
+      para a barra, feche e abra de novo: ele volta na barra (o lugar lembrado pelo `uID` 1);
+    - `... desktop_checks topmost`, arraste o form para perto da bandeja e abra o "^", o Iniciar,
+      a central de notificações (Win+N), a pesquisa e o Alt+Tab por cima dele. *Esperado:* cada
+      um escreve `on_topmost_lost` com `system true` e o form fica por baixo (não volta ao topo);
+      com o `desktop_checks cover` (ou o Gerenciador de Tarefas com "Sempre visível"), `system
+      false`, o nome do exe, e o form volta ao topo 1 s depois.
 
 ## Os ajustes de 08/11 que faltam conferir
 

@@ -28,6 +28,7 @@ simulador) ou `publish --target ios --device` (o iPhone: o `.app` e o `.ipa` ass
 | Pinça e giro do touchpad no macOS viram `on_gesture` | escrito | `Model3D` ou `Graph`: pinçar e girar |
 | Corretor e sugestão de texto nativos (NSSpellChecker no macOS, UITextChecker no iOS) | **falta fazer** (hoje só com um motor posto pelo app) | `spellcheck` e `autocomplete` no Edit; exemplo `spellcheck` |
 | Ícone da bandeja e notificações no macOS | escrito para o desktop | exemplos `tray` e `notification` |
+| O `guid` e o `tray_uid` do `TrayIcon` (25/11) no macOS e no Linux: sem efeito (o `tray-icon` ignora os dois); o ícone tem de aparecer igual com os dois preenchidos | escrito; não compilado no macOS | `desktop_checks tray_id` (com `--features tray`) num Mac |
 | IDE em `.app` com ícones por tipo de arquivo (`aylis-tool ide-package --target macos`) | gerado e conferido por teste; nunca aberto no Finder | instalar o `.app` e ver o ícone de um `.aylisproj` e de um `.aylisform` |
 | A barra de título própria no macOS (`border_style = custom`): a barra do sistema transparente, sem título nem botões, e o conteúdo por baixo, para manter os cantos arredondados e a sombra; com `window_corners = square`, sem moldura | escrito; compila no macOS (a IDE na VM Intel, 22/11); nunca visto na tela | exemplo `titlebar`: os cantos, arrastar pela barra própria, redimensionar, e que os botões do sistema não aparecem |
 | O form transparente e com forma no macOS (`transparent`, `window_shape`; 18/11): a janela com `with_transparent` e o OpenGL com transparência; o vidro fosco pelo `blur` do `WindowSettings` (o `set_blur` do winit) | escrito; compila no macOS (a IDE na VM Intel, 22/11); nunca visto na tela | exemplo `shaped_forms` com `AYLIS_RENDERER=gpu`: o form redondo sem fundo fora do círculo e o vidro desfocando o que está atrás; a forma do desfoque (no Windows ele segue a forma; no macOS, ver se fica retangular) |
@@ -123,6 +124,7 @@ Feito e testado por código, mas a máquina do autor não tem o hardware para co
 
 | O quê | Por que | Como conferir |
 |---|---|---|
+| O `on_topmost_lost` com o shell no Windows 10 (25/11): o "^" da bandeja lá é o `NotifyIconOverflowWindow` e o Iniciar e a central são do `ShellExperienceHost.exe`/`StartMenuExperienceHost.exe` | as classes e os processos estão na lista do `system`; nunca rodado num Windows 10 | `desktop_checks topmost` num Windows 10: o "^", o Iniciar e a central por cima do form dão `system true` |
 | Imprimir pela impressora do sistema (`Report::print`, diálogo do Windows e GDI) | testado só o PDF e a visualização; a impressão real não saiu no papel | exemplo `report`, botão Imprimir, escolher uma impressora |
 | O form transparente e com forma no Linux (18/11): `with_transparent` e o OpenGL com transparência, com um compositor (X11 com picom, Wayland); o desfoque só no KDE | escrito; não conferido | exemplo `shaped_forms` com `AYLIS_RENDERER=gpu` num Linux com compositor: fora da forma, o que está atrás |
 | Imprimir no Linux (PDF aberto pelo `xdg-open`) | só compilado | o mesmo exemplo no WSL ou num Linux |
