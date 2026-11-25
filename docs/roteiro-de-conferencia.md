@@ -275,7 +275,10 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     Navegador). Marque Python e Android e instale: o andamento mostra os dois, e no fim Rust e
     Python aparecem prontos e o Android também. Feche e abra a IDE de novo: o assistente não
     abre mais (fica em Ferramentas → Configurar linguagens). Com uma conversa do Claude ligada
-    ao MCP, rode o instalador de novo por cima: instala sem pedir para fechar nada. Em Ferramentas → Opções da IDE → Pacotes,
+    ao MCP e a IDE aberta, rode o instalador de novo por cima: a IDE fecha sozinha, a instalação
+    termina sem perguntar se quer reiniciar e não sobra `*.antigo*` na pasta instalada; na
+    conversa, a próxima chamada do MCP já fala com a ponte nova (se o Claude não religar, o MCP
+    dessa conversa fica desligado até religar). Em Ferramentas → Opções da IDE → Pacotes,
     sem espelho (a origem oficial ligada); com `/ESPELHO=<url>` no setup, o espelho aparece lá. Na pasta instalada
     (`%LOCALAPPDATA%\Programs\aylis\aylis`), não há `examples`, e um projeto novo em Rust
     compila. Pelo MCP, `component_docs` do Button responde.
@@ -1022,6 +1025,22 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     a primeira linha. No Linux, o mesmo no GNOME pelo Wayland (veja testes-em-dispositivos). Num
     app com `KeyboardCapture` rodado sem instalar, no Linux pelo Wayland, o stderr avisa uma vez
     que falta o `<app>.desktop`.
+197. **A parede de vídeos no Direct2D: o `Wait`, a cópia parcial e a `exclusion`** (pedido de
+    25/11). `cargo run --release -p marca_dagua -- --grid 16`. *Esperado:* os 16 vídeos tocando
+    com a marca em negativo, agora pela `exclusion` (o mesmo pixel da `difference`), sem lixo nem
+    pedaço velho em nenhuma célula, também ao redimensionar, maximizar, minimizar e voltar, e com
+    a janela meio coberta por outra; o menu e os cliques respondem. Compare com `--blend
+    difference` (a mesma imagem) e `--blend normal`. Depois, com `"present": "composition"` e
+    `"present": "composed"` no form (ou `AYLIS_PRESENT`), o mesmo. Uma janela que rola (o
+    `examples/GradeGigante`, a rolagem da grade): nenhum rastro ao rolar rápido. Na máquina com a
+    Intel integrada (testes-em-dispositivos), `gpu` do form em `Intel`: o 3D da Intel e a pintura
+    pelo `profile` da IDE (o resumo traz `blend_layers`).
+198. **O ritmo das pinturas (`max_paint_rate` do form)** (decisão D1 de 25/11). `cargo run
+    --release -p marca_dagua -- --grid 16 --paint-rate 15`. *Esperado:* os vídeos andam, mais
+    "travados" (15 pinturas por segundo), e o contador de FPS da barra perto de 15; passar o mouse
+    nos botões, clicar em "Pausar" e digitar no texto da marca respondem na hora, sem esperar a
+    vez. Com `--paint-rate 0` (ou sem a opção), como antes. No Object Inspector da IDE, o `Form`
+    mostra "Pinturas por segundo (sem entrada)" em Comportamento.
 
 ## Os ajustes de 08/11 que faltam conferir
 

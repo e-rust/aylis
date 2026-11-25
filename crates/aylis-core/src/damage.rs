@@ -241,6 +241,7 @@ impl Ui {
     pub fn take_frame(&mut self, root: ComponentId) -> FrameDamage {
         // O layout pendente antes: ele marca quem mudou de lugar.
         self.update_layout();
+        self.form_painted(root);
         // O que mudou por dentro, o que só mudou de lugar ou de transparência, as partes e as
         // rolagens.
         let mut content = std::mem::take(&mut *self.frame_ids.borrow_mut());
@@ -404,7 +405,19 @@ impl Ui {
     /// abertas (antes, todas, e cada uma inteira). Na dúvida, todas: o layout por refazer, uma
     /// animação, um [`Ui::request_repaint`] (que não diz onde) ou uma marca num form que não é
     /// janela (o designer da IDE, pintado dentro dela).
+    ///
+    /// O form com `max_paint_rate` que só mudou sem entrada do usuário espera a vez dele
+    /// ([`Ui::paint_held_until`]); o que mudou continua marcado e pinta junto, e o
+    /// [`Ui::next_wake`] acorda na vez.
     pub fn forms_to_paint(&self, windows: &[ComponentId]) -> Vec<ComponentId> {
+        let mut forms = self.forms_with_changes(windows);
+        if !self.frames.painted.is_empty() {
+            forms.retain(|&f| self.paint_held_until(f).is_none());
+        }
+        forms
+    }
+
+    fn forms_with_changes(&self, windows: &[ComponentId]) -> Vec<ComponentId> {
         if self.layout_dirty || self.is_animating() {
             return windows.to_vec();
         }

@@ -1,0 +1,34 @@
+{
+  "_sobre": "Uma parede de 16 vídeos com marca d'água (examples/MarcaDagua --grid 16), Direct2D em release, AMD RX 9070 XT, a janela de 1440 x 800 do form. Perfil de 8 s depois de 30 s no ar; o 3D é o contador GPU Engine do processo (média de 4 leituras de 2 s). 25/11/2026: o Wait só com a cerca pendente, a cópia parcial com o Present1 e a exclusion sem cópia do fundo.",
+  "antes": {
+    "difference": { "pinturas_por_s": 38.1, "pintura_ms": 21.42, "thread_ocupada": 0.82, "3d": 0.108 },
+    "normal": { "pinturas_por_s": 105.6, "pintura_ms": 6.13, "thread_ocupada": 0.65, "3d": 0.027 }
+  },
+  "depois": {
+    "difference": [
+      { "pinturas_por_s": 86.5, "pintura_ms": 9.04, "thread_ocupada": 0.78, "3d": 0.146, "camadas_por_pintura": 11.7, "copias_por_pintura": 11.7 },
+      { "pinturas_por_s": 64.8, "pintura_ms": 12.91, "thread_ocupada": 0.84, "3d": 0.179, "camadas_por_pintura": 15.6, "copias_por_pintura": 15.6 },
+      { "pinturas_por_s": 62.5, "pintura_ms": 13.33, "thread_ocupada": 0.83, "3d": 0.183, "camadas_por_pintura": 15.6, "copias_por_pintura": 15.6 }
+    ],
+    "exclusion": [
+      { "pinturas_por_s": 61.6, "pintura_ms": 13.57, "thread_ocupada": 0.84, "3d": 0.200, "camadas_por_pintura": 15.8, "copias_por_pintura": 0.0 },
+      { "pinturas_por_s": 68.9, "pintura_ms": 12.08, "thread_ocupada": 0.83, "3d": 0.174, "camadas_por_pintura": 15.3, "copias_por_pintura": 0.0 }
+    ],
+    "normal": { "pinturas_por_s": 114.2, "pintura_ms": 5.55, "thread_ocupada": 0.63, "3d": 0.029 }
+  },
+  "16_camadas_numa_textura_1920x1080_ms": { "normal": 17.4, "difference": 18.8, "exclusion": 18.2 },
+  "max_paint_rate": {
+    "_": "A mesma parede (exclusion) com o max_paint_rate do form (--paint-rate N).",
+    "0": { "pinturas_por_s": 66.9, "pintura_ms": 12.67, "thread_ocupada": 0.85, "3d": 0.193 },
+    "30": { "pinturas_por_s": 30.4, "pintura_ms": 13.16, "thread_ocupada": 0.40, "3d": 0.015 },
+    "15": { "pinturas_por_s": 15.0, "pintura_ms": 9.32, "thread_ocupada": 0.14, "3d": 0.011 }
+  },
+  "_quadro_inteiro": "aylis-tool bench --renderers d2d (600 quadros inteiros, mediana de 3), o mesmo código com a swap chain FLIP_DISCARD e FLIP_SEQUENTIAL (duas rodadas), média em ms.",
+  "quadro_inteiro_ms": {
+    "flip_discard": { "components": 0.675, "grid": 0.550, "modern": 2.750, "catalog": 2.664, "gallery": 2.580 },
+    "flip_sequential": [
+      { "components": 0.661, "grid": 0.550, "modern": 2.769, "catalog": 2.662, "gallery": 2.585 },
+      { "components": 0.687, "grid": 0.558, "modern": 2.755, "catalog": 2.558, "gallery": 2.650 }
+    ]
+  }
+}

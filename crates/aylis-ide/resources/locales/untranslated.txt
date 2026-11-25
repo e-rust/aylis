@@ -300,3 +300,7 @@ o nome da outra thread
 pintura frmPrincipal · 10×10
 pintura frmPrincipal · 800×600
 profile ocupado
+camadas de mistura
+cópias do fundo
+flush da mistura
+sem mistura, sem a chave

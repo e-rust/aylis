@@ -44,7 +44,14 @@ pub struct Recording {
     /// chamadas e o flame graph.
     pub stacks: Vec<Vec<String>>,
     pub dropped: u64,
+    /// O custo das camadas com mistura de cada pintura no Direct2D (uma amostra por pintura e
+    /// por nome, de [`BLEND_SAMPLES`]): o nome, o tempo e o valor.
+    pub blends: Vec<(String, f64, f64)>,
 }
+
+/// As amostras que o Direct2D grava por pintura (os `PROFILE_BLEND_*` do `aylis-d2d`): as
+/// camadas com mistura, os `Flush` e as cópias do fundo, e a chave de cada uma no resumo.
+pub const BLEND_SAMPLES: [(&str, &str); 3] = [("camadas de mistura", "layers"), ("flush da mistura", "flushes"), ("cópias do fundo", "backdrop_copies")];
 
 impl Recording {
     /// Acrescenta uma resposta do `profile_take`.
@@ -66,6 +73,7 @@ impl Recording {
                 Some("memória") => self.memory.push((s[1].as_f64().unwrap_or(0.0), value)),
                 Some("imagens no cache") => self.images.get_or_insert((0.0, 0.0)).0 = value,
                 Some("memória das imagens") => self.images.get_or_insert((0.0, 0.0)).1 = value,
+                Some(name) if BLEND_SAMPLES.iter().any(|(n, _)| *n == name) => self.blends.push((name.to_string(), s[1].as_f64().unwrap_or(0.0), value)),
                 _ => {}
             }
         }
@@ -93,6 +101,7 @@ impl Recording {
             samples.push(json!(["imagens no cache", t, count]));
             samples.push(json!(["memória das imagens", t, bytes]));
         }
+        samples.extend(self.blends.iter().map(|(n, t, v)| json!([n, t, v])));
         json!({
             "aylis_profile": 1,
             "spans": self.blocks.iter().map(|b| json!([b.lane.name(), b.name, b.start, b.duration, b.depth, b.thread])).collect::<Vec<_>>(),
@@ -149,6 +158,16 @@ impl Recording {
         let slow = frames.iter().filter(|b| b.duration > 1.0 / 60.0).count();
         frames.sort_by(|a, b| b.duration.total_cmp(&a.duration));
         let peak = self.memory.iter().map(|m| m.1).fold(0.0, f64::max);
+        // As camadas com mistura no Direct2D: o total e a média por pintura (cada pintura
+        // grava uma amostra de cada).
+        let mut blends = serde_json::Map::new();
+        for (name, key) in BLEND_SAMPLES {
+            let values: Vec<f64> = self.blends.iter().filter(|(n, ..)| n == name).map(|(.., v)| *v).collect();
+            if !values.is_empty() {
+                let total: f64 = values.iter().sum();
+                blends.insert(key.to_string(), json!({ "total": total, "per_paint": (total / values.len() as f64 * 100.0).round() / 100.0 }));
+            }
+        }
         json!({
             "seconds": (self.end() * 1000.0).round() / 1000.0,
             "blocks": self.blocks.len(),
@@ -158,6 +177,7 @@ impl Recording {
             "most_time": rows.iter().take(top).map(row).collect::<Vec<_>>(),
             "memory_mb": { "last": self.memory.last().map(|m| (m.1 / 1_048_576.0 * 10.0).round() / 10.0), "peak": (peak > 0.0).then(|| (peak / 1_048_576.0 * 10.0).round() / 10.0) },
             "stack_samples": self.stacks.len(),
+            "blend_layers": (!blends.is_empty()).then_some(Value::Object(blends)),
         })
     }
 }
@@ -886,6 +906,24 @@ mod tests {
         assert_eq!(rec.images, Some((12.0, 2097152.0)), "as imagens do cache, na última amostra");
         assert_eq!(rec.dropped, 3);
         assert_eq!(rec.end(), 0.75);
+    }
+
+    /// As camadas com mistura de cada pintura (o Direct2D grava uma amostra de cada por
+    /// pintura) aparecem no resumo, com a média por pintura, e voltam no rastro salvo.
+    #[test]
+    fn the_blend_layers_of_each_paint_show_in_the_summary() {
+        let mut rec = Recording::default();
+        rec.add(&json!({ "samples": [
+            ["camadas de mistura", 0.1, 16.0], ["flush da mistura", 0.1, 16.0], ["cópias do fundo", 0.1, 0.0],
+            ["camadas de mistura", 0.2, 2.0], ["flush da mistura", 0.2, 2.0], ["cópias do fundo", 0.2, 1.0],
+        ] }));
+        let summary = rec.summary(5);
+        assert_eq!(summary["blend_layers"]["layers"], json!({ "total": 18.0, "per_paint": 9.0 }));
+        assert_eq!(summary["blend_layers"]["flushes"]["per_paint"], 9.0);
+        assert_eq!(summary["blend_layers"]["backdrop_copies"]["total"], 1.0);
+        let again = Recording::parse(&rec.to_json().to_string()).unwrap();
+        assert_eq!(again.blends, rec.blends);
+        assert!(Recording::default().summary(5)["blend_layers"].is_null(), "sem mistura, sem a chave");
     }
 
     fn sample() -> Recording {

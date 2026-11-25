@@ -7,6 +7,10 @@
 //! Só vale quando o alvo é uma textura do Direct3D (a janela e a captura na placa) e os
 //! recortes abertos são retângulos alinhados (viram o *scissor*); senão, o efeito do Direct2D
 //! (veja `D2dCanvas::compose_blend`).
+//!
+//! A `exclusion` é a exceção, com qualquer compositor: ela vai pela mistura fixa da placa
+//! (`INV_DEST_COLOR`/`INV_SRC_COLOR`), sem copiar o fundo e sem o shader da mistura. Ainda
+//! custa o `Flush` do Direct2D antes, porque o Direct3D escreve na textura dele.
 
 use std::sync::OnceLock;
 
@@ -17,11 +21,66 @@ use windows::Win32::Graphics::Direct3D11::*;
 use windows::Win32::Graphics::Dxgi::Common::*;
 use windows_core::{Interface, Result, s};
 
-/// O código dos dois shaders, compilado uma vez no processo (o `D3DCompile` do
-/// `d3dcompiler_47.dll`, que vem no Windows). `None`: não compilou.
-fn bytecode() -> Option<&'static (Vec<u8>, Vec<u8>)> {
-    static CODE: OnceLock<Option<(Vec<u8>, Vec<u8>)>> = OnceLock::new();
-    CODE.get_or_init(|| Some((compile(s!("vs_main"), s!("vs_4_0"))?, compile(s!("ps_main"), s!("ps_4_0"))?))).as_ref()
+/// A `exclusion` na ordem do `aylis_core::BlendMode` (o `case 11` do `blend.hlsl`): a mistura
+/// que a placa faz sem copiar o fundo ([`Compositor::compose`]).
+pub(crate) const EXCLUSION: u32 = 11;
+
+/// O código compilado do `vs_main`, do `ps_main` e do `ps_layer`.
+type Shaders = (Vec<u8>, Vec<u8>, Vec<u8>);
+
+/// O código dos shaders (o do vértice, o da mistura e o da camada sozinha), compilado uma vez
+/// no processo (o `D3DCompile` do `d3dcompiler_47.dll`, que vem no Windows). `None`: não
+/// compilou.
+fn bytecode() -> Option<&'static Shaders> {
+    static CODE: OnceLock<Option<Shaders>> = OnceLock::new();
+    CODE.get_or_init(|| Some((compile(s!("vs_main"), s!("vs_4_0"))?, compile(s!("ps_main"), s!("ps_4_0"))?, compile(s!("ps_layer"), s!("ps_4_0"))?)))
+        .as_ref()
+}
+
+/// Como a camada se juntou ao fundo.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Composed {
+    /// Pelo shader da mistura, com o fundo copiado.
+    Shader,
+    /// Pela mistura fixa da placa, sem copiar o fundo (a `exclusion`).
+    Fixed,
+}
+
+/// Os mesmos pixels de `rects`, em retângulos sem sobreposição (a mistura fixa lê o alvo: um
+/// pixel desenhado duas vezes misturaria duas vezes). Cada um perde o que os de antes já cobrem
+/// (até quatro pedaços por retângulo de antes).
+pub(crate) fn disjoint(rects: &[RECT]) -> Vec<RECT> {
+    let mut out: Vec<RECT> = Vec::new();
+    for &r in rects {
+        let mut pieces = vec![r];
+        for c in &out {
+            pieces = pieces.into_iter().flat_map(|p| subtract(p, *c)).collect();
+        }
+        out.extend(pieces);
+    }
+    out
+}
+
+/// `a` sem o que `b` cobre: até quatro pedaços (em cima, embaixo, à esquerda e à direita).
+fn subtract(a: RECT, b: RECT) -> Vec<RECT> {
+    if a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top {
+        return vec![a];
+    }
+    let mut out = Vec::new();
+    let (top, bottom) = (a.top.max(b.top), a.bottom.min(b.bottom));
+    if a.top < b.top {
+        out.push(RECT { bottom: b.top, ..a });
+    }
+    if b.bottom < a.bottom {
+        out.push(RECT { top: b.bottom, ..a });
+    }
+    if a.left < b.left {
+        out.push(RECT { left: a.left, right: b.left, top, bottom });
+    }
+    if b.right < a.right {
+        out.push(RECT { left: b.right, right: a.right, top, bottom });
+    }
+    out
 }
 
 fn compile(entry: windows_core::PCSTR, target: windows_core::PCSTR) -> Option<Vec<u8>> {
@@ -73,6 +132,9 @@ pub(crate) struct Compositor {
     context: ID3D11DeviceContext,
     vs: ID3D11VertexShader,
     ps: ID3D11PixelShader,
+    /// A camada sozinha (o `ps_layer`), com a mistura fixa `exclusion`.
+    ps_layer: ID3D11PixelShader,
+    exclusion: ID3D11BlendState,
     params: ID3D11Buffer,
     rasterizer: ID3D11RasterizerState,
     /// As cópias do fundo, por tamanho e formato.
@@ -89,7 +151,7 @@ const KEEP: usize = 16;
 impl Compositor {
     /// As peças no dispositivo de `texture`. `None`: o shader não compilou ou a placa recusou.
     pub(crate) fn new(texture: &ID3D11Texture2D) -> Option<Self> {
-        let (vs_code, ps_code) = bytecode()?;
+        let (vs_code, ps_code, layer_code) = bytecode()?;
         // SAFETY: chamadas COM do Direct3D com descrições locais; os ponteiros de saída são
         // locais.
         unsafe {
@@ -99,6 +161,23 @@ impl Compositor {
             device.CreateVertexShader(vs_code, None, Some(&mut vs)).ok()?;
             let mut ps = None;
             device.CreatePixelShader(ps_code, None, Some(&mut ps)).ok()?;
+            let mut ps_layer = None;
+            device.CreatePixelShader(layer_code, None, Some(&mut ps_layer)).ok()?;
+            // A `exclusion` pela mistura fixa: rgb = s·(1 − b) + b·(1 − s), o alfa por cima
+            // (s.a + b.a·(1 − s.a)), as duas contas do `ps_main` com as cores pré-multiplicadas.
+            let mut blend = D3D11_BLEND_DESC::default();
+            blend.RenderTarget[0] = D3D11_RENDER_TARGET_BLEND_DESC {
+                BlendEnable: true.into(),
+                SrcBlend: D3D11_BLEND_INV_DEST_COLOR,
+                DestBlend: D3D11_BLEND_INV_SRC_COLOR,
+                BlendOp: D3D11_BLEND_OP_ADD,
+                SrcBlendAlpha: D3D11_BLEND_ONE,
+                DestBlendAlpha: D3D11_BLEND_INV_SRC_ALPHA,
+                BlendOpAlpha: D3D11_BLEND_OP_ADD,
+                RenderTargetWriteMask: D3D11_COLOR_WRITE_ENABLE_ALL.0 as u8,
+            };
+            let mut exclusion = None;
+            device.CreateBlendState(&blend, Some(&mut exclusion)).ok()?;
             let desc = D3D11_BUFFER_DESC {
                 ByteWidth: std::mem::size_of::<Params>() as u32,
                 Usage: D3D11_USAGE_DEFAULT,
@@ -121,6 +200,8 @@ impl Compositor {
                 context,
                 vs: vs?,
                 ps: ps?,
+                ps_layer: ps_layer?,
+                exclusion: exclusion?,
                 params: params?,
                 rasterizer: rasterizer?,
                 backdrops: Vec::new(),
@@ -201,17 +282,37 @@ impl Compositor {
 
     /// Junta `layer` (do tamanho do pedaço `area`, em pixels de `target`) ao fundo de `target`
     /// no modo `mode` (a ordem do `aylis_core::BlendMode`) com a opacidade `opacity`, só dentro
-    /// de `scissor`. Quem chama já mandou à placa o que o Direct2D tinha na fila.
-    pub(crate) fn compose(&mut self, target: &ID3D11Texture2D, layer: &ID3D11Texture2D, area: RECT, scissor: RECT, mode: u32, opacity: f32) -> Result<()> {
+    /// de `scissors` (um desenho por retângulo). Quem chama já mandou à placa o que o Direct2D
+    /// tinha na fila.
+    ///
+    /// A `exclusion` vai pela mistura fixa da placa ([`Composed::Fixed`]), com os retângulos
+    /// sem sobreposição: sem copiar o fundo e sem o shader da mistura, o mesmo pixel.
+    pub(crate) fn compose(&mut self, target: &ID3D11Texture2D, layer: &ID3D11Texture2D, area: RECT, scissors: &[RECT], mode: u32, opacity: f32) -> Result<Composed> {
         let (w, h) = ((area.right - area.left) as u32, (area.bottom - area.top) as u32);
+        let fixed = mode == EXCLUSION;
+        let split;
+        let scissors = if fixed {
+            split = disjoint(scissors);
+            &split[..]
+        } else {
+            scissors
+        };
         // SAFETY: chamadas COM do Direct3D no contexto imediato, com descrições e vistas
-        // locais; as vistas soltas no fim para o Direct2D voltar a usar as texturas.
+        // locais; as vistas soltas e o estado de mistura desfeito no fim, para o Direct2D voltar
+        // a usar as texturas.
         unsafe {
             let mut desc = D3D11_TEXTURE2D_DESC::default();
             target.GetDesc(&mut desc);
-            let (copy, copy_view) = self.backdrop(w, h, desc.Format)?;
-            let source = D3D11_BOX { left: area.left as u32, top: area.top as u32, front: 0, right: area.right as u32, bottom: area.bottom as u32, back: 1 };
-            self.context.CopySubresourceRegion(&copy, 0, 0, 0, 0, target, 0, Some(&source));
+            // O fundo copiado só para o shader da mistura (o desenho lê a cópia, e não o alvo
+            // que ele mesmo escreve: vários retângulos sobrepostos dão o mesmo pixel).
+            let copy_view = if fixed {
+                None
+            } else {
+                let (copy, copy_view) = self.backdrop(w, h, desc.Format)?;
+                let source = D3D11_BOX { left: area.left as u32, top: area.top as u32, front: 0, right: area.right as u32, bottom: area.bottom as u32, back: 1 };
+                self.context.CopySubresourceRegion(&copy, 0, 0, 0, 0, target, 0, Some(&source));
+                Some(copy_view)
+            };
             let layer_view = self.read_view(layer)?;
             let out = self.write_view(target)?;
             let params = Params {
@@ -223,23 +324,47 @@ impl Compositor {
             self.context.UpdateSubresource(&self.params, 0, None, &params as *const Params as *const _, 0, 0);
             let c = &self.context;
             c.OMSetRenderTargets(Some(&[Some(out)]), None);
-            c.OMSetBlendState(None, None, 0xffff_ffff);
+            // Sem mistura, o shader escreve o resultado; na fixa, a placa mistura com o alvo.
+            c.OMSetBlendState(if fixed { Some(&self.exclusion) } else { None }, None, 0xffff_ffff);
             c.OMSetDepthStencilState(None, 0);
             c.RSSetState(&self.rasterizer);
             c.RSSetViewports(Some(&[D3D11_VIEWPORT { TopLeftX: 0.0, TopLeftY: 0.0, Width: desc.Width as f32, Height: desc.Height as f32, MinDepth: 0.0, MaxDepth: 1.0 }]));
-            c.RSSetScissorRects(Some(&[scissor]));
             c.IASetInputLayout(None);
             c.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
             c.VSSetShader(&self.vs, None);
             c.VSSetConstantBuffers(0, Some(&[Some(self.params.clone())]));
-            c.PSSetShader(&self.ps, None);
+            c.PSSetShader(if fixed { &self.ps_layer } else { &self.ps }, None);
             c.PSSetConstantBuffers(0, Some(&[Some(self.params.clone())]));
-            c.PSSetShaderResources(0, Some(&[Some(layer_view), Some(copy_view)]));
-            c.Draw(4, 0);
-            // Solta as texturas: o Direct2D volta a escrever nelas.
+            c.PSSetShaderResources(0, Some(&[Some(layer_view), copy_view]));
+            for scissor in scissors {
+                c.RSSetScissorRects(Some(&[*scissor]));
+                c.Draw(4, 0);
+            }
+            // Solta as texturas e desfaz a mistura: o Direct2D volta a escrever nelas.
             c.PSSetShaderResources(0, Some(&[None, None]));
+            c.OMSetBlendState(None, None, 0xffff_ffff);
             c.OMSetRenderTargets(None, None);
         }
-        Ok(())
+        Ok(if fixed { Composed::Fixed } else { Composed::Shader })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Os pedaços cobrem exatamente os mesmos pixels, cada um uma vez só.
+    #[test]
+    fn the_overlapping_rects_become_disjoint_with_the_same_pixels() {
+        let r = |left, top, right, bottom| RECT { left, top, right, bottom };
+        let rects = [r(0, 0, 10, 10), r(5, 5, 15, 15), r(2, 2, 4, 4), r(8, 0, 20, 3), r(0, 0, 10, 10)];
+        let pieces = disjoint(&rects);
+        for y in -1..21 {
+            for x in -1..21 {
+                let inside = |q: &RECT| x >= q.left && x < q.right && y >= q.top && y < q.bottom;
+                let wanted = rects.iter().any(inside) as usize;
+                assert_eq!(pieces.iter().filter(|q| inside(q)).count(), wanted, "o pixel ({x}, {y})");
+            }
+        }
     }
 }

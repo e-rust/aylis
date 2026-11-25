@@ -1191,6 +1191,13 @@ impl App {
             return Ok(());
         }
         let now = self.started.elapsed().as_secs_f64();
+        // O `max_paint_rate` do form: o que mudou sem entrada do usuário espera a vez (continua
+        // marcado, e o `next_wake` do `Ui` acorda o laço nela). Todo pedido de quadro passa por
+        // aqui, inclusive os que não perguntaram ao `forms_to_paint`.
+        self.ui.set_time(now);
+        if self.ui.paint_held_until(w.form).is_some() {
+            return Ok(());
+        }
         if let Some(w) = self.windows.get_mut(index) {
             w.last_draw = now;
         }
@@ -1639,6 +1646,8 @@ impl ApplicationHandler for App {
         // A escala e o tamanho novos: o `on_scale_change` e o `on_resize_end` do form.
         if matches!(event, WindowEvent::Resized(_) | WindowEvent::ScaleFactorChanged { .. }) {
             self.report_window_change(index, &event);
+            // Arrastar a borda é entrada: pinta na hora, sem o `max_paint_rate` do form.
+            self.ui.note_input();
         }
         match event {
             WindowEvent::CloseRequested => {

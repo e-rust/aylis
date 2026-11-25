@@ -525,6 +525,49 @@ pub fn shader_blends() -> u64 {
     SHADER_BLENDS.load(std::sync::atomic::Ordering::Relaxed)
 }
 
+static FIXED_BLENDS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// Quantas camadas `exclusion` foram juntadas ao fundo pela mistura fixa da placa, sem copiar
+/// o fundo, no processo.
+pub fn fixed_blends() -> u64 {
+    FIXED_BLENDS.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+/// As camadas com mistura das pinturas do processo: quantas e quantos envios à placa
+/// (`Flush`) e cópias do fundo elas custaram. O perfil (`profile` do app) mostra por pintura.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct BlendStats {
+    /// As camadas `save_layer_blend` (fora a `normal`) que se juntaram ao fundo.
+    pub layers: u64,
+    /// Os `Flush` do alvo que elas pediram.
+    pub flushes: u64,
+    /// As cópias do fundo (o efeito do Direct2D e o shader da mistura copiam; a `exclusion`
+    /// pela mistura fixa, não).
+    pub copies: u64,
+}
+
+static BLEND_LAYERS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+static BLEND_FLUSHES: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+static BLEND_COPIES: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// O que as camadas com mistura custaram até agora no processo ([`BlendStats`]).
+pub fn blend_stats() -> BlendStats {
+    use std::sync::atomic::Ordering::Relaxed;
+    BlendStats { layers: BLEND_LAYERS.load(Relaxed), flushes: BLEND_FLUSHES.load(Relaxed), copies: BLEND_COPIES.load(Relaxed) }
+}
+
+static PARTIAL_PRESENTS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// Diagnóstico: quantas apresentações foram por parte (o `Present1` com os retângulos sujos e
+/// a cópia só do que mudou para o buffer de trás) no processo.
+pub fn partial_presents() -> u64 {
+    PARTIAL_PRESENTS.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+fn count(counter: &std::sync::atomic::AtomicU64) {
+    counter.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+}
+
 pub fn adapters() -> Vec<String> {
     // SAFETY: chamadas COM do DXGI, sem ponteiros guardados.
     unsafe {
@@ -834,7 +877,12 @@ impl D2dRenderer {
                 BufferUsage: DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT,
                 BufferCount: 2,
                 Scaling: DXGI_SCALING_STRETCH,
-                SwapEffect: DXGI_SWAP_EFFECT_FLIP_DISCARD,
+                // O `SEQUENTIAL`, e não o `DISCARD`: o buffer de trás guarda o quadro que ele
+                // mostrou, e a pintura por parte copia e apresenta só as áreas que mudaram
+                // (`Present1` com os retângulos sujos; o `DISCARD` não aceita apresentação por
+                // parte). Os dois são do modelo flip: o tearing, o VRR, o MPO e o *independent
+                // flip* valem igual.
+                SwapEffect: DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL,
                 AlphaMode: if transparent { DXGI_ALPHA_MODE_PREMULTIPLIED } else { DXGI_ALPHA_MODE_IGNORE },
                 Flags: flags,
             };
@@ -871,6 +919,9 @@ impl D2dRenderer {
                 target: None,
                 frame: None,
                 fresh: true,
+                buffers: 1,
+                partial: false,
+                history: std::collections::VecDeque::new(),
                 link: GpuLink {
                     device: device.cast()?,
                     device5: device.cast().ok(),
@@ -883,6 +934,12 @@ impl D2dRenderer {
                     frame: 0,
                 },
             };
+            // Quantos buffers ela gira e se guarda o que mostrou (o modelo flip `SEQUENTIAL`
+            // e o de cópia): só então a cópia e a apresentação vão por parte.
+            if let Ok(d) = s.swap.GetDesc1() {
+                s.buffers = d.BufferCount.max(1) as usize;
+                s.partial = d.SwapEffect == DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL || d.SwapEffect == DXGI_SWAP_EFFECT_SEQUENTIAL;
+            }
             s.attach()?;
             Ok(s)
         }
@@ -898,6 +955,13 @@ impl D2dRenderer {
     /// caminho da janela sem janela, para os testes do que só existe na placa (o compositor da
     /// mistura em Direct3D, a fila de envios). `None` sem placa.
     pub fn render_rgba_on_gpu(&self, width: u32, height: u32, scale: f32, background: Color, paint: impl FnOnce(&mut D2dCanvas<'_>)) -> Option<Vec<u8>> {
+        self.render_areas_rgba_on_gpu(width, height, scale, background, &[], paint)
+    }
+
+    /// Como [`render_rgba_on_gpu`](Self::render_rgba_on_gpu), pintando só as `areas`
+    /// (unidades lógicas; vazio, tudo), como a janela na pintura por parte: com mais de uma, a
+    /// pintura fica dentro da máscara da união. Fora das áreas, os pixels ficam transparentes.
+    pub fn render_areas_rgba_on_gpu(&self, width: u32, height: u32, scale: f32, background: Color, areas: &[RectF], paint: impl FnOnce(&mut D2dCanvas<'_>)) -> Option<Vec<u8>> {
         let (_, _, d2d) = self.shared_device(None).ok()?;
         // SAFETY: chamadas COM do Direct2D com propriedades locais; o mapa da cópia para a CPU
         // é lido pelo passo que ele informa e solto antes da volta.
@@ -911,7 +975,12 @@ impl D2dRenderer {
             dc.SetTarget(&frame);
             let target: ID2D1RenderTarget = dc.cast().ok()?;
             let mut cache = DeviceCache::default();
-            self.draw_on(&target, &mut cache, None, scale, background, None, paint);
+            if !areas.is_empty() {
+                target.BeginDraw();
+                target.Clear(Some(&color(Color::TRANSPARENT)));
+                target.EndDraw(None, None).ok()?;
+            }
+            self.draw_on_areas(&target, &mut cache, None, scale, background, areas, paint);
             target.EndDraw(None, None).ok()?;
             readable.CopyFromBitmap(None, &frame, None).ok()?;
             let map = readable.Map(D2D1_MAP_OPTIONS_READ).ok()?;
@@ -1120,6 +1189,7 @@ impl D2dRenderer {
                 brush,
                 transform: base,
                 frames: Vec::new(),
+                base_areas: if areas.len() > 1 { areas.iter().map(pixels).collect() } else { Vec::new() },
                 pushes,
                 cache,
                 gpu,
@@ -1202,11 +1272,20 @@ struct Swap {
     flags: u32,
     /// O buffer de trás da swap chain.
     target: Option<ID2D1Bitmap1>,
-    /// O quadro guardado: a pintura vai para ele, por parte quando dá, e ele é copiado
-    /// inteiro para o buffer de trás (no modelo flip, o buffer de trás não guarda o quadro
-    /// anterior). `fresh`: acabou de ser criado, sem nada pintado.
+    /// O quadro guardado: a pintura vai para ele, por parte quando dá, e dele vai para o
+    /// buffer de trás o que o buffer ainda não tem. `fresh`: acabou de ser criado, sem nada
+    /// pintado.
     frame: Option<ID2D1Bitmap1>,
     fresh: bool,
+    /// Quantos buffers a swap chain gira: o buffer de trás de agora mostrou o quadro de
+    /// `buffers` apresentações atrás.
+    buffers: usize,
+    /// A swap chain guarda o que cada buffer mostrou (o flip `SEQUENTIAL`, a cópia): a cópia
+    /// para o buffer de trás e o `Present1` vão só pelas áreas que mudaram.
+    partial: bool,
+    /// As áreas (pixels) que mudaram nos últimos `buffers - 1` quadros apresentados, o mais
+    /// novo primeiro; `None`: o quadro inteiro (ou o buffer sem conteúdo conhecido).
+    history: std::collections::VecDeque<Option<Vec<D2D_RECT_U>>>,
     link: GpuLink,
 }
 
@@ -1258,6 +1337,75 @@ impl Swap {
             self.frame = Some(frame);
             self.fresh = true;
         }
+        self.forget_buffers();
+        Ok(())
+    }
+
+    /// Os buffers de trás sem conteúdo conhecido (criados, redimensionados, ou depois de uma
+    /// apresentação que não girou): os próximos `buffers` quadros vão inteiros.
+    fn forget_buffers(&mut self) {
+        self.history.clear();
+        self.history.extend(std::iter::repeat_n(None, self.buffers.saturating_sub(1)));
+    }
+
+    /// Leva o quadro guardado ao buffer de trás e apresenta. `dirty`: o que mudou no quadro
+    /// guardado desde a última apresentação (pixels; `None`, tudo). Com a swap chain que guarda
+    /// os buffers, copia só a união do que mudou desde que este buffer foi mostrado (este
+    /// quadro e os `buffers - 1` de antes) e apresenta só `dirty`; senão, a cópia inteira.
+    ///
+    /// Nesta máquina (AMD, 25/11), o próprio DXGI já completa o buffer apresentado por fora dos
+    /// retângulos sujos com o quadro anterior: a união com os quadros de antes é a garantia de
+    /// que o buffer está inteiro sem depender disso, e custa só as áreas do quadro anterior.
+    fn present(&mut self, dirty: Option<Vec<D2D_RECT_U>>, interval: u32, flags: DXGI_PRESENT) -> windows::core::Result<()> {
+        let (Some(back), Some(frame)) = (&self.target, &self.frame) else { return Ok(()) };
+        let dirty = dirty.filter(|_| self.partial);
+        let copy: Option<Vec<D2D_RECT_U>> = dirty.as_ref().and_then(|d| {
+            let mut all = d.clone();
+            for h in &self.history {
+                all.extend(h.as_ref()?.iter().copied());
+            }
+            Some(all)
+        });
+        // SAFETY: chamadas COM do Direct2D e do DXGI com os bitmaps da swap chain e retângulos
+        // locais dentro do quadro (o `changed_pixels` recorta); `rects` vive até a volta do
+        // `Present1`.
+        let hr = unsafe {
+            match &copy {
+                Some(rects) => {
+                    for r in rects {
+                        back.CopyFromBitmap(Some(&D2D_POINT_2U { x: r.left, y: r.top }), frame, Some(r))?;
+                    }
+                }
+                None => back.CopyFromBitmap(None, frame, None)?,
+            }
+            match &dirty {
+                Some(d) => {
+                    let mut rects: Vec<windows::Win32::Foundation::RECT> = d
+                        .iter()
+                        .map(|r| windows::Win32::Foundation::RECT { left: r.left as i32, top: r.top as i32, right: r.right as i32, bottom: r.bottom as i32 })
+                        .collect();
+                    let params = DXGI_PRESENT_PARAMETERS {
+                        DirtyRectsCount: rects.len() as u32,
+                        pDirtyRects: rects.as_mut_ptr(),
+                        pScrollRect: std::ptr::null_mut(),
+                        pScrollOffset: std::ptr::null_mut(),
+                    };
+                    self.swap.Present1(interval, flags, &params)
+                }
+                None => self.swap.Present(interval, flags),
+            }
+        };
+        hr.ok()?;
+        if dirty.is_some() {
+            count(&PARTIAL_PRESENTS);
+        }
+        if hr != windows::Win32::Foundation::S_OK {
+            // Um aviso (a janela encoberta, por exemplo): o buffer pode não ter girado.
+            self.forget_buffers();
+        } else if self.buffers > 1 {
+            self.history.push_front(dirty);
+            self.history.truncate(self.buffers - 1);
+        }
         Ok(())
     }
 
@@ -1304,6 +1452,39 @@ impl Swap {
         }
         self.attach()
     }
+}
+
+/// Quantos retângulos sujos vão no `Present1`; mais que isso, a caixa em volta de todos.
+const MAX_DIRTY_RECTS: usize = 16;
+
+/// Os pixels que um quadro por parte muda no quadro guardado: as `areas` (unidades lógicas,
+/// arredondadas para fora como o `draw_on_areas` recorta) e o destino das cópias da rolagem
+/// `moves` (como o `Swap::copy_moves`), dentro de `size`.
+fn changed_pixels(areas: &[RectF], moves: &[aylis_core::ScrollMove], scale: f32, size: (u32, u32)) -> Vec<D2D_RECT_U> {
+    let (w, h) = (size.0.max(1) as f32, size.1.max(1) as f32);
+    let clip = |l: f32, t: f32, r: f32, b: f32| {
+        let (l, t, r, b) = (l.clamp(0.0, w), t.clamp(0.0, h), r.clamp(0.0, w), b.clamp(0.0, h));
+        (r > l && b > t).then_some(D2D_RECT_U { left: l as u32, top: t as u32, right: r as u32, bottom: b as u32 })
+    };
+    let mut rects: Vec<D2D_RECT_U> = areas
+        .iter()
+        .filter_map(|a| clip((a.x * scale).floor(), (a.y * scale).floor(), (a.right() * scale).ceil(), (a.bottom() * scale).ceil()))
+        .collect();
+    for m in moves {
+        let px = |v: f32| (v * scale).round();
+        let (dx, dy) = (px(m.delta.x), px(m.delta.y));
+        rects.extend(clip(px(m.rect.x) + dx, px(m.rect.y) + dy, px(m.rect.right()) + dx, px(m.rect.bottom()) + dy));
+    }
+    if rects.len() > MAX_DIRTY_RECTS {
+        let all = rects.iter().fold(rects[0], |a, r| D2D_RECT_U {
+            left: a.left.min(r.left),
+            top: a.top.min(r.top),
+            right: a.right.max(r.right),
+            bottom: a.bottom.max(r.bottom),
+        });
+        rects = vec![all];
+    }
+    rects
 }
 
 enum Kind {
@@ -1642,6 +1823,36 @@ impl HwndTarget {
         })
     }
 
+    /// Os pixels RGBA do buffer de trás de agora (o que a próxima apresentação mostra antes de
+    /// receber a cópia): para os testes conferirem que cada buffer tem o quadro que mostrou.
+    /// `None` no alvo antigo.
+    #[doc(hidden)]
+    pub fn back_buffer_rgba(&self) -> Option<Vec<u8>> {
+        let Kind::Swap(s) = &self.kind else { return None };
+        let back = s.target.as_ref()?;
+        // SAFETY: chamadas COM do Direct2D; o mapa da cópia para a CPU é lido pelo passo que
+        // ele informa e solto antes da volta.
+        unsafe {
+            let size = back.GetPixelSize();
+            let props = D2D1_BITMAP_PROPERTIES1 {
+                pixelFormat: D2D1_PIXEL_FORMAT { format: DXGI_FORMAT_B8G8R8A8_UNORM, alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED },
+                dpiX: 96.0,
+                dpiY: 96.0,
+                bitmapOptions: D2D1_BITMAP_OPTIONS_CPU_READ | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+                colorContext: std::mem::ManuallyDrop::new(None),
+            };
+            let readable = s.dc.CreateBitmap(size, None, 0, &props).ok()?;
+            readable.CopyFromBitmap(None, back, None).ok()?;
+            let map = readable.Map(D2D1_MAP_OPTIONS_READ).ok()?;
+            let mut bgra = Vec::with_capacity((size.width * size.height * 4) as usize);
+            for y in 0..size.height as usize {
+                bgra.extend_from_slice(std::slice::from_raw_parts(map.bits.add(y * map.pitch as usize), size.width as usize * 4));
+            }
+            let _ = readable.Unmap();
+            Some(unpremultiply_bgra_to_rgba(&bgra))
+        }
+    }
+
     /// A placa de vídeo em que desenha (no alvo antigo, `ID2D1HwndRenderTarget`, não se sabe).
     pub fn adapter(&self) -> Option<&str> {
         match &self.kind {
@@ -1684,7 +1895,39 @@ impl HwndTarget {
     ) -> Result<bool, Error> {
         let resized = self.size != (width, height);
         self.size = (width, height);
-        let result = match &mut self.kind {
+        let blends = blend_stats();
+        let result = self.draw_kind(renderer, width, height, scale, background, parts, paint, resized);
+        // O que as camadas com mistura custaram nesta pintura, no perfil do app (`profile`):
+        // quantas, os `Flush` e as cópias do fundo.
+        if aylis_core::profile::is_on() {
+            let now = blend_stats();
+            aylis_core::profile::sample(PROFILE_BLEND_LAYERS, (now.layers - blends.layers) as f64);
+            aylis_core::profile::sample(PROFILE_BLEND_FLUSHES, (now.flushes - blends.flushes) as f64);
+            aylis_core::profile::sample(PROFILE_BLEND_COPIES, (now.copies - blends.copies) as f64);
+        }
+        match result {
+            Ok(()) => Ok(true),
+            Err(e) if e.code() == D2DERR_RECREATE_TARGET || e.code() == DXGI_ERROR_DEVICE_REMOVED || e.code() == DXGI_ERROR_DEVICE_RESET => {
+                self.rebuild(renderer, None)?;
+                Ok(false)
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    #[allow(clippy::too_many_arguments, clippy::type_complexity)]
+    fn draw_kind(
+        &mut self,
+        renderer: &D2dRenderer,
+        width: u32,
+        height: u32,
+        scale: f32,
+        background: Color,
+        parts: Option<(&[aylis_core::ScrollMove], &[RectF])>,
+        paint: impl FnOnce(&mut D2dCanvas<'_>, Option<&[RectF]>),
+        resized: bool,
+    ) -> windows::core::Result<()> {
+        match &mut self.kind {
             Kind::Hwnd(target) => {
                 if resized {
                     unsafe { target.Resize(&D2D_SIZE_U { width: width.max(1), height: height.max(1) })? };
@@ -1712,11 +1955,9 @@ impl HwndTarget {
                 renderer.draw_on_areas(&target, &mut self.cache, Some(&mut s.link), scale, background, areas, |c| paint(c, given));
                 let end = unsafe { target.EndDraw(None, None) };
                 s.link.finish();
-                // O quadro guardado vai inteiro para o buffer de trás (uma cópia na GPU).
-                let end = end.and_then(|_| match (&s.target, &s.frame) {
-                    (Some(back), Some(frame)) => unsafe { back.CopyFromBitmap(None, frame, None) },
-                    _ => Ok(()),
-                });
+                // O que mudou no quadro guardado: as áreas e o destino das cópias da rolagem.
+                // Sem área, tudo.
+                let dirty = given.map(|areas| changed_pixels(areas, parts.map_or(&[][..], |(m, _)| m), scale, (width, height)));
                 s.fresh = false;
                 end.and_then(|_| {
                     let (interval, flags) = match (self.vsync, s.flags != 0) {
@@ -1724,20 +1965,17 @@ impl HwndTarget {
                         (false, true) => (0, DXGI_PRESENT_ALLOW_TEARING),
                         (false, false) => (0, DXGI_PRESENT(0)),
                     };
-                    unsafe { s.swap.Present(interval, flags) }.ok()
+                    s.present(dirty, interval, flags)
                 })
             }
-        };
-        match result {
-            Ok(()) => Ok(true),
-            Err(e) if e.code() == D2DERR_RECREATE_TARGET || e.code() == DXGI_ERROR_DEVICE_REMOVED || e.code() == DXGI_ERROR_DEVICE_RESET => {
-                self.rebuild(renderer, None)?;
-                Ok(false)
-            }
-            Err(e) => Err(e),
         }
     }
 }
+
+/// Os nomes das amostras do perfil com o custo das camadas com mistura de cada pintura.
+pub const PROFILE_BLEND_LAYERS: &str = "camadas de mistura";
+pub const PROFILE_BLEND_FLUSHES: &str = "flush da mistura";
+pub const PROFILE_BLEND_COPIES: &str = "cópias do fundo";
 
 // ---------------------------------------------------------------------------
 // canvas
@@ -1810,6 +2048,10 @@ pub struct D2dCanvas<'a> {
     transform: Matrix3x2,
     frames: Vec<Frame>,
     pushes: Vec<Push>,
+    /// As áreas (pixels) da pintura por parte com mais de uma área: a camada da máscara da
+    /// união é o primeiro dos `pushes` do alvo da janela. Vazia com uma área só (um recorte) ou
+    /// a janela inteira.
+    base_areas: Vec<D2D_RECT_F>,
     cache: &'a mut DeviceCache,
     /// O Direct3D por baixo (só no alvo por swap chain), para compor texturas de fora.
     gpu: Option<&'a mut GpuLink>,
@@ -2082,16 +2324,19 @@ impl D2dCanvas<'_> {
                 // O envio à placa vem antes de mexer no fundo e nos efeitos: o desenho da camada
                 // anterior, ainda na fila, lê o mesmo bitmap e os mesmos efeitos.
                 self.cache.blend_pool.flushes += 1;
-                if blend_compositor(self.cache.blend_compositor) == aylis_core::gpu::BlendCompositor::Direct3d {
-                    // O shader do Aylis; se não der aqui (recorte arredondado, alvo na CPU), o
-                    // efeito do Direct2D logo abaixo.
-                    self.target.Flush(None, None)?;
-                    if self.compose_on_gpu(content, index, opacity, a) {
-                        return Ok(());
-                    }
+                count(&BLEND_LAYERS);
+                // A `exclusion` vai sempre pela placa quando dá (a mistura fixa, sem copiar o
+                // fundo: o mesmo pixel nos dois compositores); as outras, com o compositor em
+                // Direct3D, pelo shader do Aylis. Se não der aqui (recorte arredondado, camada de
+                // opacidade ou máscara aberta, alvo na CPU), o efeito do Direct2D logo abaixo.
+                let direct3d = blend_compositor(self.cache.blend_compositor) == aylis_core::gpu::BlendCompositor::Direct3d;
+                if (direct3d || index == compositor::EXCLUSION) && self.compose_on_gpu(content, index, opacity, a) {
+                    return Ok(());
                 }
                 let dc: ID2D1DeviceContext = self.target.cast()?;
                 let backdrop = self.cache.blend_pool.backdrop(&self.target, a.right - a.left, a.bottom - a.top)?;
+                count(&BLEND_FLUSHES);
+                count(&BLEND_COPIES);
                 self.without_pushes(|c| c.target.Flush(None, None).and_then(|_| backdrop.CopyFromRenderTarget(None, &c.target, Some(&a))))?;
                 // A camada já é do tamanho do pedaço.
                 let layer = content.GetBitmap()?;
@@ -2120,25 +2365,36 @@ impl D2dCanvas<'_> {
 
     /// Junta a camada pelo compositor em Direct3D ([`compositor::Compositor`]), se o alvo de
     /// agora é uma textura da placa e os recortes abertos são retângulos alinhados (viram o
-    /// *scissor*). `false`: não deu, e quem chama usa o efeito do Direct2D. O que o Direct2D
-    /// tinha na fila já foi mandado à placa.
+    /// *scissor*; as várias áreas da pintura por parte, um *scissor* cada). Manda à placa o
+    /// que o Direct2D tinha na fila (o `Flush`: o Direct3D escreve na textura do Direct2D).
+    /// `false`: não deu, e quem chama usa o efeito do Direct2D.
     fn compose_on_gpu(&mut self, content: &ID2D1BitmapRenderTarget, index: u32, opacity: f32, a: D2D_RECT_U) -> bool {
+        // A camada da máscara das várias áreas (o primeiro dos `pushes` do alvo da janela)
+        // fecha durante a composição, e as áreas viram os *scissors*.
+        let root = self.masks.is_empty() && self.cached.is_empty() && self.blends.is_empty();
+        let base = root && !self.base_areas.is_empty() && matches!(self.pushes.first(), Some(Push::Layer(..)));
         // Uma camada aberta (máscara, opacidade) junta o que vem depois a ela: o shader
         // escreveria por fora dela.
-        if self.pushes.iter().any(|p| matches!(p, Push::Layer(..))) {
+        if self.pushes.iter().enumerate().any(|(i, p)| matches!(p, Push::Layer(..)) && !(base && i == 0)) {
             return false;
         }
         if self.pushes.iter().any(|p| matches!(p, Push::Clip(_, m) if m.M12 != 0.0 || m.M21 != 0.0)) {
             return false;
         }
         let clip = self.clip_area();
-        let scissor = windows::Win32::Foundation::RECT {
-            left: a.left.max(clip.left) as i32,
-            top: a.top.max(clip.top) as i32,
-            right: a.right.min(clip.right) as i32,
-            bottom: a.bottom.min(clip.bottom) as i32,
+        let inside = |r: D2D_RECT_U| windows::Win32::Foundation::RECT {
+            left: a.left.max(clip.left).max(r.left) as i32,
+            top: a.top.max(clip.top).max(r.top) as i32,
+            right: a.right.min(clip.right).min(r.right) as i32,
+            bottom: a.bottom.min(clip.bottom).min(r.bottom) as i32,
         };
-        if scissor.right <= scissor.left || scissor.bottom <= scissor.top {
+        let scissors: Vec<windows::Win32::Foundation::RECT> = if base {
+            self.base_areas.iter().map(|r| inside(D2D_RECT_U { left: r.left as u32, top: r.top as u32, right: r.right as u32, bottom: r.bottom as u32 })).collect()
+        } else {
+            vec![inside(D2D_RECT_U { left: 0, top: 0, right: u32::MAX, bottom: u32::MAX })]
+        };
+        let scissors: Vec<_> = scissors.into_iter().filter(|s| s.right > s.left && s.bottom > s.top).collect();
+        if scissors.is_empty() {
             // Nada à vista: nada a compor.
             return true;
         }
@@ -2156,13 +2412,29 @@ impl D2dCanvas<'_> {
         if pool.compositor.as_ref().is_some_and(|c| c.as_ref().is_some_and(|c| !c.serves(&target))) {
             pool.compositor = None;
         }
-        let Some(compositor) = pool.compositor.get_or_insert_with(|| compositor::Compositor::new(&target)).as_mut() else { return false };
-        let area = windows::Win32::Foundation::RECT { left: a.left as i32, top: a.top as i32, right: a.right as i32, bottom: a.bottom as i32 };
-        let done = compositor.compose(&target, &layer, area, scissor, index, opacity).is_ok();
-        if done {
-            SHADER_BLENDS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        if pool.compositor.get_or_insert_with(|| compositor::Compositor::new(&target)).is_none() {
+            return false;
         }
-        done
+        let area = windows::Win32::Foundation::RECT { left: a.left as i32, top: a.top as i32, right: a.right as i32, bottom: a.bottom as i32 };
+        let compose = |c: &mut Self| -> Option<compositor::Composed> {
+            count(&BLEND_FLUSHES);
+            // SAFETY: chamada COM sem argumentos num alvo válido.
+            unsafe { c.target.Flush(None, None) }.ok()?;
+            let compositor = c.cache.blend_pool.compositor.as_mut()?.as_mut()?;
+            compositor.compose(&target, &layer, area, &scissors, index, opacity).ok()
+        };
+        // Com a máscara das áreas aberta, o que foi pintado nela ainda não está na textura:
+        // fecha (o Direct2D junta) e reabre depois, como a cópia do fundo do efeito.
+        let done = if base { self.without_pushes(compose) } else { compose(self) };
+        match done {
+            Some(compositor::Composed::Fixed) => count(&FIXED_BLENDS),
+            Some(compositor::Composed::Shader) => {
+                count(&SHADER_BLENDS);
+                count(&BLEND_COPIES);
+            }
+            None => {}
+        }
+        done.is_some()
     }
 
     /// Fecha clips e camadas que a pintura deixou abertos (o EndDraw exige).
@@ -2606,9 +2878,15 @@ impl D2dCanvas<'_> {
         let ready = link.fence(ready)?;
         let release = link.fence(release)?;
         // A GPU espera o 3D terminar o quadro (a CPU não para), desenha, e no fim do quadro
-        // a cerca de liberação avisa que a textura pode ser reescrita.
+        // a cerca de liberação avisa que a textura pode ser reescrita. Só espera a cerca que
+        // ainda não passou: em algumas placas (a Intel UHD 770, numa parede de 16 vídeos) o
+        // `Wait` prende a thread da interface no kernel mesmo com a cerca já passada, e a
+        // pintura ia de 7,7 para 23,6 ms.
+        // SAFETY: chamadas COM do Direct3D e do Direct2D com a cerca e o bitmap abertos acima.
         unsafe {
-            link.context4.as_ref()?.Wait(&ready, ready_value).ok()?;
+            if ready.GetCompletedValue() < ready_value {
+                link.context4.as_ref()?.Wait(&ready, ready_value).ok()?;
+            }
             dc.DrawBitmap(&bitmap, Some(&rect(dest)), 1.0, D2D1_INTERPOLATION_MODE_LINEAR, None, None);
         }
         link.signals.push((release, release_value));

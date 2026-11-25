@@ -89,6 +89,15 @@ float3 blend(float3 b, float3 s) {
     }
 }
 
+// A camada sozinha (com a opacidade), para as misturas que a placa faz sem ler o fundo: a
+// `exclusion` vira a mistura fixa `INV_DEST_COLOR`/`INV_SRC_COLOR` do Direct3D. Com as cores
+// pré-multiplicadas, a fórmula de `ps_main` no `case 11` dá, com qualquer alfa do fundo,
+// rgb = s + b - 2·s·b = s·(1 - b) + b·(1 - s), e o alfa s.a + b.a·(1 - s.a).
+float4 ps_layer(float4 position : SV_Position) : SV_Target {
+    int2 p = int2(position.xy) - int2(area.xy);
+    return layer.Load(int3(p, 0)) * opacity;
+}
+
 float4 ps_main(float4 position : SV_Position) : SV_Target {
     int2 p = int2(position.xy) - int2(area.xy);
     float4 s = layer.Load(int3(p, 0)) * opacity;

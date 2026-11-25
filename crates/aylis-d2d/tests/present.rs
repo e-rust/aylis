@@ -49,3 +49,69 @@ fn a_composed_window_draws_and_the_mode_changes_while_open() {
         let _ = DestroyWindow(hwnd);
     }
 }
+
+/// A pintura por parte copia para o buffer de trás só o que mudou (a união das áreas desde que
+/// aquele buffer foi mostrado) e apresenta com os retângulos sujos: cada buffer continua com o
+/// quadro inteiro que ele mostrou, nos três modos de apresentar (a swap chain da janela e a da
+/// composição giram dois buffers; a do modelo de cópia, um).
+#[cfg(windows)]
+#[test]
+fn the_partial_copy_keeps_every_buffer_whole() {
+    use aylis_core::gpu::GpuChoice;
+    use aylis_core::{Canvas, Color, RectF};
+    use windows::Win32::UI::WindowsAndMessaging::{CreateWindowExW, DestroyWindow, WINDOW_EX_STYLE, WS_POPUP, WS_VISIBLE};
+    use windows::core::w;
+
+    let (w, h) = (64u32, 48u32);
+    let renderer = aylis_d2d::D2dRenderer::new().expect("Direct2D");
+    // As áreas de cada quadro (vazio: o inteiro) e a cor que pintam.
+    let frames: [(&[RectF], Color); 6] = [
+        (&[], Color::WHITE),
+        (&[RectF::new(0.0, 0.0, 20.0, 20.0)], Color::rgb(255, 0, 0)),
+        (&[RectF::new(30.0, 20.0, 20.0, 20.0)], Color::rgb(0, 0, 255)),
+        (&[RectF::new(10.0, 30.0, 10.0, 10.0), RectF::new(50.0, 0.0, 14.0, 10.0)], Color::rgb(0, 200, 0)),
+        (&[RectF::new(5.0, 5.0, 10.0, 10.0)], Color::rgb(0, 0, 0)),
+        (&[RectF::new(40.0, 25.0, 4.0, 4.0)], Color::rgb(255, 255, 0)),
+    ];
+    // O quadro inteiro depois de cada um.
+    let mut expected: Vec<Vec<u8>> = Vec::new();
+    let mut now = vec![0u8; (w * h * 4) as usize];
+    for (areas, color) in &frames {
+        for y in 0..h {
+            for x in 0..w {
+                let hit = areas.is_empty() || areas.iter().any(|a| (x as f32) >= a.x && (x as f32) < a.right() && (y as f32) >= a.y && (y as f32) < a.bottom());
+                if hit {
+                    let i = ((y * w + x) * 4) as usize;
+                    now[i..i + 4].copy_from_slice(&[color.r, color.g, color.b, 255]);
+                }
+            }
+        }
+        expected.push(now.clone());
+    }
+    for (present, lag) in [(PresentMode::Window, 1), (PresentMode::Composition, 1), (PresentMode::Composed, 0)] {
+        // SAFETY: uma janela da classe pronta "STATIC", fora da tela (visível: a encoberta não
+        // gira os buffers), destruída no fim.
+        let hwnd = unsafe { CreateWindowExW(WINDOW_EX_STYLE(0), w!("STATIC"), w!(""), WS_POPUP | WS_VISIBLE, -2000, -2000, w as i32, h as i32, None, None, None, None) }.expect("janela");
+        let mut target = renderer.hwnd_target_with(hwnd.0 as isize, w, h, false, GpuChoice::Auto, present).expect("alvo");
+        let partial = aylis_d2d::partial_presents();
+        for (k, (areas, color)) in frames.iter().enumerate() {
+            let parts = (!areas.is_empty()).then_some((&[][..], *areas));
+            target
+                .draw_parts(&renderer, w, h, 1.0, Color::WHITE, parts, |c, _| c.fill_rect(RectF::new(0.0, 0.0, w as f32, h as f32), 0.0, &(*color).into()))
+                .expect("quadro");
+            // O buffer de trás de agora mostrou o quadro de `lag` apresentações atrás.
+            if k > lag {
+                let back = target.back_buffer_rgba().expect("o buffer de trás");
+                assert!(back == expected[k - lag], "{present:?}, depois do quadro {k}: o buffer de trás não é o quadro {}", k - lag);
+            }
+        }
+        let partial = aylis_d2d::partial_presents() - partial;
+        eprintln!("{present:?}: {partial} apresentações por parte");
+        assert!(partial >= 3, "{present:?}: só {partial} apresentações por parte (a janela encoberta não gira?)");
+        drop(target);
+        // SAFETY: a janela criada acima.
+        unsafe {
+            let _ = DestroyWindow(hwnd);
+        }
+    }
+}

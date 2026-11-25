@@ -318,6 +318,14 @@ pub struct Form {
     /// Quadros por segundo da janela (0 = a taxa do monitor dela). Um telão de 60 Hz ao lado
     /// de um monitor de 144 Hz não precisa acompanhar o mais rápido.
     pub frame_rate: f32,
+    /// Pinturas por segundo, no máximo, do que muda sem a entrada do usuário (quadros de
+    /// vídeo, timers, animações); 0 = desligado, cada mudança pinta na volta seguinte. Ligado,
+    /// as células de uma parede de vídeos que mudaram desde a última pintura são pintadas
+    /// juntas, no máximo esse tanto de vezes por segundo, em vez de uma pintura por quadro que
+    /// chega. O mouse, o teclado, a roda e o toque (e o que eles puxam logo depois, como o
+    /// deslize da rolagem) continuam pintando na hora; parado, nenhum relógio. Diferente do
+    /// `frame_rate`, que limita tudo, a entrada inclusive.
+    pub max_paint_rate: f32,
     /// Celular: a orientação da tela enquanto este form está à frente (`project`: a do
     /// projeto). Fechá-lo devolve a do form de baixo; mudar com o app aberto gira na hora. No
     /// desktop e no navegador, sem efeito.
@@ -503,6 +511,7 @@ impl Form {
             force_foreground: false,
             close_action: CloseAction::Hide,
             frame_rate: 0.0,
+            max_paint_rate: 0.0,
             orientation: aylis_core::FormOrientation::Project,
             host: None,
             dockable: false,
@@ -589,6 +598,7 @@ impl Component for Form {
         force_foreground: bool => "Behavior",
         close_action: CloseAction => "Behavior",
         frame_rate: f32 => "Behavior",
+        max_paint_rate: f32 => "Behavior",
         orientation: aylis_core::FormOrientation => "Layout",
         host: Option<ComponentId> => "Behavior",
         dockable: bool => "Behavior";

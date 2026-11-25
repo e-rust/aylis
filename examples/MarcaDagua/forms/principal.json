@@ -126,7 +126,7 @@
                 "name": "layMarca",
                 "align": "client",
                 "clip_children": true,
-                "blend_mode": "difference",
+                "blend_mode": "exclusion",
                 "children": [
                   {
                     "class": "Label",

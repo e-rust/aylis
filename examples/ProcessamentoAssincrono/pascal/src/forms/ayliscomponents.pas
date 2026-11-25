@@ -668,6 +668,8 @@ type
     procedure SetCloseAction(Value: TCloseAction);
     function GetFrameRate: Double;
     procedure SetFrameRate(Value: Double);
+    function GetMaxPaintRate: Double;
+    procedure SetMaxPaintRate(Value: Double);
     function GetOrientation: TFormOrientation;
     procedure SetOrientation(Value: TFormOrientation);
     function GetHost: TAylisComponent;
@@ -939,6 +941,7 @@ type
     property ForceForeground: Boolean read GetForceForeground write SetForceForeground;
     property CloseAction: TCloseAction read GetCloseAction write SetCloseAction;
     property FrameRate: Double read GetFrameRate write SetFrameRate;
+    property MaxPaintRate: Double read GetMaxPaintRate write SetMaxPaintRate;
     property Orientation: TFormOrientation read GetOrientation write SetOrientation;
     property Host: TAylisComponent read GetHost write SetHost;
     property Dockable: Boolean read GetDockable write SetDockable;
@@ -5206,6 +5209,16 @@ end;
 procedure TForm.SetFrameRate(Value: Double);
 begin
   SetProp('frame_rate', TJSONFloatNumber.Create(Value));
+end;
+
+function TForm.GetMaxPaintRate: Double;
+begin
+  Result := GetProp('max_paint_rate').AsFloat;
+end;
+
+procedure TForm.SetMaxPaintRate(Value: Double);
+begin
+  SetProp('max_paint_rate', TJSONFloatNumber.Create(Value));
 end;
 
 function TForm.GetOrientation: TFormOrientation;

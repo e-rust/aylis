@@ -4,9 +4,10 @@
 //! Uma grade de vídeos, cada um com a marca d'água própria. A célula do form (`layCelula`:
 //! o `vpVideo`, a camada `layMarca` e o texto `lblMarca`) é o modelo, e as outras são cópias
 //! dela (`ui.clone_component`). O texto é branco, girado, repetido em linhas, e a camada está
-//! em `blend_mode: difference`: a diferença com o branco é o negativo, então cada letra sai
-//! na cor invertida do vídeo que está por baixo dela, quadro a quadro, sem o app tocar nos
-//! pixels.
+//! em `blend_mode: exclusion`: com o branco, ela dá o negativo (o mesmo pixel da
+//! `difference`), então cada letra sai na cor invertida do vídeo que está por baixo dela,
+//! quadro a quadro, sem o app tocar nos pixels. No Direct2D, a `exclusion` é a mistura que a
+//! placa faz sem copiar o fundo; a `difference` copia o fundo a cada camada.
 //!
 //! Sem o vídeo ("Vídeo" desmarcado), cada célula mostra uma imagem fixa e nenhum decodificador
 //! roda: sobra só o custo da marca na placa. "Mover" faz a marca deslizar (a `FloatAnimation`
@@ -14,8 +15,10 @@
 //! células em todo quadro.
 //!
 //! Para medir sem clicar: `marca_dagua --grid 36` abre com 36 vídeos e `--mark TEXTO` troca a
-//! marca (vazio: sem marca); `--still` tira o vídeo, `--move` move a marca e `--blend normal`
-//! desliga a inversão; com `AYLIS_BENCH`, o tempo de cada quadro.
+//! marca (vazio: sem marca); `--still` tira o vídeo, `--move` move a marca, `--blend normal`
+//! desliga a inversão, `--blend difference` inverte pela `difference` (para comparar o custo) e
+//! `--paint-rate N` junta as células que mudaram em até N pinturas por segundo;
+//! com `AYLIS_BENCH`, o tempo de cada quadro.
 
 #[allow(unused_imports)]
 use aylis::prelude::*;
@@ -87,6 +90,8 @@ pub struct Data {
     fitted: Option<(usize, i32, i32, String, usize)>,
     /// O vídeo aberto (vazio: o de exemplo).
     video_file: String,
+    /// A inversão pela `difference` (`--blend difference`), no lugar da `exclusion`.
+    difference: bool,
 }
 
 // Os handlers têm o nome do componente (`btnSalvar_click`).
@@ -208,7 +213,7 @@ impl FrmPrincipal {
         }
     }
 
-    pub fn frmPrincipal_show(&mut self, ui: &mut Ui, _sender: crate::generated::Form) {
+    pub fn frmPrincipal_show(&mut self, ui: &mut Ui, sender: crate::generated::Form) {
         // `--grid N`: começa com N vídeos (o mais perto entre as escolhas), para medir.
         let args: Vec<String> = std::env::args().collect();
         let arg = |name: &str| args.iter().position(|a| a == name).and_then(|i| args.get(i + 1).cloned());
@@ -217,14 +222,24 @@ impl FrmPrincipal {
             self.edtTexto.set_text(ui, mark);
         }
         let flag = |name: &str| args.iter().any(|a| a == name);
+        // `--paint-rate N`: as células que mudaram se juntam numa pintura, no máximo N vezes
+        // por segundo (o `max_paint_rate` do form; a entrada continua na hora).
+        if let Some(rate) = arg("--paint-rate").and_then(|n| n.parse::<f64>().ok()) {
+            sender.set_max_paint_rate(ui, rate);
+        }
         if flag("--still") {
             self.chkVideo.set_checked(ui, false);
         }
         if flag("--move") {
             self.chkMover.set_checked(ui, true);
         }
-        if arg("--blend").as_deref() == Some("normal") {
-            self.chkInverter.set_checked(ui, false);
+        match arg("--blend").as_deref() {
+            Some("normal") => self.chkInverter.set_checked(ui, false),
+            Some("difference") => {
+                self.data.difference = true;
+                self.layMarca.set_blend_mode(ui, BlendMode::Difference);
+            }
+            _ => {}
         }
         let wanted = arg("--grid").and_then(|n| n.parse::<usize>().ok());
         if let Some(wanted) = wanted {
@@ -264,7 +279,11 @@ impl FrmPrincipal {
 
     /// Desligado, a marca fica branca por cima (`normal`), para comparar.
     pub fn chkInverter_change(&mut self, ui: &mut Ui, _sender: crate::generated::CheckBox, value: bool) {
-        let mode = if value { BlendMode::Difference } else { BlendMode::Normal };
+        let mode = match (value, self.data.difference) {
+            (false, _) => BlendMode::Normal,
+            (true, true) => BlendMode::Difference,
+            (true, false) => BlendMode::Exclusion,
+        };
         for cell in self.cells(ui) {
             cell.layer.set_blend_mode(ui, mode);
         }

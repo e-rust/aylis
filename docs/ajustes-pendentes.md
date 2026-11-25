@@ -13,6 +13,129 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Ajustes de 25/11/2026: o vídeo na placa integrada (uma parede de vídeos no Direct2D)**
+
+Uma parede de 16 a 64 vídeos (`GpuFrame` no `VideoPlayer`), cada célula com uma marca d'água
+em camada de mistura, travava a interface nas janelas desenhadas numa placa integrada (Intel
+UHD 770). Três defeitos do `aylis-d2d`, feitos (roteiro, item 197):
+
+- **O `Wait` da cerca a cada quadro de vídeo.** O `draw_gpu` chamava
+  `ID3D11DeviceContext4::Wait` antes de cada `DrawBitmap`, e na Intel a chamada prende a thread
+  da interface no kernel mesmo com a cerca já passada. Agora só espera se
+  `GetCompletedValue() < ready_value`. Medido por quem relatou, na Intel: a pintura de 23,6 para
+  7,7 ms, e a thread da interface de 83% para 30% ocupada.
+- **A cópia do quadro inteiro a cada pintura.** O `draw_parts` pintava só as áreas, mas copiava
+  o quadro guardado inteiro para o buffer de trás e apresentava a janela inteira (33 MB por
+  pintura numa janela 4K). Agora a swap chain é `FLIP_SEQUENTIAL` (era `FLIP_DISCARD`, que não
+  aceita apresentação por parte), a cópia vai só pela união das áreas desde que aquele buffer foi
+  mostrado (este quadro e os `BufferCount − 1` de antes, lido do `GetDesc1`) e o `Present1` leva
+  os retângulos sujos (as áreas e o destino das cópias da rolagem; mais de 16, a caixa em volta).
+  Depois de criar ou redimensionar, e de uma apresentação que volta com aviso (a janela
+  encoberta), os próximos quadros vão inteiros. O modelo de cópia (`present: composed`, um
+  buffer) também vai por parte.
+  - *Nenhum caminho ficou no `DISCARD`:* os dois são do modelo flip, então o tearing
+    (`ALLOW_TEARING` com o intervalo 0), o VRR, o *independent flip* e o MPO, a tela cheia sem
+    borda, o `ResizeBuffers` e a troca de placa ou de monitor (a swap chain é recriada) são os
+    mesmos; o vidro copia do quadro guardado, não do buffer de trás; a janela transparente usa a
+    swap chain da composição, que aceita o `SEQUENTIAL` com o alfa pré-multiplicado. Conferido
+    nos três modos de apresentar (`window`, `composition`, `composed`) pelo teste novo.
+  - *Achado:* nesta máquina (AMD), o DXGI já completa o buffer apresentado por fora dos
+    retângulos sujos com o quadro anterior: o teste passou também sem a união com o quadro de
+    antes. A união ficou (não depende disso e custa só as áreas do quadro anterior).
+- **O custo das camadas de mistura.**
+  - *A `exclusion` sem cópia:* ela vai sempre pela placa (nos dois compositores), pela mistura
+    fixa `INV_DEST_COLOR`/`INV_SRC_COLOR` e um pixel shader que só lê a camada (`ps_layer` no
+    `blend.hlsl`), sem copiar o fundo e sem o shader genérico. Com as cores pré-multiplicadas, a
+    conta do `blend.hlsl` dá `s + b − 2·s·b` com **qualquer** alfa do fundo (não só o opaco) e o
+    alfa por cima, então o pixel é o mesmo; a opacidade da camada vale. Fica o `Flush` antes,
+    porque o Direct3D escreve na textura do Direct2D. Ela cai no efeito do Direct2D como antes com
+    recorte arredondado ou girado, camada de opacidade ou máscara aberta, ou o alvo na CPU.
+  - *A pintura por parte com várias áreas* (a máscara da união aberta por baixo de tudo)
+    deixava o compositor em Direct3D sempre de fora; agora a máscara fecha durante a composição e
+    cada área vira um *scissor* (na mistura fixa, divididas em retângulos sem sobreposição).
+  - *A documentação:* o `save_layer_blend` e o `BlendMode` dizem o custo no Direct2D (um `Flush`
+    e uma cópia do fundo por camada, salvo a `exclusion`) e recomendam a `exclusion` para texto
+    ou marca branca, que dá o mesmo pixel da `difference`. O `examples/MarcaDagua` passou para a
+    `exclusion` (`--blend difference` compara).
+  - *O perfil:* cada pintura do Direct2D grava as amostras "camadas de mistura", "flush da
+    mistura" e "cópias do fundo" no `profile_take` (`aylis_d2d::blend_stats()`), e o resumo do
+    `profile` do MCP da IDE traz `blend_layers` (o total e a média por pintura). Também
+    `aylis_d2d::fixed_blends()` e `partial_presents()`.
+  - Skia e Canvas 2D já estavam certos (a `exclusion` do W3C nos dois).
+
+Medido nesta máquina, que **não tem a Intel** (uma AMD RX 9070 XT só): o `examples/MarcaDagua`
+em release, 16 vídeos, a janela de 1440 × 800 do form, o perfil por 8 s depois de 30 s
+no ar e o 3D do processo pelo contador `GPU Engine` (os números em
+[medicoes/parede_de_video.json](../medicoes/parede_de_video.json)):
+
+| 16 vídeos | Pinturas/s | Cada pintura | Thread da interface | 3D da placa | Cópias do fundo por pintura |
+|---|---|---|---|---|---|
+| antes, `difference` | 38 | 21,4 ms | 82% | 10,8% | (todas) |
+| antes, `normal` | 106 | 6,1 ms | 65% | 2,7% | 0 |
+| agora, `difference` (3 rodadas) | 62–87 | 9,0–13,3 ms | 78–84% | 15–18% | 11,7–15,6 (todas) |
+| agora, `exclusion` (3 rodadas) | 62–69 | 12,1–13,6 ms | 83–84% | 17–20% | 0 |
+| agora, `normal` | 114 | 5,6 ms | 63% | 2,9% | 0 |
+
+- O `Wait` e a cópia parcial: a pintura com `difference` de 21,4 para 9–13 ms e de 38 para 62–87
+  pinturas por segundo (as duas correções juntas; a rodada varia com quantas células cada
+  pintura pega). O 3D por pintura ficou o mesmo: nesta placa a cópia da janela inteira já era
+  barata.
+- A `exclusion` não mudou nada mensurável aqui: as cópias do fundo zeraram, mas o tempo e o 3D
+  ficaram iguais aos da `difference`. Na AMD, o custo por camada (~0,5 ms) é da CPU: abrir e
+  fechar a camada fora da tela, o `Flush` e fechar e reabrir a máscara das áreas. Um teste à
+  parte (16 camadas numa textura de 1920 × 1080) deu o mesmo: 18,2–18,8 ms nas duas, contra 17,4
+  na `normal`.
+- **A conferir na Intel UHD 770** ([testes-em-dispositivos](testes-em-dispositivos.md)): o 3D e
+  a pintura com os três ajustes, onde a cópia da janela e a do fundo pesam (o relato mediu 99%
+  de 3D).
+- O quadro inteiro não piorou com o `SEQUENTIAL`: o `aylis-tool bench --renderers d2d` (os
+  cinco exemplos, 600 quadros inteiros, mediana de 3) com o mesmo código e o `DISCARD` de volta
+  deu 0,675 / 0,550 / 2,750 / 2,664 / 2,580 ms, e com o `SEQUENTIAL`, 0,661–0,687 /
+  0,550–0,558 / 2,755–2,769 / 2,558–2,662 / 2,585–2,650 ms (componentes, grade, moderno,
+  catálogo, galeria): dentro de ±4%, o ruído entre rodadas. O `giant_screen` (release) e o
+  `partial_paint` passam.
+
+Testes novos: `the_partial_copy_keeps_every_buffer_whole` (`crates/aylis-d2d/tests/present.rs`:
+cada buffer de trás com o quadro inteiro, nos três modos), `the_exclusion_without_copy_matches_the_effect_and_skia`,
+`white_text_in_exclusion_is_the_same_as_in_difference` e `the_blend_on_the_gpu_holds_with_several_areas`
+(`blend_compositor.rs`), `the_overlapping_rects_become_disjoint_with_the_same_pixels`
+(`compositor.rs`) e `the_blend_layers_of_each_paint_show_in_the_summary` (o profiler da IDE).
+
+*O ritmo das pinturas (`max_paint_rate`, a D1 do histórico, seção 20).* O autor: "Aprovo que
+seja feito com opção por padrão desligado". Feito (roteiro, item 198):
+- **A propriedade `max_paint_rate` do `Form`** (Behavior, número; 0 = desligado, o padrão):
+  pinturas por segundo, no máximo, do que muda sem a entrada do usuário (quadros de vídeo,
+  timers, animações). As células que mudaram desde a última pintura são pintadas juntas na vez
+  seguinte, em vez de uma pintura por quadro que chega. Diferente do `frame_rate`, que limita
+  tudo, a entrada inclusive.
+- **A decisão é do núcleo** (`aylis-core/src/frames.rs`): o `Ui` guarda, por form, quando pintou
+  (`take_frame`) e se veio entrada desde então (`Ui::note_input`, chamado pelo `pointer_*`,
+  `wheel`, `key_*`, `text_input`, `gesture` e, na plataforma, pelo tamanho e pela escala da
+  janela). `Ui::paint_held_until` diz até quando a pintura espera; o `forms_to_paint` deixa o
+  form de fora até a vez, e o `next_wake` acorda o laço nela (parado, nenhum relógio: sem nada
+  pendente, o `next_wake` não conta o ritmo). Na plataforma, o `redraw` também pergunta, porque
+  há pedidos de quadro que não passam pelo `forms_to_paint`.
+- **A entrada pinta na hora**, e o que ela puxa nos 250 ms seguintes também (`INPUT_GRACE`: o
+  deslize da rolagem, a transição do realce).
+- O `examples/MarcaDagua` ganhou `--paint-rate N`. Catálogo, rótulo traduzido
+  (`properties.tsv`), `docs/video-e-pintura.md`, `docs/tempo-de-execucao.md` e as mesmas páginas
+  da Landing (a linha acrescentada à mão, sem regenerar as outras). Teste:
+  `crates/aylis-controls/tests/paint_rate.rs` (a espera e a vez, a mudança junta, parado sem
+  relógio, a entrada e a tecla na hora, desligado como antes).
+
+Medido na mesma parede de 16 vídeos (AMD, `exclusion`):
+
+| `max_paint_rate` | Pinturas/s | Cada pintura | Thread da interface | 3D da placa |
+|---|---|---|---|---|
+| 0 (desligado) | 67 | 12,7 ms | 85% | 19,3% |
+| 30 | 30 | 13,2 ms | 40% | 1,5% |
+| 15 | 15 | 9,3 ms | 14% | 1,1% |
+
+Cada pintura continua pegando as 16 células (16 camadas), mas a placa e a thread caem com o
+número de pinturas. O 3D cai mais que as pinturas (de 19% para 1,5% com a metade delas); a
+conferir se é a apresentação com menos pedaços pequenos. A placa integrada, a conferir junto com
+os outros três ajustes (testes-em-dispositivos).
+
 **Ajustes de 24/11/2026: a janela de vídeo igual no Windows e no Linux**
 
 As decisões, item a item, estão no histórico (seção 19). Cada sessão acrescenta o seu bloco.
@@ -1560,10 +1683,17 @@ os que dependiam dele ("fazer tudo", na ordem abaixo). As decisões estão no hi
 - [ ] Pedido do autor em 16/11: o instalador não instalava com o Claude usando o MCP (a ponte é
   o `aylis-tool.exe` da instalação, preso). Feito em 16/11 (falta o autor conferir numa
   instalação por cima com uma conversa ligada): antes de copiar cada executável (a IDE, o
-  `aylis-tool`, o `aylis-host`, o `aylis-migrate`), o instalador renomeia o que está lá para
-  `<nome>.antigo.exe` (o Windows deixa renomear o que está rodando) e o marca para sair no
-  próximo reinício; nenhum processo é encerrado, para não derrubar o MCP das conversas (o Claude
-  não religa o servidor sozinho). Teste `a_binary_in_use_is_renamed_before_the_copy`.
+  `aylis-tool`, o `aylis-host`, o `aylis-migrate`), o instalador renomeia o que está lá (o
+  Windows deixa renomear o que está rodando). Mudado em 25/11 a pedido do autor (o instalador
+  perguntava se queria reiniciar): o instalador encerra a IDE e o MCP antigos e nunca pede para
+  reiniciar. Os novos são extraídos como `.novo`, a hora é guardada, a troca é feita pelo nome
+  (o antigo vira `.antigo-<tick>`) e só então o `aylis-tool stop-installed --started-before`
+  encerra o que abriu antes da troca: a ponte que o Claude religar depois já é a nova e fica. O
+  desinstalador também encerra. Conferido com processos reais numa pasta de teste (o antigo
+  renomeado sai, o aberto depois e o de outro nome ficam, a sobra `.antigo` é apagada). Falta o
+  autor conferir numa instalação por cima com a IDE aberta e uma conversa ligada. Testes
+  `the_old_processes_are_stopped_after_the_swap_without_a_reboot` e
+  `only_the_installed_binaries_are_stopped`.
 
 **Ajustes de 15/11/2026: o cursor parado sobre o form em tela cheia (MPO)**
 

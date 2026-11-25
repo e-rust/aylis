@@ -1752,10 +1752,9 @@ impl Ui {
 
     pub fn next_wake(&self) -> Option<f64> {
         let painted = self.next_paint_wake();
-        match (painted, self.timers_wake()) {
-            (Some(a), Some(b)) => Some(a.min(b)),
-            (a, b) => a.or(b),
-        }
+        // A vez de um form que espera o `max_paint_rate`.
+        let paced = self.next_paced_paint();
+        [painted, self.timers_wake(), paced].into_iter().flatten().reduce(f64::min)
     }
 
     /// O zoom do app inteiro: 1 é o normal, 1.5 deixa tudo 50% maior (textos, controles,

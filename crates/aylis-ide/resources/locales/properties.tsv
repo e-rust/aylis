@@ -468,6 +468,7 @@ one_shot	Disparo único	One shot	Disparo único	Déclenchement unique	Einmalig	�
 activate_on_show	Ativar ao mostrar	Activate on show	Activar al mostrar	Activer à l’affichage	Beim Anzeigen aktivieren	Активировать при показе	显示时激活	表示時にアクティブ化	التنشيط عند العرض	দেখানোর সময় সক্রিয়	दिखाते समय सक्रिय करें	Aktifkan saat tampil
 close_action	Ao fechar	Close action	Al cerrar	Action à la fermeture	Aktion beim Schließen	Действие при закрытии	关闭时操作	閉じるときの動作	إجراء الإغلاق	বন্ধ করার সময়	बंद करने पर	Aksi saat ditutup
 frame_rate	Quadros por segundo	Frame rate	Fotogramas por segundo	Images par seconde	Bildrate	Частота кадров	帧率	フレームレート	معدل الإطارات	ফ্রেম হার	फ़्रेम दर	Laju bingkai
+max_paint_rate	Pinturas por segundo (sem entrada)	Max paint rate	Pinturas por segundo (sin entrada)	Peintures par seconde (sans saisie)	Max. Zeichnungen pro Sekunde	Макс. отрисовок в секунду	最大重绘频率	最大描画レート	الحد الأقصى لمعدل الرسم	সর্বোচ্চ আঁকার হার	अधिकतम पेंट दर	Laju gambar maksimum
 target	Alvo	Target	Destino	Cible	Ziel	Цель	目标	対象	الهدف	লক্ষ্য	लक्ष्य	Target
 tasks	Tarefas	Tasks	Tareas	Tâches	Aufgaben	Задачи	任务	タスク	المهام	কাজসমূহ	कार्य	Tugas
 tear_off	Arrancar abas	Tear off tabs	Desprender pestañas	Détacher les onglets	Tabs abreißen	Отрывать вкладки	拖出标签页	タブの切り離し	فصل علامات التبويب	ট্যাব আলাদা করা	टैब अलग करना	Lepas tab

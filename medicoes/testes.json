@@ -1,9 +1,9 @@
 {
   "_": "aylis-tool test-all: o resultado de cada alvo de teste do workspace (sem os tempos: duas rodadas boas dão o mesmo arquivo).",
   "summary": {
-    "targets": 367,
+    "targets": 368,
     "failed": 0,
-    "tests": 1831
+    "tests": 1841
   },
   "targets": {
     "abas/arrastar": {
@@ -441,6 +441,12 @@
     "aylis-controls/paint": {
       "status": "ok",
       "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    "aylis-controls/paint_rate": {
+      "status": "ok",
+      "passed": 3,
       "failed": 0,
       "ignored": 0
     },
@@ -950,7 +956,7 @@
     },
     "aylis-d2d/blend_compositor": {
       "status": "ok",
-      "passed": 2,
+      "passed": 5,
       "failed": 0,
       "ignored": 0
     },
@@ -974,13 +980,13 @@
     },
     "aylis-d2d/lib": {
       "status": "ok",
-      "passed": 0,
+      "passed": 1,
       "failed": 0,
       "ignored": 0
     },
     "aylis-d2d/present": {
       "status": "ok",
-      "passed": 2,
+      "passed": 3,
       "failed": 0,
       "ignored": 0
     },
@@ -1364,7 +1370,7 @@
     },
     "aylis-ide/lib": {
       "status": "ok",
-      "passed": 47,
+      "passed": 48,
       "failed": 0,
       "ignored": 1
     },
@@ -1850,7 +1856,7 @@
     },
     "aylis-tools/lib": {
       "status": "ok",
-      "passed": 189,
+      "passed": 190,
       "failed": 0,
       "ignored": 1
     },

@@ -36,6 +36,7 @@ O caminho é medir com o padrão, trocar um valor, medir de novo e só então gr
 | Propriedade | De quem | O que faz |
 |---|---|---|
 | `frame_rate` | Form | Quadros por segundo da janela (`0`: a taxa do monitor). Um telão não precisa de 144 quadros |
+| `max_paint_rate` | Form | Pinturas por segundo, no máximo, do que muda sem a entrada do usuário (quadros de vídeo, timers, animações): as células de uma parede de vídeos que mudaram se juntam numa pintura só. O mouse, o teclado, a roda, o toque e o tamanho da janela (e o que puxam nos 250 ms seguintes) pintam na hora; parado, nenhum relógio. `0` (o padrão) desliga. Diferente do `frame_rate`, que limita tudo |
 | `layer_cache` | Form | As camadas automáticas neste form: `project`, `on` ou `off` |
 | `frame_reuse_kb` | Form | Até quantos KB um quadro de vídeo reaproveita o bitmap do anterior nesta janela: `-1` (o padrão) é o do projeto; `0` sempre cria. Só no Direct2D (o Skia e o navegador não reaproveitam) |
 | `cache_layer` | todo controle | Guarda o desenho do controle como imagem enquanto ele anda ou esmaece |

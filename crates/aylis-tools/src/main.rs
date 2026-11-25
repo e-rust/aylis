@@ -6,6 +6,7 @@
 //! aylis-tool publish <projeto.aylisproj> [--target ...] [--out pasta] [--debug] [--features a,b] [--abis arm64-v8a,armeabi-v7a]
 //! aylis-tool clean [--days 7] [--target pasta] [--project projeto.aylisproj]
 //! aylis-tool installer-ide [--out pasta] [--skip-build] [--with-packages nome,...|all]
+//! aylis-tool stop-installed --dir pasta [--started-before filetime]   o instalador encerra a IDE e o MCP
 //! aylis-tool translations [--apply tabela.tsv] [--templates]
 //! aylis-tool new <pasta> <nome> [linguagem]
 //! aylis-tool generate <projeto.aylisproj>
@@ -406,6 +407,18 @@ fn main() -> ExitCode {
         // release não pode se sobrescrever enquanto está aberto.
         // A auditoria das dependências (cargo deny, regras em deny.toml).
         Some("audit") => aylis_tools::installer::audit(&PathBuf::from(aylis_project::codegen::aylis_root())),
+        // O instalador e o desinstalador da IDE: encerra a IDE e o MCP da pasta instalada
+        // (`--started-before`: o FILETIME de antes da troca dos executáveis).
+        Some("stop-installed") => (|| -> Result<(), String> {
+            let dir = value_of(&args, "--dir").map(PathBuf::from).ok_or("falta --dir <pasta da instalação>")?;
+            let before = match value_of(&args, "--started-before") {
+                Some(v) => Some(aylis_tools::installer::filetime_to_unix(v.parse().map_err(|_| format!("--started-before: {v} não é um FILETIME"))?)),
+                None => None,
+            };
+            let stopped = aylis_tools::installer::stop_installed(&dir, before);
+            println!("{stopped} processos encerrados");
+            Ok(())
+        })(),
         Some("installer-ide") => {
             // `--with-packages [nomes|all]`: o kit offline (a pasta `pacotes` ao lado do setup).
             let with_packages = args.iter().position(|a| a == "--with-packages").map(|i| {

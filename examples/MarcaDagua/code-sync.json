@@ -2,12 +2,12 @@
   "revisions": {
     "frmPrincipal.btnAbrir_click": 1,
     "frmPrincipal.btnTocar_click": 3,
-    "frmPrincipal.chkInverter_change": 2,
+    "frmPrincipal.chkInverter_change": 3,
     "frmPrincipal.chkMover_change": 1,
     "frmPrincipal.chkVideo_change": 1,
     "frmPrincipal.dlgAbrir_select": 3,
     "frmPrincipal.edtTexto_change": 2,
-    "frmPrincipal.frmPrincipal_show": 3,
+    "frmPrincipal.frmPrincipal_show": 4,
     "frmPrincipal.grdVideos_resize": 1,
     "frmPrincipal.segGrade_change": 1,
     "frmPrincipal.vpVideo_error": 2
@@ -37,8 +37,8 @@
           "seen": 3
         },
         "frmPrincipal.chkInverter_change": {
-          "hash": "v2:f11d3fedf6b710c0",
-          "seen": 2
+          "hash": "v2:86a9169a933b782e",
+          "seen": 3
         },
         "frmPrincipal.chkMover_change": {
           "hash": "v2:03ad576e172873d1",
@@ -57,8 +57,8 @@
           "seen": 2
         },
         "frmPrincipal.frmPrincipal_show": {
-          "hash": "v2:df8d27e8cf21ede9",
-          "seen": 3
+          "hash": "v2:cfd65c7c9cc36d48",
+          "seen": 4
         },
         "frmPrincipal.grdVideos_resize": {
           "hash": "v2:92c3f4ddc55e8800",

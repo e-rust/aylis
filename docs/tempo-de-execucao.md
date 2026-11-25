@@ -140,6 +140,8 @@ ui.show_modal_in(f, self.pnlPagina.id, |ui, result| { /* ... */ })?; // modal s�
 - **Minimizar:** o `on_minimize` e o `on_restore` avisam; `ui.is_minimized(f)` responde.
 - **Quadros:** `frame_rate` limita a janela (0 = a taxa do monitor dela); cada janela segue o
   monitor em que está.
+  O `max_paint_rate` limita só o que muda sem a entrada do usuário (vídeo, timers, animações),
+  juntando as mudanças numa pintura; a entrada continua pintando na hora.
 - **Teclas:** o Button com `default_button` recebe o Enter que nenhum controle usou; com
   `cancel_button`, o Esc. `aylis_core::shortcut_text("ctrl+s")` escreve `Ctrl+S` para mostrar.
 - **DPI:** no Windows, o winit liga o DPI por monitor (`PER_MONITOR_AWARE_V2`, ou o V1 nos

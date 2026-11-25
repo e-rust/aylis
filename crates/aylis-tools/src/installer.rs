@@ -249,29 +249,113 @@ pub fn makensis() -> Option<PathBuf> {
         })
 }
 
+/// Os segundos Unix de um FILETIME do Windows (centenas de nanossegundos desde 1601), o que o
+/// instalador passa em `--started-before`.
+pub fn filetime_to_unix(filetime: u64) -> u64 {
+    (filetime / 10_000_000).saturating_sub(11_644_473_600)
+}
+
+/// O processo é de um executável do Aylis instalado em `dir` (a IDE, o host, o aylis-tool, o
+/// migrate, com os nomes de troca `.novo`/`.antigo-*`)? Só o nome do arquivo e a pasta exata:
+/// nada de fora da instalação, mesmo com o `/D=` numa pasta com outros programas.
+#[cfg_attr(target_arch = "wasm32", allow(dead_code))]
+fn is_installed(exe: &Path, dir: &Path) -> bool {
+    let normal = |p: &Path| {
+        let text = p.display().to_string().replace('/', "\\").to_lowercase();
+        let text = text.strip_prefix("\\\\?\\").map(str::to_string).unwrap_or(text);
+        text.trim_end_matches('\\').to_string()
+    };
+    let Some(parent) = exe.parent() else { return false };
+    let name = exe.file_name().map(|n| n.to_string_lossy().to_lowercase()).unwrap_or_default();
+    normal(parent) == normal(dir) && name.ends_with(".exe") && BINARIES.iter().any(|(_, b)| name == format!("{b}.exe") || name.starts_with(&format!("{b}.")))
+}
+
+/// `aylis-tool stop-installed --dir <pasta> [--started-before <FILETIME>]`: encerra os
+/// processos da IDE instalada em `dir` (a IDE, a ponte do MCP, o host), para o instalador não
+/// pedir para reiniciar. Com `started_before`, só os abertos antes desse momento: o instalador
+/// troca os executáveis pelo nome primeiro (o Windows deixa renomear o que está rodando) e
+/// passa a hora de antes da troca; o que o Claude religar depois (a ponte do MCP) já abre o
+/// executável novo e fica. O próprio processo nunca. Depois apaga as sobras da troca
+/// (`*.antigo*`). Devolve quantos encerrou.
+pub fn stop_installed(dir: &Path, started_before: Option<u64>) -> usize {
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, System, UpdateKind};
+        let me = Pid::from_u32(std::process::id());
+        let kind = ProcessRefreshKind::nothing().with_exe(UpdateKind::Always);
+        let mut system = System::new();
+        system.refresh_processes_specifics(ProcessesToUpdate::All, true, kind);
+        let old: Vec<Pid> = system
+            .processes()
+            .values()
+            .filter(|p| p.pid() != me && p.exe().is_some_and(|exe| is_installed(exe, dir)) && started_before.is_none_or(|t| p.start_time() < t))
+            .filter(|p| p.kill())
+            .map(|p| p.pid())
+            .collect();
+        // O encerramento não é na hora: espera sumirem (até 5 s) para os arquivos ficarem livres.
+        for _ in 0..50 {
+            system.refresh_processes_specifics(ProcessesToUpdate::Some(&old), true, ProcessRefreshKind::nothing());
+            if old.iter().all(|pid| system.process(*pid).is_none()) {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+        if let Ok(entries) = std::fs::read_dir(dir) {
+            for entry in entries.flatten() {
+                if entry.file_name().to_string_lossy().to_lowercase().contains(".antigo") {
+                    let _ = std::fs::remove_file(entry.path());
+                }
+            }
+        }
+        old.len()
+    }
+    #[cfg(target_arch = "wasm32")]
+    {
+        let _ = (dir, started_before);
+        0
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 fn script(root: &Path, release: &Path, runtime: &[PathBuf], readme: &Path, icons: &Path, manifest: &Path, setup: &Path, version: &str) -> String {
     let p = |path: &Path| path.display().to_string().replace('/', "\\");
     let skip: String = SKIP.iter().map(|s| format!("/x {s} ")).collect();
     let tree = |name: &str| format!("  File /r {skip}\"{}\"\n", p(&root.join(name)));
     let file = |name: &str| format!("  File \"{}\"\n", p(&root.join(name)));
-    // Um executável em uso (a ponte do MCP de uma conversa do Claude é um `aylis-tool`, e a IDE
-    // pode estar aberta) é renomeado antes da cópia: o Windows deixa renomear o que está rodando,
-    // a cópia nova entra no nome certo, quem estava rodando segue com o antigo até fechar, e o
-    // renomeado sai no próximo reinício. Encerrar o processo derrubaria o MCP da conversa no
-    // meio do trabalho (o Claude não religa o servidor sozinho; pedido do autor em 16/11).
-    // As DLLs do runtime do Visual C++ do mesmo jeito (a IDE aberta as tem carregadas).
-    let in_use = |name: &str, old: &str, from: &Path| {
-        format!("  Delete \"$INSTDIR\\{old}\"\n  Rename \"$INSTDIR\\{name}\" \"$INSTDIR\\{old}\"\n  Delete /REBOOTOK \"$INSTDIR\\{old}\"\n  File \"{}\"\n", p(from))
-    };
-    let bins: String = BINARIES
+    // Os executáveis em uso (a IDE aberta, a ponte do MCP de uma conversa do Claude, que é um
+    // `aylis-tool`) são encerrados, sem pedir para reiniciar (pedido do autor em 25/11). A ordem
+    // fecha a corrida com o Claude religando a ponte: (1) os novos são extraídos como `.novo`;
+    // (2) guarda a hora e troca pelo nome, o antigo para `.antigo-<tick>` (o Windows deixa
+    // renomear o que está rodando) e o novo para o nome certo, em microssegundos; (3) o
+    // aylis-tool novo encerra os processos da pasta abertos antes da hora (`stop_installed`). O
+    // que abrir depois da troca já é o novo e fica. (4) Um `.novo` que não entrou (o antigo
+    // preso por outro programa) entra agora, com o processo encerrado. As DLLs do runtime do
+    // Visual C++ do mesmo jeito (a IDE aberta as tem carregadas).
+    let items: Vec<(String, String, String, String)> = BINARIES
         .iter()
-        .map(|(_, b)| in_use(&exe(b), &format!("{b}.antigo.exe"), &release.join(exe(b))))
+        .map(|(_, b)| (exe(b), format!("{b}.novo.exe"), format!("{b}.antigo-$R8.exe"), p(&release.join(exe(b)))))
         .chain(runtime.iter().map(|dll| {
             let name = dll.file_name().unwrap_or_default().to_string_lossy().to_string();
-            in_use(&name, &format!("{name}.antigo"), dll)
+            (name.clone(), format!("{name}.novo"), format!("{name}.antigo-$R8"), p(dll))
         }))
         .collect();
+    let mut bins = String::new();
+    for (_, new, _, from) in &items {
+        bins += &format!("  File \"/oname={new}\" \"{from}\"\n");
+    }
+    bins += "  System::Call 'kernel32::GetSystemTimeAsFileTime(*l .R9)'\n  System::Call 'kernel32::GetTickCount() i .R8'\n";
+    for (name, new, old, _) in &items {
+        bins += &format!("  Rename \"$INSTDIR\\{name}\" \"$INSTDIR\\{old}\"\n  Rename \"$INSTDIR\\{new}\" \"$INSTDIR\\{name}\"\n");
+    }
+    bins += "  DetailPrint \"Fechando a IDE e o MCP da versão anterior…\"\n  nsExec::Exec '\"$INSTDIR\\aylis-tool.exe\" stop-installed --dir \"$INSTDIR\" --started-before $R9'\n  Pop $R7\n";
+    for (name, new, old, _) in &items {
+        bins += &format!(
+            "  IfFileExists \"$INSTDIR\\{new}\" 0 +3\n  Delete \"$INSTDIR\\{name}\"\n  Rename \"$INSTDIR\\{new}\" \"$INSTDIR\\{name}\"\n  Delete \"$INSTDIR\\{old}\"\n"
+        );
+    }
+    // A reinicialização nunca é pedida: o que sobrar (um processo de administrador que não se
+    // deixou encerrar) sai na próxima instalação.
+    bins += "  SetRebootFlag false\n";
     // O código do Aylis (os projetos em Rust compilam contra ele), sem os exemplos: o
     // `Cargo.toml` é a cópia sem eles entre os membros. O `third_party` também: o cargo exige
     // as dependências por caminho mesmo de outro alvo (a cópia do `accesskit_android`).
@@ -411,13 +495,15 @@ Section "Aylis IDE e Rust (obrigatório)" SecIde
   ; que mais custa (medido em 12/11: 20 mil arquivos apagados em 28,3 s com a lista e 3,1 s
   ; sem ela). A barra mostra só a etapa.
   SetDetailsPrint textonly
+  ; Os executáveis primeiro: a troca encerra a IDE e o MCP antigos, e o resto sai sem nada
+  ; preso.
+  DetailPrint "Copiando a IDE…"
+  SetOutPath "$INSTDIR"
+@BINS@@README@
   DetailPrint "Removendo a versão anterior…"
   ; Uma versão anterior sai inteira (sem sobrar arquivos que a nova não tem, como os
   ; exemplos das versões que os levavam).
   RMDir /r "$INSTDIR\aylis"
-  DetailPrint "Copiando a IDE…"
-  SetOutPath "$INSTDIR"
-@BINS@@README@
   SetOutPath "$INSTDIR\aylis"
 @RESOURCES@
   DetailPrint "Copiando o código do Aylis…"
@@ -569,6 +655,10 @@ Section "Uninstall"
   ; dezenas de milhares, e a lista levava minutos.
   SetDetailsPrint textonly
   DetailPrint "Removendo o Aylis…"
+  ; A IDE e o MCP abertos são encerrados antes (o aylis-tool não encerra a si mesmo, e o
+  ; desinstalador roda de uma cópia na pasta temporária).
+  nsExec::Exec '"$INSTDIR\aylis-tool.exe" stop-installed --dir "$INSTDIR"'
+  Pop $0
   Delete "$DESKTOP\Aylis IDE.lnk"
   RMDir /r "$SMPROGRAMS\Aylis"
   RMDir /r "$INSTDIR\aylis"
@@ -658,24 +748,49 @@ mod tests {
     #[test]
     fn the_visual_cpp_runtime_goes_beside_the_executables() {
         let script = generated_script();
-        assert!(script.contains("Rename \"$INSTDIR\\vcruntime140.dll\" \"$INSTDIR\\vcruntime140.dll.antigo\""), "{script}");
-        assert!(script.contains("File \"x\\vcruntime140.dll\""));
+        assert!(script.contains("Rename \"$INSTDIR\\vcruntime140.dll\" \"$INSTDIR\\vcruntime140.dll.antigo-$R8\""), "{script}");
+        assert!(script.contains("File \"/oname=vcruntime140.dll.novo\" \"x\\vcruntime140.dll\""));
         for dll in crate::vcruntime::DLLS {
             assert!(script.contains(&format!("Delete \"$INSTDIR\\{dll}\"")), "o desinstalar apaga {dll}");
         }
     }
 
-    /// O executável em uso (a ponte do MCP, a IDE aberta) é renomeado antes da cópia, e nenhum
-    /// processo é encerrado (pedido do autor em 16/11: instalar com o Claude usando o MCP).
+    /// A IDE e a ponte do MCP abertas são encerradas sem pedir para reiniciar (pedido do autor
+    /// em 25/11), na ordem que fecha a corrida com o Claude religando a ponte: o novo extraído
+    /// como `.novo`, a hora guardada, a troca pelo nome e só então o encerramento do que abriu
+    /// antes da hora.
     #[test]
-    fn a_binary_in_use_is_renamed_before_the_copy() {
+    fn the_old_processes_are_stopped_after_the_swap_without_a_reboot() {
         let script = generated_script();
-        let tool = exe("aylis-tool");
-        let rename = script.find(&format!("Rename \"$INSTDIR\\{tool}\" \"$INSTDIR\\aylis-tool.antigo.exe\"")).expect("o rename do aylis-tool");
-        let copy = script[rename..].find(&format!("\\{tool}\"")).expect("a cópia depois do rename");
-        assert!(copy > 0);
-        assert!(script.contains("Delete /REBOOTOK \"$INSTDIR\\aylis-ide.antigo.exe\""));
-        assert!(!script.to_lowercase().contains("taskkill"), "nenhum processo é encerrado");
+        let at = |s: &str| script.find(s).unwrap_or_else(|| panic!("falta {s}: {script}"));
+        let extract = at("File \"/oname=aylis-tool.novo.exe\" \"x\\aylis-tool.exe\"");
+        let time = at("GetSystemTimeAsFileTime(*l .R9)");
+        let old = at("Rename \"$INSTDIR\\aylis-tool.exe\" \"$INSTDIR\\aylis-tool.antigo-$R8.exe\"");
+        let new = at("Rename \"$INSTDIR\\aylis-tool.novo.exe\" \"$INSTDIR\\aylis-tool.exe\"");
+        let stop = at("nsExec::Exec '\"$INSTDIR\\aylis-tool.exe\" stop-installed --dir \"$INSTDIR\" --started-before $R9'");
+        let retry = at("IfFileExists \"$INSTDIR\\aylis-ide.novo.exe\"");
+        assert!(extract < time && time < old && old < new && new < stop && stop < retry);
+        // A troca antes de apagar a versão anterior: nada preso no RMDir.
+        assert!(stop < at("RMDir /r \"$INSTDIR\\aylis\""));
+        assert!(!script.contains("REBOOTOK") && script.contains("SetRebootFlag false"), "nunca pede para reiniciar");
+        let uninstall = &script[at("Section \"Uninstall\"")..];
+        assert!(uninstall.find("stop-installed --dir \"$INSTDIR\"'").unwrap() < uninstall.find("Delete \"$INSTDIR\\aylis-tool.exe\"").unwrap());
+    }
+
+    /// Só os executáveis do Aylis na pasta exata da instalação (com os nomes da troca).
+    #[test]
+    fn only_the_installed_binaries_are_stopped() {
+        let dir = Path::new(r"C:\Users\x\AppData\Local\Programs\aylis");
+        for name in ["aylis-ide.exe", "AYLIS-TOOL.EXE", "aylis-tool.antigo-123.exe", "aylis-host.novo.exe", "aylis-migrate.exe"] {
+            assert!(is_installed(&dir.join(name), dir), "{name}");
+        }
+        assert!(is_installed(Path::new(r"\\?\C:\Users\x\AppData\Local\Programs\aylis\aylis-ide.exe"), Path::new(r"c:/users/x/appdata/local/programs/aylis/")));
+        for name in ["outro.exe", "aylis-ide-setup.exe", "desinstalar.exe", "vcruntime140.dll"] {
+            assert!(!is_installed(&dir.join(name), dir), "{name}");
+        }
+        assert!(!is_installed(&dir.join("sub").join("aylis-ide.exe"), dir), "fora da pasta exata");
+        // 01/01/2026 00:00 UTC.
+        assert_eq!(filetime_to_unix(134_116_992_000_000_000), 1_767_225_600);
     }
 
     /// Nenhum exemplo vai: o workspace instalado não os lista (o cargo recusaria), e o script

@@ -673,6 +673,7 @@ impl Ui {
 
     /// O ponteiro se moveu. `event.position` em coordenadas do form.
     pub fn pointer_move(&mut self, root: ComponentId, event: PointerEvent) {
+        self.note_input();
         self.report(&crate::activity::Activity::PointerMove { form: root, event });
         if self.input_blocked(root) {
             return; // há um form modal aberto por cima
@@ -757,6 +758,7 @@ impl Ui {
 
     /// Um botão foi pressionado (ou um dedo tocou a tela).
     pub fn pointer_down(&mut self, root: ComponentId, event: PointerEvent) {
+        self.note_input();
         self.report(&crate::activity::Activity::PointerDown { form: root, event });
         // Há um form modal aberto por cima: o clique traz o modal para a frente e o faz piscar,
         // como no Windows. Sem isso, o modal atrás de outra janela (no Wayland, onde a janela não
@@ -906,6 +908,7 @@ impl Ui {
     /// Um botão foi solto. Se for o principal e for solto sobre o mesmo controle em que
     /// foi pressionado, gera o clique.
     pub fn pointer_up(&mut self, root: ComponentId, event: PointerEvent) {
+        self.note_input();
         self.report(&crate::activity::Activity::PointerUp { form: root, event });
         if self.input_blocked(root) {
             return; // há um form modal aberto por cima
@@ -1495,6 +1498,7 @@ impl Ui {
 
     /// O ponteiro saiu da janela.
     pub fn pointer_leave(&mut self, root: ComponentId) {
+        self.note_input();
         self.hide_hint(root);
         let before = self.input_state(root).pointer.take();
         self.reveal_moved(root, before, None);
@@ -1505,6 +1509,7 @@ impl Ui {
 
     /// Cancela a interação em andamento (a janela perdeu o foco, o toque foi cancelado...).
     pub fn pointer_cancel(&mut self, root: ComponentId) {
+        self.note_input();
         if let Some(p) = self.input_state(root).pinch.take() {
             let e = crate::event::GestureEvent { phase: crate::event::GesturePhase::End, scale: 1.0, delta_scale: 1.0, center: p.last_center, ..Default::default() };
             self.gesture_from(p.target, e);
@@ -1522,6 +1527,7 @@ impl Ui {
     /// Roda do mouse / rolagem. Sobe do controle sob o ponteiro para os pais até algum
     /// componente marcar como tratado.
     pub fn wheel(&mut self, root: ComponentId, event: WheelEvent) {
+        self.note_input();
         self.report(&crate::activity::Activity::Wheel { form: root, event });
         if self.input_blocked(root) {
             return; // há um form modal aberto por cima
@@ -1657,6 +1663,7 @@ impl Ui {
     /// Gesto já reconhecido pelo sistema (pinça e giro do touchpad no macOS): vai ao
     /// controle sob `event.center` (coordenadas do form) e sobe para os pais.
     pub fn gesture(&mut self, root: ComponentId, event: crate::event::GestureEvent) {
+        self.note_input();
         if self.input_blocked(root) {
             return;
         }
@@ -1989,6 +1996,7 @@ impl Ui {
     /// Tecla pressionada: vai para o controle com foco (ou o form) e sobe para os pais
     /// até alguém tratar. Tab / Shift+Tab sem tratamento movem o foco.
     pub fn key_down(&mut self, root: ComponentId, mut event: KeyEvent) {
+        self.note_input();
         // A janela em que a tecla chegou (o form raiz).
         event.form = Some(self.root_of(root));
         self.report(&crate::activity::Activity::KeyDown { form: root, event });
@@ -2298,6 +2306,7 @@ impl Ui {
     }
 
     pub fn key_up(&mut self, root: ComponentId, mut event: KeyEvent) {
+        self.note_input();
         event.form = Some(self.root_of(root));
         self.report(&crate::activity::Activity::KeyUp { form: root, event });
         if self.input_blocked(root) {
@@ -2336,6 +2345,7 @@ impl Ui {
 
     /// Texto digitado (já com acentos/IME resolvidos), entregue ao controle com foco.
     pub fn text_input(&mut self, root: ComponentId, text: &str) {
+        self.note_input();
         self.report(&crate::activity::Activity::Text { form: root, text });
         if self.input_blocked(root) {
             return; // há um form modal aberto por cima

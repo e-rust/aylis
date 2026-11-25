@@ -48,6 +48,7 @@ pub mod form_window;
 pub mod monitors;
 pub mod ndef;
 mod frames;
+pub use frames::INPUT_GRACE;
 // Repintar só o que mudou.
 mod damage;
 pub use damage::{FrameDamage, ScrollMove};

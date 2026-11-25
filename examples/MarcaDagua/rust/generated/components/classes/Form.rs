@@ -289,6 +289,12 @@ impl Form {
     pub fn set_frame_rate(self, ui: &mut Ui, value: f64) {
         handles::write(ui, self.id, "frame_rate", value)
     }
+    pub fn max_paint_rate(self, ui: &Ui) -> f64 {
+        handles::read(ui, self.id, "max_paint_rate").and_then(|v| v.to_f64().ok()).unwrap_or_default()
+    }
+    pub fn set_max_paint_rate(self, ui: &mut Ui, value: f64) {
+        handles::write(ui, self.id, "max_paint_rate", value)
+    }
     pub fn orientation(self, ui: &Ui) -> aylis::prelude::FormOrientation {
         handles::read_enum::<aylis::prelude::FormOrientation>(ui, self.id, "orientation")
     }

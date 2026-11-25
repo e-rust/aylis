@@ -37,7 +37,8 @@ impl From<Color> for Brush {
 
 /// Como uma camada se junta ao que está por baixo dela (o `mix-blend-mode` do CSS e do
 /// Photoshop). Só os modos que o Skia, o Direct2D e o Canvas 2D do navegador desenham igual.
-/// `Difference` com branco é o negativo (a marca d'água que inverte o vídeo por baixo).
+/// `Difference` e `Exclusion` com branco são o negativo (a marca d'água que inverte o vídeo por
+/// baixo); prefira a `Exclusion`, mais barata no Direct2D ([`Canvas::save_layer_blend`]).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum BlendMode {
     /// Por cima, sem mistura.
@@ -54,7 +55,8 @@ pub enum BlendMode {
     SoftLight,
     /// A diferença entre as cores: o branco inverte, o preto não muda.
     Difference,
-    /// Como a diferença, com menos contraste.
+    /// Como a diferença, com menos contraste; com o branco, o mesmo negativo. No Direct2D, a
+    /// placa mistura sem copiar o fundo.
     Exclusion,
     Hue,
     Saturation,
@@ -498,6 +500,14 @@ pub trait Canvas {
     /// por baixo pelo modo `mode`. `bounds`: até onde a camada desenha (nas coordenadas de
     /// agora), para o renderizador misturar só ali. O padrão (um canvas sem mistura) é a
     /// camada normal.
+    ///
+    /// **O custo no Direct2D:** cada camada (fora a `normal`) custa um `Flush` (um envio à
+    /// placa no meio da pintura) e uma cópia do fundo onde ela cai, e a pintura refaz a camada
+    /// sempre que algo por baixo muda (um vídeo, a cada quadro). A exceção é a `exclusion`, que
+    /// a placa mistura sem copiar o fundo (fica só o `Flush`). Para texto ou marca **branca**,
+    /// use a `exclusion` no lugar da `difference`: com o branco as duas dão o mesmo pixel (o
+    /// negativo do fundo), nos três renderizadores. O perfil do app (`profile`) mostra, por
+    /// pintura, as camadas, os `Flush` e as cópias do fundo.
     fn save_layer_blend(&mut self, opacity: f32, mode: BlendMode, bounds: RectF) {
         let _ = (mode, bounds);
         self.save_layer(opacity);
