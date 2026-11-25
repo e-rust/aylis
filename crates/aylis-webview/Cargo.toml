@@ -9,7 +9,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-aylis-core = { version = "0.10.1", path = "../aylis-core" }
+aylis-core = { version = "0.11.0", path = "../aylis-core" }
 
 [dev-dependencies]
 aylis-controls = { path = "../aylis-controls" }
