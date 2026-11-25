@@ -77,6 +77,8 @@
     procedure SetGpu(Value: string);
     function GetPresent: TFormPresent;
     procedure SetPresent(Value: TFormPresent);
+    function GetBlendCompositor: TFormBlendCompositor;
+    procedure SetBlendCompositor(Value: TFormBlendCompositor);
     function GetSpanMonitors: Boolean;
     procedure SetSpanMonitors(Value: Boolean);
     function GetPhysicalPixels: Boolean;
@@ -123,6 +125,10 @@
     procedure SetOnViewChange(Value: string);
     function GetOnTopmostLost: string;
     procedure SetOnTopmostLost(Value: string);
+    function GetOnScaleChange: string;
+    procedure SetOnScaleChange(Value: string);
+    function GetOnResizeEnd: string;
+    procedure SetOnResizeEnd(Value: string);
     function GetClientWidth: Double;
     procedure SetClientWidth(Value: Double);
     function GetClientHeight: Double;
@@ -298,6 +304,10 @@
   public
     procedure MoveToMonitor(AMonitor: Int64);
     procedure RequestAttention(ACritical: Boolean);
+    procedure BringToFront;
+    procedure SetActivationToken(AToken: string);
+    function WindowScale: Double;
+    function PointerOver: Boolean;
     procedure Place(AMonitor: Int64; AX: Int64; AY: Int64; AWidth: Int64; AHeight: Int64; AActivate: Boolean);
     function GpuAdapter: string;
     function GpuAdapters: TStringArray;
@@ -345,6 +355,7 @@
     property RememberPlacement: Boolean read GetRememberPlacement write SetRememberPlacement;
     property Gpu: string read GetGpu write SetGpu;
     property Present: TFormPresent read GetPresent write SetPresent;
+    property BlendCompositor: TFormBlendCompositor read GetBlendCompositor write SetBlendCompositor;
     property SpanMonitors: Boolean read GetSpanMonitors write SetSpanMonitors;
     property PhysicalPixels: Boolean read GetPhysicalPixels write SetPhysicalPixels;
     property ActivateOnShow: Boolean read GetActivateOnShow write SetActivateOnShow;
@@ -368,6 +379,8 @@
     property OnFilesDrop: string read GetOnFilesDrop write SetOnFilesDrop;
     property OnViewChange: string read GetOnViewChange write SetOnViewChange;
     property OnTopmostLost: string read GetOnTopmostLost write SetOnTopmostLost;
+    property OnScaleChange: string read GetOnScaleChange write SetOnScaleChange;
+    property OnResizeEnd: string read GetOnResizeEnd write SetOnResizeEnd;
     property ClientWidth: Double read GetClientWidth write SetClientWidth;
     property ClientHeight: Double read GetClientHeight write SetClientHeight;
     property Left: Double read GetLeft write SetLeft;
@@ -837,6 +850,16 @@ begin
   SetProp('present', TJSONString.Create(FormPresentNames[Value]));
 end;
 
+function TForm.GetBlendCompositor: TFormBlendCompositor;
+begin
+  Result := FormBlendCompositorOf(GetProp('blend_compositor'));
+end;
+
+procedure TForm.SetBlendCompositor(Value: TFormBlendCompositor);
+begin
+  SetProp('blend_compositor', TJSONString.Create(FormBlendCompositorNames[Value]));
+end;
+
 function TForm.GetSpanMonitors: Boolean;
 begin
   Result := GetProp('span_monitors').AsBoolean;
@@ -1065,6 +1088,26 @@ end;
 procedure TForm.SetOnTopmostLost(Value: string);
 begin
   SetProp('on_topmost_lost', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnScaleChange: string;
+begin
+  Result := AsText(GetProp('on_scale_change'));
+end;
+
+procedure TForm.SetOnScaleChange(Value: string);
+begin
+  SetProp('on_scale_change', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnResizeEnd: string;
+begin
+  Result := AsText(GetProp('on_resize_end'));
+end;
+
+procedure TForm.SetOnResizeEnd(Value: string);
+begin
+  SetProp('on_resize_end', TJSONString.Create(Value));
 end;
 
 function TForm.GetClientWidth: Double;
@@ -1935,6 +1978,26 @@ end;
 procedure TForm.RequestAttention(ACritical: Boolean);
 begin
   Aylis.Send('invoke', TJSONObject.Create(['target', Id, 'method', 'request_attention', 'args', TJSONArray.Create([ACritical])]));
+end;
+
+procedure TForm.BringToFront;
+begin
+  Aylis.Send('invoke', TJSONObject.Create(['target', Id, 'method', 'bring_to_front', 'args', TJSONArray.Create]));
+end;
+
+procedure TForm.SetActivationToken(AToken: string);
+begin
+  Aylis.Send('invoke', TJSONObject.Create(['target', Id, 'method', 'set_activation_token', 'args', TJSONArray.Create([AToken])]));
+end;
+
+function TForm.WindowScale: Double;
+begin
+  Result := Aylis.Call('invoke', TJSONObject.Create(['target', Id, 'method', 'window_scale', 'args', TJSONArray.Create])).AsFloat;
+end;
+
+function TForm.PointerOver: Boolean;
+begin
+  Result := Aylis.Call('invoke', TJSONObject.Create(['target', Id, 'method', 'pointer_over', 'args', TJSONArray.Create])).AsBoolean;
 end;
 
 procedure TForm.Place(AMonitor: Int64; AX: Int64; AY: Int64; AWidth: Int64; AHeight: Int64; AActivate: Boolean);

@@ -117,6 +117,70 @@
             setProp("topmost", value);
         }
 
+        public boolean isBottommost() {
+            return asBool(getProp("bottommost"));
+        }
+
+        public void setBottommost(boolean value) {
+            setProp("bottommost", value);
+        }
+
+        public KeepAwake getKeepAwake() {
+            return KeepAwake.of(getProp("keep_awake"));
+        }
+
+        public void setKeepAwake(KeepAwake value) {
+            setProp("keep_awake", value.value);
+        }
+
+        public CursorConfine getConfineCursor() {
+            return CursorConfine.of(getProp("confine_cursor"));
+        }
+
+        public void setConfineCursor(CursorConfine value) {
+            setProp("confine_cursor", value.value);
+        }
+
+        public double getWindowOpacity() {
+            return asNumber(getProp("window_opacity"));
+        }
+
+        public void setWindowOpacity(double value) {
+            setProp("window_opacity", value);
+        }
+
+        public FullScreenMode getFullScreenMode() {
+            return FullScreenMode.of(getProp("full_screen_mode"));
+        }
+
+        public void setFullScreenMode(FullScreenMode value) {
+            setProp("full_screen_mode", value.value);
+        }
+
+        public long getVideoWidth() {
+            return (long) asNumber(getProp("video_width"));
+        }
+
+        public void setVideoWidth(long value) {
+            setProp("video_width", value);
+        }
+
+        public long getVideoHeight() {
+            return (long) asNumber(getProp("video_height"));
+        }
+
+        public void setVideoHeight(long value) {
+            setProp("video_height", value);
+        }
+
+        public double getVideoRefresh() {
+            return asNumber(getProp("video_refresh"));
+        }
+
+        public void setVideoRefresh(double value) {
+            setProp("video_refresh", value);
+        }
+
         public boolean isShowInTaskbar() {
             return asBool(getProp("show_in_taskbar"));
         }
@@ -245,6 +309,14 @@
             setProp("present", value.value);
         }
 
+        public FormBlendCompositor getBlendCompositor() {
+            return FormBlendCompositor.of(getProp("blend_compositor"));
+        }
+
+        public void setBlendCompositor(FormBlendCompositor value) {
+            setProp("blend_compositor", value.value);
+        }
+
         public boolean isSpanMonitors() {
             return asBool(getProp("span_monitors"));
         }
@@ -299,6 +371,22 @@
 
         public void setOrientation(FormOrientation value) {
             setProp("orientation", value.value);
+        }
+
+        public Aylis.AylisComponent getHost() {
+            return getRef("host");
+        }
+
+        public void setHost(Aylis.AylisComponent value) {
+            setRef("host", value);
+        }
+
+        public boolean isDockable() {
+            return asBool(getProp("dockable"));
+        }
+
+        public void setDockable(boolean value) {
+            setProp("dockable", value);
         }
 
         public String getOnShow() {
@@ -371,6 +459,62 @@
 
         public void setOnGpuChange(String value) {
             setProp("on_gpu_change", value);
+        }
+
+        public String getOnDock() {
+            return asText(getProp("on_dock"));
+        }
+
+        public void setOnDock(String value) {
+            setProp("on_dock", value);
+        }
+
+        public String getOnUndock() {
+            return asText(getProp("on_undock"));
+        }
+
+        public void setOnUndock(String value) {
+            setProp("on_undock", value);
+        }
+
+        public String getOnFilesDrop() {
+            return asText(getProp("on_files_drop"));
+        }
+
+        public void setOnFilesDrop(String value) {
+            setProp("on_files_drop", value);
+        }
+
+        public String getOnViewChange() {
+            return asText(getProp("on_view_change"));
+        }
+
+        public void setOnViewChange(String value) {
+            setProp("on_view_change", value);
+        }
+
+        public String getOnTopmostLost() {
+            return asText(getProp("on_topmost_lost"));
+        }
+
+        public void setOnTopmostLost(String value) {
+            setProp("on_topmost_lost", value);
+        }
+
+        public String getOnScaleChange() {
+            return asText(getProp("on_scale_change"));
+        }
+
+        public void setOnScaleChange(String value) {
+            setProp("on_scale_change", value);
+        }
+
+        public String getOnResizeEnd() {
+            return asText(getProp("on_resize_end"));
+        }
+
+        public void setOnResizeEnd(String value) {
+            setProp("on_resize_end", value);
         }
 
         public double getClientWidth() {
@@ -1065,12 +1209,44 @@
             aylis.send("invoke", Aylis.obj("target", id, "method", "move_to_monitor", "args", java.util.List.of(monitor)));
         }
 
+        public void requestAttention(boolean critical) {
+            aylis.send("invoke", Aylis.obj("target", id, "method", "request_attention", "args", java.util.List.of(critical)));
+        }
+
+        public void bringToFront() {
+            aylis.send("invoke", Aylis.obj("target", id, "method", "bring_to_front", "args", java.util.List.of()));
+        }
+
+        public void setActivationToken(String token) {
+            aylis.send("invoke", Aylis.obj("target", id, "method", "set_activation_token", "args", java.util.List.of(token)));
+        }
+
+        public double windowScale() {
+            return asNumber(aylis.call("invoke", Aylis.obj("target", id, "method", "window_scale", "args", java.util.List.of())));
+        }
+
+        public boolean pointerOver() {
+            return asBool(aylis.call("invoke", Aylis.obj("target", id, "method", "pointer_over", "args", java.util.List.of())));
+        }
+
+        public void place(long monitor, long x, long y, long width, long height, boolean activate) {
+            aylis.send("invoke", Aylis.obj("target", id, "method", "place", "args", java.util.List.of(monitor, x, y, width, height, activate)));
+        }
+
         public String gpuAdapter() {
             return asText(aylis.call("invoke", Aylis.obj("target", id, "method", "gpu_adapter", "args", java.util.List.of())));
         }
 
         public java.util.List<String> gpuAdapters() {
             return asList(aylis.call("invoke", Aylis.obj("target", id, "method", "gpu_adapters", "args", java.util.List.of())));
+        }
+
+        public double dropX() {
+            return asNumber(aylis.call("invoke", Aylis.obj("target", id, "method", "drop_x", "args", java.util.List.of())));
+        }
+
+        public double dropY() {
+            return asNumber(aylis.call("invoke", Aylis.obj("target", id, "method", "drop_y", "args", java.util.List.of())));
         }
 
         public String renderRgba(double x, double y, double width, double height, double scale) {

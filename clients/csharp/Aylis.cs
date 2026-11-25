@@ -301,6 +301,9 @@ public class Aylis
     // handlers rodando (um evento que pergunta roda mesmo durante um Call).
     private int waiting;
     private int running;
+    // As respostas dos eventos que perguntam em andamento (a última é a do handler que roda), para
+    // o Reply do handler tipado, que não recebe o evento.
+    private readonly List<JsonObject?> replies = new();
     // A thread que lê (a do Loop): um Call de outra thread leria a mesma entrada.
     private int owner;
 
@@ -377,6 +380,15 @@ public class Aylis
         if (fields != null)
             foreach (var (k, v) in fields) message[k] = v?.DeepClone();
         return message;
+    }
+
+    /// <summary>Dentro de um evento que pergunta: grava um campo da resposta, como o
+    /// <c>ev.Reply[name]</c> do handler que recebe o evento inteiro (o tipado não o recebe).
+    /// <c>Reply("key", "")</c> no <c>on_key_down</c> engole a tecla; uma exceção recusa. Fora de
+    /// um evento que pergunta, não faz nada.</summary>
+    public void Reply(string name, JsonNode? value)
+    {
+        if (replies.Count > 0 && replies[^1] is JsonObject current) current[name] = value;
     }
 
     /// <summary>Envia um comando sem esperar resposta (erros chegam como evento "error").</summary>
@@ -582,6 +594,7 @@ public class Aylis
         var ev = new AylisEvent(kind, message["handler"]?.ToString() ?? "", message["form"]?.ToString() ?? "",
             message["sender"]?["name"]?.ToString() ?? "", message["sender"]?["class"]?.ToString() ?? "", message["args"], message["info"]) { Ask = ask, Pointer = AylisPointer.From(message["pointer"]), SenderId = message["sender"]?["id"] is JsonValue sid && sid.TryGetValue<long>(out var senderId) ? senderId : 0 };
         running++;
+        replies.Add(ask != null ? ev.Reply : null);
         try
         {
             if (!handlers.TryGetValue($"{ev.Form}.{ev.Handler}", out var handler) && !handlers.TryGetValue(ev.Handler, out handler))
@@ -608,6 +621,7 @@ public class Aylis
         finally
         {
             running--;
+            replies.RemoveAt(replies.Count - 1);
             // O handler terminou: a tela deixa de mostrar o backend ocupado.
             if (message["seq"] is JsonValue s && s.TryGetValue<long>(out var seq)) Send("done", new() { ["seq"] = seq });
         }

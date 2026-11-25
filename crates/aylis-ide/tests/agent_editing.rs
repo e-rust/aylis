@@ -41,7 +41,7 @@ fn show_code(ide: &mut app::Ide, state: &aylis_ide::state::Shared) {
 
 fn key(ui: &mut Ui, form: aylis_core::ComponentId, shortcut: &str) {
     let (modifiers, key) = aylis_core::parse_shortcut(shortcut).unwrap();
-    let event = KeyEvent { key, modifiers, repeat: false, form: None };
+    let event = KeyEvent { key, modifiers, ..Default::default() };
     ui.key_down(form, event);
     ui.key_up(form, event);
 }

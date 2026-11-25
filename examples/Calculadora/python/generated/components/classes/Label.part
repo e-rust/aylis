@@ -124,6 +124,14 @@ class Label(AylisComponent):
         self._set("text_shadow", (value.to_json() if value else ""))
 
     @property
+    def max_lines(self) -> int:
+        return self._get("max_lines")
+
+    @max_lines.setter
+    def max_lines(self, value: int) -> None:
+        self._set("max_lines", value)
+
+    @property
     def focus_control(self) -> AylisComponent | None:
         return self._get_ref("focus_control")
 

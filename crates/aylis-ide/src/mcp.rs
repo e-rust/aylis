@@ -1098,6 +1098,19 @@ fn code_target(state: &Shared, args: &Value) -> Result<std::path::PathBuf, Strin
     }
 }
 
+/// O nome do handler que o agente manda no `set_property` de um evento: o texto puro
+/// (`btn_click`) ou o nome em JSON, como a descrição da ferramenta diz (`"\"btn_click\""`, que
+/// era recusado como nome inválido). Vazio ou `null` desliga o handler, como apagar no Object
+/// Inspector.
+fn event_value(value: Value) -> Value {
+    let Some(text) = value.as_str().map(str::trim) else { return value };
+    let text = match serde_json::from_str::<Value>(text) {
+        Ok(Value::String(inner)) => inner.trim().to_string(),
+        _ => text.to_string(),
+    };
+    if text.is_empty() || text == "null" { Value::Null } else { Value::String(text) }
+}
+
 /// Acha o componente pelo nome no form aberto (vazio: o form).
 fn component(state: &Shared, name: &str) -> Result<aylis_core::ComponentId, String> {
     let st = state.borrow();
@@ -1190,7 +1203,7 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
             // Um evento vazio (`""` ou `null`, que o agente às vezes manda como texto) desliga o
             // handler, como apagar no Object Inspector: antes dava erro ou ligava a um "null".
             let is_event = property.starts_with("on_") || property.starts_with("before_") || property.starts_with("after_");
-            let value = if is_event && matches!(value.as_str(), Some("") | Some("null")) { Value::Null } else { value };
+            let value = if is_event { event_value(value) } else { value };
             if property == "name" {
                 // Como renomear no Object Inspector: o designer, e depois o resto do projeto (o
                 // código e os outros forms; o relatório do Tabernáculo, M08: só mudava o form).
@@ -1481,7 +1494,7 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
         "editor_key" => {
             let form = crate::codewindow::code_form(ui).ok_or("a janela de código não está aberta (open_code)")?;
             let (modifiers, key) = aylis_core::parse_shortcut(arg(args, "key")).ok_or("tecla inválida")?;
-            let event = aylis_core::KeyEvent { key, modifiers, repeat: false, form: None };
+            let event = aylis_core::KeyEvent { key, modifiers, ..Default::default() };
             crate::codewindow::as_agent(ui, |ui| {
                 ui.key_down(form, event);
                 ui.key_up(form, event);
@@ -1559,7 +1572,7 @@ pub fn run_tool(ui: &mut Ui, state: &Shared, ids: &Ids, name: &str, args: &Value
                 ui.text_input(form, arg(args, "text"));
             } else {
                 let (modifiers, key) = aylis_core::parse_shortcut(arg(args, "key")).ok_or("tecla inválida")?;
-                let event = aylis_core::KeyEvent { key, modifiers, repeat: false, form: None };
+                let event = aylis_core::KeyEvent { key, modifiers, ..Default::default() };
                 ui.key_down(form, event);
                 ui.key_up(form, event);
             }
@@ -1923,5 +1936,20 @@ mod wait_tests {
         assert_eq!(args_wait(&serde_json::json!({})), 45);
         assert_eq!(args_wait(&serde_json::json!({ "max_wait": 20 })), 20);
         assert_eq!(args_wait(&serde_json::json!({ "max_wait": 200 })), MAX_WAIT);
+    }
+
+    /// O `set_property` de um evento aceita o nome em JSON (`"\"btn_click\""`, como a descrição
+    /// da ferramenta diz) e o texto puro; vazio e `null` desligam.
+    #[test]
+    fn the_event_handler_comes_as_json_or_as_plain_text() {
+        use serde_json::json;
+        assert_eq!(event_value(json!("\"btn_click\"")), json!("btn_click"));
+        assert_eq!(event_value(json!(" \"btn_click\" ")), json!("btn_click"));
+        assert_eq!(event_value(json!("btn_click")), json!("btn_click"));
+        for off in [json!(""), json!("null"), json!("\"\""), json!("\"null\""), Value::Null] {
+            assert_eq!(event_value(off.clone()), Value::Null, "{off}");
+        }
+        // O que não é texto segue para o set_prop, que recusa com a mensagem dele.
+        assert_eq!(event_value(json!(3)), json!(3));
     }
 }

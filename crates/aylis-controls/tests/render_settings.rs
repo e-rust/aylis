@@ -23,6 +23,7 @@ fn reset() {
     image_cache::set_limits(ImageCacheLimits::DEFAULT);
     image_cache::set_auto_layers(true);
     image_cache::set_frame_reuse_kb(DEFAULT_FRAME_REUSE_KB);
+    gpu::set_blend_compositor(gpu::BlendCompositor::Direct2d);
 }
 
 fn int(ui: &Ui, id: ComponentId, name: &str) -> i64 {
@@ -106,5 +107,30 @@ fn the_form_frame_reuse_is_its_own_or_the_project_one() {
     assert!(image_cache::reuses_frame(320, 180, limit(&ui, other)) && !image_cache::reuses_frame(320, 180, limit(&ui, form)));
     // Gravado no form (é configuração dele, não de execução).
     assert!(ui.prop_info(form, "frame_reuse_kb").is_some_and(|p| !p.runtime));
+    reset();
+}
+
+/// O `blend_compositor` (o efeito do Direct2D ou o shader do Aylis em Direct3D), nos três
+/// níveis: o projeto (o valor do processo), o form (`project` segue o do projeto) e o
+/// `RenderSettings` em execução, que troca o do projeto e não fica gravado.
+#[test]
+fn the_blend_compositor_is_the_form_one_or_the_project_one() {
+    let _turn = GLOBALS.lock().unwrap_or_else(|e| e.into_inner());
+    reset();
+    let (mut ui, form, s) = setup(false);
+    let other = ui.create("Form", None).unwrap();
+    assert_eq!(ui.get_prop(form, "blend_compositor").unwrap(), PropValue::Enum("project".into()));
+    assert_eq!(ui.form_blend_compositor(form), None, "project: o do projeto");
+    assert_eq!(ui.get_prop(s, "blend_compositor").unwrap(), PropValue::Enum("direct2d".into()), "o padrão");
+    ui.set_prop(form, "blend_compositor", "direct3d").unwrap();
+    assert_eq!(ui.form_blend_compositor(form), Some(gpu::BlendCompositor::Direct3d));
+    assert_eq!(ui.form_blend_compositor(other), None);
+    // O RenderSettings troca o do app inteiro, já.
+    ui.set_prop(s, "blend_compositor", "direct3d").unwrap();
+    assert_eq!(gpu::blend_compositor(), gpu::BlendCompositor::Direct3d);
+    assert!(ui.prop_info(s, "blend_compositor").is_some_and(|p| p.runtime), "não grava no form");
+    assert!(ui.prop_info(form, "blend_compositor").is_some_and(|p| !p.runtime), "o do form é gravado");
+    // Um nome que não existe é recusado.
+    assert!(ui.set_prop(form, "blend_compositor", "opengl").is_err());
     reset();
 }

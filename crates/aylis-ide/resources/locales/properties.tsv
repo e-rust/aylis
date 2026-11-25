@@ -6,6 +6,7 @@ accessory	Seta à direita	Accessory arrow	Flecha a la derecha	Flèche à droite	
 action	Ação	Action	Acción	Action	Aktion	Действие	操作	アクション	الإجراء	ক্রিয়া	क्रिया	Aksi
 actions	Ações	Actions	Acciones	Actions	Aktionen	Действия	操作	アクション一覧	الإجراءات	ক্রিয়াসমূহ	क्रियाएँ	Aksi-aksi
 active	Ativo	Active	Activo	Actif	Aktiv	Активно	激活	有効	نشط	সক্রিয়	सक्रिय	Aktif
+alt_f4	Capturar o Alt+F4	Capture Alt+F4	Capturar Alt+F4	Capturer Alt+F4	Alt+F4 abfangen	Перехватывать Alt+F4	捕获 Alt+F4	Alt+F4 をキャプチャ	التقاط Alt+F4	Alt+F4 ধরুন	Alt+F4 पकड़ें	Tangkap Alt+F4
 active_control	Controle ativo	Active control	Control activo	Contrôle actif	Aktives Steuerelement	Активный элемент	活动控件	アクティブなコントロール	عنصر التحكم النشط	সক্রিয় কন্ট্রোল	सक्रिय नियंत्रण	Kontrol aktif
 aggregate	Agregação	Aggregate	Agregación	Agrégation	Aggregation	Агрегирование	聚合	集計	التجميع	সমষ্টি	समुच्चय	Agregasi
 alarm_above	Alarme acima de	Alarm above	Alarma por encima de	Alarme au-dessus de	Alarm über	Тревога выше	高于此值报警	この値以上で警報	إنذار فوق	এর উপরে অ্যালার্ম	इससे ऊपर अलार्म	Alarm di atas
@@ -812,3 +813,4 @@ prompt_name	Nome do prompt	Prompt name	Nombre del prompt	Nom du prompt	Prompt-Na
 arguments	Argumentos	Arguments	Argumentos	Arguments	Argumente	Аргументы	参数	引数	الوسائط	আর্গুমেন্ট	तर्क	Argumen
 user_agent	Identificação do cliente (User-Agent)	User agent	Agente de usuario	Agent utilisateur	User-Agent	User-Agent	用户代理	ユーザーエージェント	وكيل المستخدم	ইউজার এজেন্ট	यूज़र एजेंट	Agen pengguna
 request_timeout	Prazo do pedido	Request timeout	Tiempo límite de la solicitud	Délai de la requête	Anfrage-Zeitlimit	Тайм-аут запроса	请求超时	リクエストのタイムアウト	مهلة الطلب	অনুরোধের সময়সীমা	अनुरोध टाइमआउट	Batas waktu permintaan
+blend_compositor	Compositor da mistura	Blend compositor	Compositor de fusión	Compositeur de fusion	Mischungs-Compositor	Компоновщик наложения	混合合成器	合成処理（ブレンド）	مُركِّب المزج	ব্লেন্ড কম্পোজিটর	मिश्रण कम्पोज़िटर	Kompositor campuran

@@ -111,7 +111,7 @@ fn selection_moves_with_the_mouse_and_the_arrows() {
     assert_eq!(ui.invoke(pc, "has_selection", &[]).unwrap(), PropValue::Bool(true));
     drag(&mut ui, form, (15.0, 15.0), (35.0, 15.0), PointerButton::Primary);
     // As setas andam 1 pixel (Shift: 10).
-    let key = |k: Key, shift: bool| KeyEvent { key: k, modifiers: Modifiers { shift, ..Default::default() }, repeat: false, form: None };
+    let key = |k: Key, shift: bool| KeyEvent { key: k, modifiers: Modifiers { shift, ..Default::default() }, ..Default::default() };
     ui.key_down(form, key(Key::Down, false));
     ui.key_down(form, key(Key::Right, true));
     ui.key_down(form, key(Key::Enter, false));

@@ -1798,6 +1798,16 @@ impl Ui {
         }
     }
 
+    /// O compositor da mistura próprio do form `form` (a propriedade `blend_compositor`;
+    /// `None`: o do projeto). A plataforma passa ao alvo do Direct2D da janela a cada quadro.
+    pub fn form_blend_compositor(&self, form: ComponentId) -> Option<crate::gpu::BlendCompositor> {
+        use crate::PropEnum;
+        match self.get_prop(form, "blend_compositor") {
+            Ok(PropValue::Enum(name)) => crate::gpu::FormBlendCompositor::from_name(&name).and_then(crate::gpu::FormBlendCompositor::own),
+            _ => None,
+        }
+    }
+
     /// Avisa a plataforma que um zoom mudou (o `zoom` de um form chama isto).
     pub fn mark_zoom_changed(&mut self) {
         self.zoom_changed = true;

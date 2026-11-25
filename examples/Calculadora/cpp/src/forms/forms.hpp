@@ -6,7 +6,7 @@
 #include "components.hpp"
 
 namespace frm_calculadora {
-void form_key_down(aylis::Aylis& app, const aylis::Event& ev);
+void form_key_down(aylis::Aylis& app, aylis_components::Form sender, aylis_components::KeyEvent value);
 void limpar_historico_click(aylis::Aylis& app, aylis_components::Button sender);
 void historico_item_click(aylis::Aylis& app, aylis_components::ListView sender, long long value);
 void memoria_item_click(aylis::Aylis& app, aylis_components::ListView sender, long long value);
@@ -17,7 +17,10 @@ void tecla_click(aylis::Aylis& app, aylis_components::Button sender);
 // Registra as classes dos forms e os handlers de todos.
 inline void register_forms(aylis::Aylis& app) {
     aylis_components::register_classes();
-    app.on("frmCalculadora.form_key_down", [&app](const aylis::Event& ev) { frm_calculadora::form_key_down(app, ev); });
+    app.on("frmCalculadora.form_key_down", [&app](const aylis::Event& ev) {
+        using namespace aylis_components;
+        frm_calculadora::form_key_down(app, frmCalculadora, aylis_components::KeyEvent::from_json(ev.args));
+    });
     app.on("frmCalculadora.limpar_historico_click", [&app](const aylis::Event& ev) {
         using namespace aylis_components;
         frm_calculadora::limpar_historico_click(app, frmCalculadora.sender_as_button(ev));

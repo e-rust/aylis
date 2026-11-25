@@ -163,6 +163,12 @@ rola; o `ScrollBox` aceita os seus (`wheel_step` > 0 e `smooth`: `default`, `on`
 `WheelEvent` traz `lines` quando veio de uma roda com dentes (o touchpad e o dedo não
 deslizam: já são contínuos).
 
+O `delta` do `WheelEvent` (o `dx`/`dy` nas outras linguagens) tem o mesmo sinal em todos os
+sistemas: **positivo = para cima e para a esquerda** (a roda girada para longe de quem usa).
+Com `lines: true`, cada dente já vem multiplicado pelo `wheel_step` (um dente para cima com o
+padrão é `delta.y == 100`; para contar dentes, divida pelo `wheel_step`); com `lines: false`
+(o touchpad), são os pixels do gesto em unidades lógicas, sem o passo.
+
 ### Teclado do celular sobre os campos
 
 Quando o teclado do celular abre, o form encolhe (a área segura desconta o teclado) e o
@@ -220,6 +226,38 @@ maximizar/restaurar e fechar (com o vermelho do Windows). Controles postos dentr
 clique maximiza. Por baixo, `ui.window_command(form, WindowCommand::…)` (minimizar,
 maximizar, fechar, arrastar, redimensionar por uma borda, sempre por cima) vale para
 qualquer controle; o exemplo `titlebar` mostra.
+
+### A janela no Linux: Wayland e GNOME
+
+O que muda no Wayland (conferido num Ubuntu com GNOME e no WSLg em 24/11):
+
+- **O tamanho pelo código** (`width`, `height`, `client_width`, `client_height` com o app
+  rodando): no Wayland o tamanho da janela é do próprio app, e o winit o aplica na hora, sem o
+  `Resized` que o Windows e o X11 mandam depois. O Aylis faz ali o que o `Resized` faria (a
+  superfície, o form, o lugar guardado e o `on_resize_end`). Maior que a área livre do
+  monitor, o compositor limita, e o form fica com o que coube.
+- **O monitor da janela** (`ui.form_monitor(form)`): no Wayland só se sabe depois do primeiro
+  quadro (o `wl_surface.enter` do compositor). No `on_window_created` pode ainda ser `None`;
+  logo depois vale. O `remember_placement` grava o monitor pelo mesmo caminho.
+- **O `KeyboardCapture`** pede ao compositor para inibir os atalhos
+  (`zwp_keyboard_shortcuts_inhibit_manager_v1`), e o GNOME pergunta ao usuário se deixa. Ele
+  só lembra a resposta de um app que reconhece: um `.desktop` instalado com o mesmo nome do
+  `app_id` da janela (o `Options::app_id`, que o `aylis::Application` preenche com o nome do
+  pacote do projeto; vazio, o nome do executável), em `~/.local/share/applications` ou
+  `/usr/share/applications`. Os pacotes da publicação para Linux (`.deb`, `.rpm`, AppImage) e o
+  atalho no menu (`menu_shortcut`) gravam `<app_id>.desktop`; no Flatpak quem identifica o app
+  é o sandbox. Rodando o app compilado e não instalado, sem esse arquivo, o GNOME pergunta a
+  cada abertura, e o Aylis avisa uma vez no stderr. A resposta fica no armazém de permissões do
+  GNOME (`flatpak permissions gnome shortcuts-inhibitor` mostra; `flatpak permission-reset
+  <app_id>` apaga).
+- **A área de transferência:** o `arboard` tenta primeiro o Wayland direto (os protocolos
+  `ext-data-control` ou `wlr-data-control`), que o KDE e os compositores do wlroots (sway,
+  Hyprland) têm. O GNOME (Mutter) não tem: ele cai no X11, pelo XWayland, e funciona igual. Na
+  troca, o `arboard` escreve um aviso pelo crate `log` ("...wlr-data-control version 1 is not
+  supported by the compositor"), uma vez por execução, e só aparece num app que liga um logger.
+  Para calar, o app filtra o alvo `arboard` (com o `env_logger`, `RUST_LOG=warn,arboard=error`
+  ou `filter_module("arboard", LevelFilter::Error)`). Sem o XWayland (`DISPLAY` vazio) no GNOME,
+  não há área de transferência do sistema.
 
 ### Ícone na bandeja
 

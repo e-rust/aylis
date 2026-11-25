@@ -13,6 +13,14 @@
     procedure SetCharMap(Value: string);
     function GetGap: Double;
     procedure SetGap(Value: Double);
+    function GetHoverFill: TAylisColor;
+    procedure SetHoverFill(Value: TAylisColor);
+    function GetPressedFill: TAylisColor;
+    procedure SetPressedFill(Value: TAylisColor);
+    function GetInteractive: Boolean;
+    procedure SetInteractive(Value: Boolean);
+    function GetSelectedFill: TAylisColor;
+    procedure SetSelectedFill(Value: TAylisColor);
     function GetFill: TAylisColor;
     procedure SetFill(Value: TAylisColor);
     function GetFill2: TAylisColor;
@@ -29,6 +37,8 @@
     procedure SetStroke(Value: TAylisColor);
     function GetStrokeWidth: Double;
     procedure SetStrokeWidth(Value: Double);
+    function GetStrokeDash: TAylisDoubleArray;
+    procedure SetStrokeDash(Value: TAylisDoubleArray);
     function GetRadius: TAylisBounds;
     procedure SetRadius(Value: TAylisBounds);
     function GetLeft: Double;
@@ -204,6 +214,10 @@
     property CharsOverride: Boolean read GetCharsOverride write SetCharsOverride;
     property CharMap: string read GetCharMap write SetCharMap;
     property Gap: Double read GetGap write SetGap;
+    property HoverFill: TAylisColor read GetHoverFill write SetHoverFill;
+    property PressedFill: TAylisColor read GetPressedFill write SetPressedFill;
+    property Interactive: Boolean read GetInteractive write SetInteractive;
+    property SelectedFill: TAylisColor read GetSelectedFill write SetSelectedFill;
     property Fill: TAylisColor read GetFill write SetFill;
     property Fill2: TAylisColor read GetFill2 write SetFill2;
     property FillMid: TAylisColor read GetFillMid write SetFillMid;
@@ -212,6 +226,7 @@
     property GradientRadial: Boolean read GetGradientRadial write SetGradientRadial;
     property Stroke: TAylisColor read GetStroke write SetStroke;
     property StrokeWidth: Double read GetStrokeWidth write SetStrokeWidth;
+    property StrokeDash: TAylisDoubleArray read GetStrokeDash write SetStrokeDash;
     property Radius: TAylisBounds read GetRadius write SetRadius;
     property Left: Double read GetLeft write SetLeft;
     property Top: Double read GetTop write SetTop;
@@ -359,6 +374,46 @@ begin
   SetProp('gap', TJSONFloatNumber.Create(Value));
 end;
 
+function TPanel.GetHoverFill: TAylisColor;
+begin
+  Result := AylisColorFromJSON(GetProp('hover_fill'));
+end;
+
+procedure TPanel.SetHoverFill(Value: TAylisColor);
+begin
+  SetProp('hover_fill', AylisColorToJSON(Value));
+end;
+
+function TPanel.GetPressedFill: TAylisColor;
+begin
+  Result := AylisColorFromJSON(GetProp('pressed_fill'));
+end;
+
+procedure TPanel.SetPressedFill(Value: TAylisColor);
+begin
+  SetProp('pressed_fill', AylisColorToJSON(Value));
+end;
+
+function TPanel.GetInteractive: Boolean;
+begin
+  Result := GetProp('interactive').AsBoolean;
+end;
+
+procedure TPanel.SetInteractive(Value: Boolean);
+begin
+  SetProp('interactive', TJSONBoolean.Create(Value));
+end;
+
+function TPanel.GetSelectedFill: TAylisColor;
+begin
+  Result := AylisColorFromJSON(GetProp('selected_fill'));
+end;
+
+procedure TPanel.SetSelectedFill(Value: TAylisColor);
+begin
+  SetProp('selected_fill', AylisColorToJSON(Value));
+end;
+
 function TPanel.GetFill: TAylisColor;
 begin
   Result := AylisColorFromJSON(GetProp('fill'));
@@ -437,6 +492,16 @@ end;
 procedure TPanel.SetStrokeWidth(Value: Double);
 begin
   SetProp('stroke_width', TJSONFloatNumber.Create(Value));
+end;
+
+function TPanel.GetStrokeDash: TAylisDoubleArray;
+begin
+  Result := AsNumbers(GetProp('stroke_dash'));
+end;
+
+procedure TPanel.SetStrokeDash(Value: TAylisDoubleArray);
+begin
+  SetProp('stroke_dash', NumbersText(Value));
 end;
 
 function TPanel.GetRadius: TAylisBounds;

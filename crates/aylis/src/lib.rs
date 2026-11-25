@@ -133,7 +133,7 @@ pub mod prelude {
         FormPosition, FpsMeter, Frame, FrameTimer, FrameView, FullScreenMode, Gamepad, GATT_CHARACTERISTIC,
         Gauge, GraphCable, GraphNode, GraphSelection, GridLayout, GroupBox, HEADER_COLUMN, hotkey_text,
         HotkeyEdit, IconPosition, IconView, image_list, IMAGE_LIST_ITEM, IMAGE_SIZE, ImageList, ImageView,
-        industrial, InnerLoading, InterceptScope, Joystick, KeepAwake, Kinder, Knob, Label, Layout,
+        industrial, InnerLoading, InterceptScope, Joystick, KeepAwake, KeyboardCapture, Kinder, Knob, Label, Layout,
         LegendPosition, LevelMeter, LightSensor, LineDirection, list_header, LIST_VIEW_ITEM, ListBox,
         ListHeader, ListItem, ListOrientation, ListView, LoadingIndicator, Location, LockScreen, looks,
         LowerPanel, MainMenu, Manometer, MAP_MARKER, MAP_POINT, MapPoint, MapView, markup_plain, markup_runs,
@@ -163,10 +163,11 @@ pub mod prelude {
         WindowSettingsScope, WindowShape, WindowState, Wire,
     };
     pub use aylis_core::*;
-    // Do `aylis_core::*`, as duas que também são registros do acesso tipado (o mesmo motivo):
-    // a importação privada esconde o nome do `*` público (`aylis::core::JumpTask` segue valendo).
+    // Do `aylis_core::*`, as que também são registros do acesso tipado (o mesmo motivo): a
+    // importação privada esconde o nome do `*` público (`aylis::core::JumpTask` e
+    // `aylis::core::LockKeys` seguem valendo).
     #[allow(unused_imports, hidden_glob_reexports)]
-    use aylis_core::{JumpTask, ThumbButton};
+    use aylis_core::{JumpTask, LockKeys, ThumbButton};
     #[cfg(feature = "data")]
     pub use aylis_data::{
         ApplyMode, ApplyResult, Change, ChangeKind, ClientDataSet, DataSet, DataSource, Date, DateTime, Decimal, Delta, Field, FieldKind, FieldType,
@@ -298,6 +299,7 @@ pub mod classes {
         Biometrics: aylis_controls::Biometrics => "System",
         AppLink: aylis_controls::AppLink => "System",
         UrlScheme: aylis_controls::UrlScheme => "System",
+        KeyboardCapture: aylis_controls::KeyboardCapture => "System",
         SystemBars: aylis_controls::SystemBars => "Device",
         Location: aylis_controls::Location => "Device",
         Battery: aylis_controls::Battery => "Device",

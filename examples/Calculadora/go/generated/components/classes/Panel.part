@@ -20,6 +20,18 @@ func (c aylisPanel) SetCharMap(v string) { c.Set("char_map", v) }
 func (c aylisPanel) Gap() float64 { return asNumber(c.Get("gap")) }
 func (c aylisPanel) SetGap(v float64) { c.Set("gap", v) }
 
+func (c aylisPanel) HoverFill() aylis.Color { return aylis.ColorFromJSON(c.Get("hover_fill")) }
+func (c aylisPanel) SetHoverFill(v aylis.Color) { c.Set("hover_fill", v.JSON()) }
+
+func (c aylisPanel) PressedFill() aylis.Color { return aylis.ColorFromJSON(c.Get("pressed_fill")) }
+func (c aylisPanel) SetPressedFill(v aylis.Color) { c.Set("pressed_fill", v.JSON()) }
+
+func (c aylisPanel) Interactive() bool { return asBool(c.Get("interactive")) }
+func (c aylisPanel) SetInteractive(v bool) { c.Set("interactive", v) }
+
+func (c aylisPanel) SelectedFill() aylis.Color { return aylis.ColorFromJSON(c.Get("selected_fill")) }
+func (c aylisPanel) SetSelectedFill(v aylis.Color) { c.Set("selected_fill", v.JSON()) }
+
 func (c aylisPanel) Fill() aylis.Color { return aylis.ColorFromJSON(c.Get("fill")) }
 func (c aylisPanel) SetFill(v aylis.Color) { c.Set("fill", v.JSON()) }
 
@@ -43,6 +55,9 @@ func (c aylisPanel) SetStroke(v aylis.Color) { c.Set("stroke", v.JSON()) }
 
 func (c aylisPanel) StrokeWidth() float64 { return asNumber(c.Get("stroke_width")) }
 func (c aylisPanel) SetStrokeWidth(v float64) { c.Set("stroke_width", v) }
+
+func (c aylisPanel) StrokeDash() []float64 { return asNumbers(c.Get("stroke_dash")) }
+func (c aylisPanel) SetStrokeDash(v []float64) { c.Set("stroke_dash", numbersText(v)) }
 
 func (c aylisPanel) Radius() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("radius")) }
 func (c aylisPanel) SetRadius(v aylis.Bounds) { c.Set("radius", v.JSON()) }

@@ -125,6 +125,8 @@ mod share_windows;
 #[cfg(all(target_os = "linux", not(mobile)))]
 mod url_scheme_linux;
 mod input;
+mod cursor_images;
+mod keyboard_capture;
 #[cfg(target_os = "android")]
 mod android_jni;
 #[cfg(target_os = "android")]
@@ -200,6 +202,7 @@ mod window_commands;
 mod window_input;
 mod window_lifecycle;
 mod window_monitors;
+mod window_reports;
 mod system_bars;
 #[cfg(windows)]
 mod drag_window;
@@ -740,6 +743,8 @@ fn run_on(
         label_window: Default::default(),
         #[cfg(windows)]
         hand_cursors: Vec::new(),
+        cursor_images: Default::default(),
+        keyboard_held: None,
         watch_insets_until: None,
         #[cfg(any(native_webview, web_webview, android_webview))]
         native: Default::default(),
@@ -921,6 +926,8 @@ struct FormWindow {
     /// Última posição do ponteiro, em unidades lógicas.
     pointer: PointF,
     cursor: CursorShape,
+    /// O id do cursor de imagem mostrado (`CursorImage::id`; 0: o da forma).
+    cursor_image: u64,
     /// Aceita entrada (fica desligada debaixo de um form modal).
     enabled: bool,
     /// `border_style = custom`: a borda sob o mouse (redimensiona ao apertar).
@@ -999,6 +1006,10 @@ struct App {
     /// de mover no Windows, que não tem mão aberta nem fechada no sistema.
     #[cfg(windows)]
     hand_cursors: Vec<(u32, winit::window::CustomCursor, winit::window::CustomCursor)>,
+    /// Os cursores de imagem (`Ui::set_cursor_image`) já criados no sistema.
+    cursor_images: cursor_images::CursorImages,
+    /// O teclado preso para um `KeyboardCapture` (veja `keyboard_capture.rs`).
+    keyboard_held: Option<keyboard_capture::Held>,
     /// Até quando conferir a área segura (o sistema não avisa quando o teclado virtual
     /// termina de abrir ou fechar).
     watch_insets_until: Option<Instant>,
@@ -1255,6 +1266,7 @@ impl App {
             Backend::D2d(d2d) => {
                 // O `frame_reuse_kb` do form desta janela (ou o do projeto), lido a cada quadro.
                 d2d.set_frame_reuse_kb(ui.form_frame_reuse_kb(form));
+                d2d.set_blend_compositor(ui.form_blend_compositor(form));
                 d2d.draw(&self.renderer.d2d, size, scale, background, parts, |c, area| paint_stack(ui, under, form, c, area), capture)?
             }
             #[cfg(web)]
@@ -1624,6 +1636,10 @@ impl ApplicationHandler for App {
                 access.process_event(&w.window, &event);
             }
         }
+        // A escala e o tamanho novos: o `on_scale_change` e o `on_resize_end` do form.
+        if matches!(event, WindowEvent::Resized(_) | WindowEvent::ScaleFactorChanged { .. }) {
+            self.report_window_change(index, &event);
+        }
         match event {
             WindowEvent::CloseRequested => {
                 // O X passa pelo on_close_query; fechar o principal encerra.
@@ -1673,23 +1689,7 @@ impl ApplicationHandler for App {
                 self.follow_monitor(index, false);
                 self.windows[index].window.request_redraw();
             }
-            WindowEvent::Resized(_) | WindowEvent::ScaleFactorChanged { .. } => {
-                // Minimizou ou voltou: o form fica sabendo (o relatório do Tabernáculo, P06).
-                let minimized = self.windows[index].window.is_minimized() == Some(true);
-                if minimized != self.windows[index].minimized {
-                    self.windows[index].minimized = minimized;
-                    let form = self.windows[index].form;
-                    self.ui.set_form_minimized(form, minimized);
-                    self.ui.fire(form, if minimized { "on_minimize" } else { "on_restore" }, &aylis_core::EventArgs::None);
-                }
-                self.sync_form_size(index);
-                self.store_placement(index);
-                #[cfg(windows)]
-                self.apply_shape(index);
-                // Maximizar ou encaixar (Win+Shift+seta) também leva a outro monitor.
-                self.follow_monitor(index, false);
-                self.windows[index].window.request_redraw();
-            }
+            WindowEvent::Resized(_) | WindowEvent::ScaleFactorChanged { .. } => self.window_resized(index),
             WindowEvent::Moved(_) => {
                 self.store_placement(index);
                 self.follow_monitor(index, false);
@@ -1772,6 +1772,7 @@ impl ApplicationHandler for App {
     /// controle agendou um frame para depois, dorme até lá. Parado, não consome CPU.
     /// O laço vai acabar (o X do principal, `request_close`): grava as posições guardadas.
     fn exiting(&mut self, _event_loop: &ActiveEventLoop) {
+        self.release_keyboard();
         #[cfg(not(any(web, mobile)))]
         self.placements.flush();
         self.ui.fire_terminate();
@@ -1795,6 +1796,12 @@ impl ApplicationHandler for App {
         }
         #[cfg(windows)]
         self.caption_buttons();
+        // O teclado preso (o `KeyboardCapture`) segue a janela em foco; os cursores de imagem
+        // pedidos no `after_input` são criados aqui (o winit pede o `ActiveEventLoop`).
+        self.sync_keyboard_capture();
+        if self.cursor_images.create_missing(event_loop) {
+            self.after_input();
+        }
         self.settle_deactivations();
         self.apply_window_commands();
         self.refresh_monitors(event_loop, false);
@@ -1832,6 +1839,8 @@ impl ApplicationHandler for App {
         #[cfg(windows)]
         for form in win32::take_move_ends() {
             self.ui.window_drag_end(form);
+            // Soltou a borda depois de redimensionar: o `on_resize_end`.
+            self.ui.form_resize_released(form);
         }
         // O mouse foi tomado no meio de um gesto (outro programa capturou, a troca de janela com
         // o botão apertado): o soltar não vai chegar, e o arrasto acaba como no Esc.

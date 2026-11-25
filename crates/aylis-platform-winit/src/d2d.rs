@@ -33,6 +33,11 @@ impl D2dBackend {
         self.target.set_frame_reuse_kb(kb);
     }
 
+    /// O `blend_compositor` próprio do form da janela (`None`: o do projeto), a cada quadro.
+    pub(crate) fn set_blend_compositor(&mut self, compositor: Option<aylis_core::gpu::BlendCompositor>) {
+        self.target.set_blend_compositor(compositor);
+    }
+
     /// O modo de apresentar do form mudou (`Ok(true)`: recriou o alvo).
     pub(crate) fn set_present(&mut self, renderer: &D2dRenderer, present: aylis_core::gpu::PresentMode) -> Result<bool, Error> {
         Ok(self.target.set_present(renderer, present)?)

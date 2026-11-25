@@ -47,6 +47,9 @@ func (c aylisLabel) SetLineHeight(v float64) { c.Set("line_height", v) }
 func (c aylisLabel) TextShadow() *aylis.Shadow { return aylis.ShadowFromJSON(c.Get("text_shadow")) }
 func (c aylisLabel) SetTextShadow(v *aylis.Shadow) { c.Set("text_shadow", v.JSON()) }
 
+func (c aylisLabel) MaxLines() int64 { return int64(asNumber(c.Get("max_lines"))) }
+func (c aylisLabel) SetMaxLines(v int64) { c.Set("max_lines", v) }
+
 func (c aylisLabel) FocusControl() *aylis.Component { return c.GetRef("focus_control") }
 func (c aylisLabel) SetFocusControl(v aylis.Ref) { c.SetRef("focus_control", v) }
 

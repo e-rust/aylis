@@ -16,6 +16,14 @@
         public LayerCaching LayerCache { get => EnumNames.Of<LayerCaching>(GetProp("layer_cache"), EnumNames.LayerCaching); set => SetProp("layer_cache", EnumNames.LayerCaching[(int)value]); }
         public long FrameReuseKb { get => (long)Number(GetProp("frame_reuse_kb")); set => SetProp("frame_reuse_kb", value); }
         public bool Topmost { get => Bool(GetProp("topmost")); set => SetProp("topmost", value); }
+        public bool Bottommost { get => Bool(GetProp("bottommost")); set => SetProp("bottommost", value); }
+        public KeepAwake KeepAwake { get => EnumNames.Of<KeepAwake>(GetProp("keep_awake"), EnumNames.KeepAwake); set => SetProp("keep_awake", EnumNames.KeepAwake[(int)value]); }
+        public CursorConfine ConfineCursor { get => EnumNames.Of<CursorConfine>(GetProp("confine_cursor"), EnumNames.CursorConfine); set => SetProp("confine_cursor", EnumNames.CursorConfine[(int)value]); }
+        public double WindowOpacity { get => Number(GetProp("window_opacity")); set => SetProp("window_opacity", value); }
+        public FullScreenMode FullScreenMode { get => EnumNames.Of<FullScreenMode>(GetProp("full_screen_mode"), EnumNames.FullScreenMode); set => SetProp("full_screen_mode", EnumNames.FullScreenMode[(int)value]); }
+        public long VideoWidth { get => (long)Number(GetProp("video_width")); set => SetProp("video_width", value); }
+        public long VideoHeight { get => (long)Number(GetProp("video_height")); set => SetProp("video_height", value); }
+        public double VideoRefresh { get => Number(GetProp("video_refresh")); set => SetProp("video_refresh", value); }
         public bool ShowInTaskbar { get => Bool(GetProp("show_in_taskbar")); set => SetProp("show_in_taskbar", value); }
         public AylisComponent? ActiveControl { get => GetRef("active_control"); set => SetRef("active_control", value); }
         public string[] TabOrder { get => ListOf(GetProp("tab_order")); set => SetProp("tab_order", string.Join(";", value)); }
@@ -32,6 +40,7 @@
         public bool RememberPlacement { get => Bool(GetProp("remember_placement")); set => SetProp("remember_placement", value); }
         public string Gpu { get => Text(GetProp("gpu")); set => SetProp("gpu", value); }
         public FormPresent Present { get => EnumNames.Of<FormPresent>(GetProp("present"), EnumNames.FormPresent); set => SetProp("present", EnumNames.FormPresent[(int)value]); }
+        public FormBlendCompositor BlendCompositor { get => EnumNames.Of<FormBlendCompositor>(GetProp("blend_compositor"), EnumNames.FormBlendCompositor); set => SetProp("blend_compositor", EnumNames.FormBlendCompositor[(int)value]); }
         public bool SpanMonitors { get => Bool(GetProp("span_monitors")); set => SetProp("span_monitors", value); }
         public bool PhysicalPixels { get => Bool(GetProp("physical_pixels")); set => SetProp("physical_pixels", value); }
         public bool ActivateOnShow { get => Bool(GetProp("activate_on_show")); set => SetProp("activate_on_show", value); }
@@ -39,6 +48,8 @@
         public CloseAction CloseAction { get => EnumNames.Of<CloseAction>(GetProp("close_action"), EnumNames.CloseAction); set => SetProp("close_action", EnumNames.CloseAction[(int)value]); }
         public double FrameRate { get => Number(GetProp("frame_rate")); set => SetProp("frame_rate", value); }
         public FormOrientation Orientation { get => EnumNames.Of<FormOrientation>(GetProp("orientation"), EnumNames.FormOrientation); set => SetProp("orientation", EnumNames.FormOrientation[(int)value]); }
+        public AylisComponent? Host { get => GetRef("host"); set => SetRef("host", value); }
+        public bool Dockable { get => Bool(GetProp("dockable")); set => SetProp("dockable", value); }
         public string OnShow { get => Text(GetProp("on_show")); set => SetProp("on_show", value); }
         public string OnWindowCreated { get => Text(GetProp("on_window_created")); set => SetProp("on_window_created", value); }
         public string OnClose { get => Text(GetProp("on_close")); set => SetProp("on_close", value); }
@@ -48,6 +59,13 @@
         public string OnRestore { get => Text(GetProp("on_restore")); set => SetProp("on_restore", value); }
         public string OnNavigate { get => Text(GetProp("on_navigate")); set => SetProp("on_navigate", value); }
         public string OnGpuChange { get => Text(GetProp("on_gpu_change")); set => SetProp("on_gpu_change", value); }
+        public string OnDock { get => Text(GetProp("on_dock")); set => SetProp("on_dock", value); }
+        public string OnUndock { get => Text(GetProp("on_undock")); set => SetProp("on_undock", value); }
+        public string OnFilesDrop { get => Text(GetProp("on_files_drop")); set => SetProp("on_files_drop", value); }
+        public string OnViewChange { get => Text(GetProp("on_view_change")); set => SetProp("on_view_change", value); }
+        public string OnTopmostLost { get => Text(GetProp("on_topmost_lost")); set => SetProp("on_topmost_lost", value); }
+        public string OnScaleChange { get => Text(GetProp("on_scale_change")); set => SetProp("on_scale_change", value); }
+        public string OnResizeEnd { get => Text(GetProp("on_resize_end")); set => SetProp("on_resize_end", value); }
         public double ClientWidth { get => Number(GetProp("client_width")); set => SetProp("client_width", value); }
         public double ClientHeight { get => Number(GetProp("client_height")); set => SetProp("client_height", value); }
         public double Left { get => Number(GetProp("left")); set => SetProp("left", value); }
@@ -135,8 +153,16 @@
         public string OnDragDrop { get => Text(GetProp("on_drag_drop")); set => SetProp("on_drag_drop", value); }
         public string OnDragEnd { get => Text(GetProp("on_drag_end")); set => SetProp("on_drag_end", value); }
         public void MoveToMonitor(long monitor) => Aylis.Send("invoke", new JsonObject { ["target"] = Id, ["method"] = "move_to_monitor", ["args"] = new JsonArray(monitor) });
+        public void RequestAttention(bool critical) => Aylis.Send("invoke", new JsonObject { ["target"] = Id, ["method"] = "request_attention", ["args"] = new JsonArray(critical) });
+        public void BringToFront() => Aylis.Send("invoke", new JsonObject { ["target"] = Id, ["method"] = "bring_to_front", ["args"] = new JsonArray() });
+        public void SetActivationToken(string token) => Aylis.Send("invoke", new JsonObject { ["target"] = Id, ["method"] = "set_activation_token", ["args"] = new JsonArray(token) });
+        public double WindowScale() => Number(Aylis.Call("invoke", new JsonObject { ["target"] = Id, ["method"] = "window_scale", ["args"] = new JsonArray() }));
+        public bool PointerOver() => Bool(Aylis.Call("invoke", new JsonObject { ["target"] = Id, ["method"] = "pointer_over", ["args"] = new JsonArray() }));
+        public void Place(long monitor, long x, long y, long width, long height, bool activate) => Aylis.Send("invoke", new JsonObject { ["target"] = Id, ["method"] = "place", ["args"] = new JsonArray(monitor, x, y, width, height, activate) });
         public string GpuAdapter() => Text(Aylis.Call("invoke", new JsonObject { ["target"] = Id, ["method"] = "gpu_adapter", ["args"] = new JsonArray() }));
         public string[] GpuAdapters() => ListOf(Aylis.Call("invoke", new JsonObject { ["target"] = Id, ["method"] = "gpu_adapters", ["args"] = new JsonArray() }));
+        public double DropX() => Number(Aylis.Call("invoke", new JsonObject { ["target"] = Id, ["method"] = "drop_x", ["args"] = new JsonArray() }));
+        public double DropY() => Number(Aylis.Call("invoke", new JsonObject { ["target"] = Id, ["method"] = "drop_y", ["args"] = new JsonArray() }));
         public string RenderRgba(double x, double y, double width, double height, double scale) => Text(Aylis.Call("invoke", new JsonObject { ["target"] = Id, ["method"] = "render_rgba", ["args"] = new JsonArray(x, y, width, height, scale) }));
         public string Focused() => Text(Aylis.Call("focused", new JsonObject { ["target"] = Id }));
         public void FocusNext() => Aylis.Send("focus_next", new JsonObject { ["target"] = Id });

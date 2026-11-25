@@ -529,6 +529,9 @@ type Aylis struct {
 	// handlers rodando (um evento que pergunta roda mesmo durante um Call).
 	waiting int
 	running int
+	// As respostas dos eventos que perguntam em andamento (a última é a do handler que roda),
+	// para o Reply do handler tipado, que não recebe o evento.
+	replies []M
 	// Os Post do desktop (de qualquer goroutine).
 	postMu sync.Mutex
 	// Os forms liberados na tela (o aviso __freed).
@@ -602,6 +605,15 @@ func (i *Aylis) read() (map[string]json.RawMessage, error) {
 		return message, nil
 	}
 	return nil, ErrClosed
+}
+
+// Reply, dentro de um evento que pergunta, grava um campo da resposta, como o ev.Reply[name] do
+// handler que recebe o evento inteiro (o tipado não o recebe). Reply("key", "") no on_key_down
+// engole a tecla; um panic recusa. Fora de um evento que pergunta, não faz nada.
+func (i *Aylis) Reply(name string, value any) {
+	if n := len(i.replies); n > 0 && i.replies[n-1] != nil {
+		i.replies[n-1][name] = value
+	}
 }
 
 // Send envia um comando sem esperar resposta (erros chegam como evento "error").
@@ -927,8 +939,14 @@ func (i *Aylis) handleEvent(message map[string]json.RawMessage) {
 		handler = i.handlers[ev.Handler]
 	}
 	i.running++
+	if ev.Ask != nil {
+		i.replies = append(i.replies, ev.Reply)
+	} else {
+		i.replies = append(i.replies, nil)
+	}
 	defer func() {
 		i.running--
+		i.replies = i.replies[:len(i.replies)-1]
 		// O handler terminou: a tela deixa de mostrar o backend ocupado.
 		if raw, ok := message["seq"]; ok {
 			var seq int64

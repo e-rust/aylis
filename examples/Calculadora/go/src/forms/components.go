@@ -383,6 +383,33 @@ func enumNamesCloseAction(vs []CloseAction) []string {
 	return out
 }
 
+// CursorConfine são os valores de um enum do acesso tipado.
+type CursorConfine string
+
+const (
+	CursorConfineNone CursorConfine = "none"
+	CursorConfineWindow CursorConfine = "window"
+	CursorConfineMonitor CursorConfine = "monitor"
+)
+
+func enumListCursorConfine(v any) []CursorConfine {
+	var out []CursorConfine
+	if l, ok := v.([]any); ok {
+		for _, x := range l {
+			out = append(out, CursorConfine(asText(x)))
+		}
+	}
+	return out
+}
+
+func enumNamesCursorConfine(vs []CursorConfine) []string {
+	out := make([]string, len(vs))
+	for i, v := range vs {
+		out[i] = string(v)
+	}
+	return out
+}
+
 // CursorShape são os valores de um enum do acesso tipado.
 type CursorShape string
 
@@ -446,6 +473,33 @@ func enumListFontWeight(v any) []FontWeight {
 }
 
 func enumNamesFontWeight(vs []FontWeight) []string {
+	out := make([]string, len(vs))
+	for i, v := range vs {
+		out[i] = string(v)
+	}
+	return out
+}
+
+// FormBlendCompositor são os valores de um enum do acesso tipado.
+type FormBlendCompositor string
+
+const (
+	FormBlendCompositorProject FormBlendCompositor = "project"
+	FormBlendCompositorDirect2d FormBlendCompositor = "direct2d"
+	FormBlendCompositorDirect3d FormBlendCompositor = "direct3d"
+)
+
+func enumListFormBlendCompositor(v any) []FormBlendCompositor {
+	var out []FormBlendCompositor
+	if l, ok := v.([]any); ok {
+		for _, x := range l {
+			out = append(out, FormBlendCompositor(asText(x)))
+		}
+	}
+	return out
+}
+
+func enumNamesFormBlendCompositor(vs []FormBlendCompositor) []string {
 	out := make([]string, len(vs))
 	for i, v := range vs {
 		out[i] = string(v)
@@ -568,6 +622,32 @@ func enumNamesFormStyle(vs []FormStyle) []string {
 	return out
 }
 
+// FullScreenMode são os valores de um enum do acesso tipado.
+type FullScreenMode string
+
+const (
+	FullScreenModeBorderless FullScreenMode = "borderless"
+	FullScreenModeExclusive FullScreenMode = "exclusive"
+)
+
+func enumListFullScreenMode(v any) []FullScreenMode {
+	var out []FullScreenMode
+	if l, ok := v.([]any); ok {
+		for _, x := range l {
+			out = append(out, FullScreenMode(asText(x)))
+		}
+	}
+	return out
+}
+
+func enumNamesFullScreenMode(vs []FullScreenMode) []string {
+	out := make([]string, len(vs))
+	for i, v := range vs {
+		out[i] = string(v)
+	}
+	return out
+}
+
 // GridLayoutStyle são os valores de um enum do acesso tipado.
 type GridLayoutStyle string
 
@@ -613,6 +693,247 @@ func enumListIconPosition(v any) []IconPosition {
 }
 
 func enumNamesIconPosition(vs []IconPosition) []string {
+	out := make([]string, len(vs))
+	for i, v := range vs {
+		out[i] = string(v)
+	}
+	return out
+}
+
+// KeepAwake são os valores de um enum do acesso tipado.
+type KeepAwake string
+
+const (
+	KeepAwakeOff KeepAwake = "off"
+	KeepAwakeSystem KeepAwake = "system"
+	KeepAwakeDisplay KeepAwake = "display"
+)
+
+func enumListKeepAwake(v any) []KeepAwake {
+	var out []KeepAwake
+	if l, ok := v.([]any); ok {
+		for _, x := range l {
+			out = append(out, KeepAwake(asText(x)))
+		}
+	}
+	return out
+}
+
+func enumNamesKeepAwake(vs []KeepAwake) []string {
+	out := make([]string, len(vs))
+	for i, v := range vs {
+		out[i] = string(v)
+	}
+	return out
+}
+
+// KeyCode são os valores de um enum do acesso tipado.
+type KeyCode string
+
+const (
+	KeyCodeUnidentified KeyCode = "Unidentified"
+	KeyCodeKeyA KeyCode = "KeyA"
+	KeyCodeKeyB KeyCode = "KeyB"
+	KeyCodeKeyC KeyCode = "KeyC"
+	KeyCodeKeyD KeyCode = "KeyD"
+	KeyCodeKeyE KeyCode = "KeyE"
+	KeyCodeKeyF KeyCode = "KeyF"
+	KeyCodeKeyG KeyCode = "KeyG"
+	KeyCodeKeyH KeyCode = "KeyH"
+	KeyCodeKeyI KeyCode = "KeyI"
+	KeyCodeKeyJ KeyCode = "KeyJ"
+	KeyCodeKeyK KeyCode = "KeyK"
+	KeyCodeKeyL KeyCode = "KeyL"
+	KeyCodeKeyM KeyCode = "KeyM"
+	KeyCodeKeyN KeyCode = "KeyN"
+	KeyCodeKeyO KeyCode = "KeyO"
+	KeyCodeKeyP KeyCode = "KeyP"
+	KeyCodeKeyQ KeyCode = "KeyQ"
+	KeyCodeKeyR KeyCode = "KeyR"
+	KeyCodeKeyS KeyCode = "KeyS"
+	KeyCodeKeyT KeyCode = "KeyT"
+	KeyCodeKeyU KeyCode = "KeyU"
+	KeyCodeKeyV KeyCode = "KeyV"
+	KeyCodeKeyW KeyCode = "KeyW"
+	KeyCodeKeyX KeyCode = "KeyX"
+	KeyCodeKeyY KeyCode = "KeyY"
+	KeyCodeKeyZ KeyCode = "KeyZ"
+	KeyCodeDigit0 KeyCode = "Digit0"
+	KeyCodeDigit1 KeyCode = "Digit1"
+	KeyCodeDigit2 KeyCode = "Digit2"
+	KeyCodeDigit3 KeyCode = "Digit3"
+	KeyCodeDigit4 KeyCode = "Digit4"
+	KeyCodeDigit5 KeyCode = "Digit5"
+	KeyCodeDigit6 KeyCode = "Digit6"
+	KeyCodeDigit7 KeyCode = "Digit7"
+	KeyCodeDigit8 KeyCode = "Digit8"
+	KeyCodeDigit9 KeyCode = "Digit9"
+	KeyCodeNumpad0 KeyCode = "Numpad0"
+	KeyCodeNumpad1 KeyCode = "Numpad1"
+	KeyCodeNumpad2 KeyCode = "Numpad2"
+	KeyCodeNumpad3 KeyCode = "Numpad3"
+	KeyCodeNumpad4 KeyCode = "Numpad4"
+	KeyCodeNumpad5 KeyCode = "Numpad5"
+	KeyCodeNumpad6 KeyCode = "Numpad6"
+	KeyCodeNumpad7 KeyCode = "Numpad7"
+	KeyCodeNumpad8 KeyCode = "Numpad8"
+	KeyCodeNumpad9 KeyCode = "Numpad9"
+	KeyCodeF1 KeyCode = "F1"
+	KeyCodeF2 KeyCode = "F2"
+	KeyCodeF3 KeyCode = "F3"
+	KeyCodeF4 KeyCode = "F4"
+	KeyCodeF5 KeyCode = "F5"
+	KeyCodeF6 KeyCode = "F6"
+	KeyCodeF7 KeyCode = "F7"
+	KeyCodeF8 KeyCode = "F8"
+	KeyCodeF9 KeyCode = "F9"
+	KeyCodeF10 KeyCode = "F10"
+	KeyCodeF11 KeyCode = "F11"
+	KeyCodeF12 KeyCode = "F12"
+	KeyCodeF13 KeyCode = "F13"
+	KeyCodeF14 KeyCode = "F14"
+	KeyCodeF15 KeyCode = "F15"
+	KeyCodeF16 KeyCode = "F16"
+	KeyCodeF17 KeyCode = "F17"
+	KeyCodeF18 KeyCode = "F18"
+	KeyCodeF19 KeyCode = "F19"
+	KeyCodeF20 KeyCode = "F20"
+	KeyCodeF21 KeyCode = "F21"
+	KeyCodeF22 KeyCode = "F22"
+	KeyCodeF23 KeyCode = "F23"
+	KeyCodeF24 KeyCode = "F24"
+	KeyCodeF25 KeyCode = "F25"
+	KeyCodeF26 KeyCode = "F26"
+	KeyCodeF27 KeyCode = "F27"
+	KeyCodeF28 KeyCode = "F28"
+	KeyCodeF29 KeyCode = "F29"
+	KeyCodeF30 KeyCode = "F30"
+	KeyCodeF31 KeyCode = "F31"
+	KeyCodeF32 KeyCode = "F32"
+	KeyCodeF33 KeyCode = "F33"
+	KeyCodeF34 KeyCode = "F34"
+	KeyCodeF35 KeyCode = "F35"
+	KeyCodeLang1 KeyCode = "Lang1"
+	KeyCodeLang2 KeyCode = "Lang2"
+	KeyCodeLang3 KeyCode = "Lang3"
+	KeyCodeLang4 KeyCode = "Lang4"
+	KeyCodeLang5 KeyCode = "Lang5"
+	KeyCodeBackquote KeyCode = "Backquote"
+	KeyCodeBackslash KeyCode = "Backslash"
+	KeyCodeBracketLeft KeyCode = "BracketLeft"
+	KeyCodeBracketRight KeyCode = "BracketRight"
+	KeyCodeComma KeyCode = "Comma"
+	KeyCodeEqual KeyCode = "Equal"
+	KeyCodeIntlBackslash KeyCode = "IntlBackslash"
+	KeyCodeIntlRo KeyCode = "IntlRo"
+	KeyCodeIntlYen KeyCode = "IntlYen"
+	KeyCodeMinus KeyCode = "Minus"
+	KeyCodePeriod KeyCode = "Period"
+	KeyCodeQuote KeyCode = "Quote"
+	KeyCodeSemicolon KeyCode = "Semicolon"
+	KeyCodeSlash KeyCode = "Slash"
+	KeyCodeAltLeft KeyCode = "AltLeft"
+	KeyCodeAltRight KeyCode = "AltRight"
+	KeyCodeBackspace KeyCode = "Backspace"
+	KeyCodeCapsLock KeyCode = "CapsLock"
+	KeyCodeContextMenu KeyCode = "ContextMenu"
+	KeyCodeControlLeft KeyCode = "ControlLeft"
+	KeyCodeControlRight KeyCode = "ControlRight"
+	KeyCodeEnter KeyCode = "Enter"
+	KeyCodeMetaLeft KeyCode = "MetaLeft"
+	KeyCodeMetaRight KeyCode = "MetaRight"
+	KeyCodeShiftLeft KeyCode = "ShiftLeft"
+	KeyCodeShiftRight KeyCode = "ShiftRight"
+	KeyCodeSpace KeyCode = "Space"
+	KeyCodeTab KeyCode = "Tab"
+	KeyCodeConvert KeyCode = "Convert"
+	KeyCodeKanaMode KeyCode = "KanaMode"
+	KeyCodeNonConvert KeyCode = "NonConvert"
+	KeyCodeDelete KeyCode = "Delete"
+	KeyCodeEnd KeyCode = "End"
+	KeyCodeHelp KeyCode = "Help"
+	KeyCodeHome KeyCode = "Home"
+	KeyCodeInsert KeyCode = "Insert"
+	KeyCodePageDown KeyCode = "PageDown"
+	KeyCodePageUp KeyCode = "PageUp"
+	KeyCodeArrowDown KeyCode = "ArrowDown"
+	KeyCodeArrowLeft KeyCode = "ArrowLeft"
+	KeyCodeArrowRight KeyCode = "ArrowRight"
+	KeyCodeArrowUp KeyCode = "ArrowUp"
+	KeyCodeNumLock KeyCode = "NumLock"
+	KeyCodeNumpadAdd KeyCode = "NumpadAdd"
+	KeyCodeNumpadComma KeyCode = "NumpadComma"
+	KeyCodeNumpadDecimal KeyCode = "NumpadDecimal"
+	KeyCodeNumpadDivide KeyCode = "NumpadDivide"
+	KeyCodeNumpadEnter KeyCode = "NumpadEnter"
+	KeyCodeNumpadEqual KeyCode = "NumpadEqual"
+	KeyCodeNumpadMultiply KeyCode = "NumpadMultiply"
+	KeyCodeNumpadSubtract KeyCode = "NumpadSubtract"
+	KeyCodeEscape KeyCode = "Escape"
+	KeyCodeFn KeyCode = "Fn"
+	KeyCodePrintScreen KeyCode = "PrintScreen"
+	KeyCodeScrollLock KeyCode = "ScrollLock"
+	KeyCodePause KeyCode = "Pause"
+	KeyCodeAudioVolumeDown KeyCode = "AudioVolumeDown"
+	KeyCodeAudioVolumeMute KeyCode = "AudioVolumeMute"
+	KeyCodeAudioVolumeUp KeyCode = "AudioVolumeUp"
+	KeyCodeMediaPlayPause KeyCode = "MediaPlayPause"
+	KeyCodeMediaSelect KeyCode = "MediaSelect"
+	KeyCodeMediaStop KeyCode = "MediaStop"
+	KeyCodeMediaTrackNext KeyCode = "MediaTrackNext"
+	KeyCodeMediaTrackPrevious KeyCode = "MediaTrackPrevious"
+	KeyCodeBrowserBack KeyCode = "BrowserBack"
+	KeyCodeBrowserFavorites KeyCode = "BrowserFavorites"
+	KeyCodeBrowserForward KeyCode = "BrowserForward"
+	KeyCodeBrowserHome KeyCode = "BrowserHome"
+	KeyCodeBrowserRefresh KeyCode = "BrowserRefresh"
+	KeyCodeBrowserSearch KeyCode = "BrowserSearch"
+	KeyCodeBrowserStop KeyCode = "BrowserStop"
+	KeyCodeLaunchApp1 KeyCode = "LaunchApp1"
+	KeyCodeLaunchApp2 KeyCode = "LaunchApp2"
+	KeyCodeLaunchMail KeyCode = "LaunchMail"
+	KeyCodePower KeyCode = "Power"
+	KeyCodeSleep KeyCode = "Sleep"
+	KeyCodeWakeUp KeyCode = "WakeUp"
+	KeyCodeNumpadBackspace KeyCode = "NumpadBackspace"
+	KeyCodeNumpadClear KeyCode = "NumpadClear"
+	KeyCodeNumpadClearEntry KeyCode = "NumpadClearEntry"
+	KeyCodeNumpadHash KeyCode = "NumpadHash"
+	KeyCodeNumpadMemoryAdd KeyCode = "NumpadMemoryAdd"
+	KeyCodeNumpadMemoryClear KeyCode = "NumpadMemoryClear"
+	KeyCodeNumpadMemoryRecall KeyCode = "NumpadMemoryRecall"
+	KeyCodeNumpadMemoryStore KeyCode = "NumpadMemoryStore"
+	KeyCodeNumpadMemorySubtract KeyCode = "NumpadMemorySubtract"
+	KeyCodeNumpadParenLeft KeyCode = "NumpadParenLeft"
+	KeyCodeNumpadParenRight KeyCode = "NumpadParenRight"
+	KeyCodeNumpadStar KeyCode = "NumpadStar"
+	KeyCodeFnLock KeyCode = "FnLock"
+	KeyCodeHiragana KeyCode = "Hiragana"
+	KeyCodeKatakana KeyCode = "Katakana"
+	KeyCodeAgain KeyCode = "Again"
+	KeyCodeCopy KeyCode = "Copy"
+	KeyCodeCut KeyCode = "Cut"
+	KeyCodeFind KeyCode = "Find"
+	KeyCodeOpen KeyCode = "Open"
+	KeyCodePaste KeyCode = "Paste"
+	KeyCodeProps KeyCode = "Props"
+	KeyCodeSelect KeyCode = "Select"
+	KeyCodeUndo KeyCode = "Undo"
+	KeyCodeResume KeyCode = "Resume"
+	KeyCodeSuspend KeyCode = "Suspend"
+)
+
+func enumListKeyCode(v any) []KeyCode {
+	var out []KeyCode
+	if l, ok := v.([]any); ok {
+		for _, x := range l {
+			out = append(out, KeyCode(asText(x)))
+		}
+	}
+	return out
+}
+
+func enumNamesKeyCode(vs []KeyCode) []string {
 	out := make([]string, len(vs))
 	for i, v := range vs {
 		out[i] = string(v)
@@ -1271,6 +1592,14 @@ type KeyEvent struct {
 	Ctrl bool
 	Shift bool
 	Alt bool
+	Meta bool
+	CapsLock bool
+	NumLock bool
+	ScrollLock bool
+	Code KeyCode
+	Scancode int64
+	Form string
+	FormId int64
 }
 
 func recordOfKeyEvent(v any) KeyEvent {
@@ -1280,6 +1609,14 @@ func recordOfKeyEvent(v any) KeyEvent {
 		Ctrl: asBool(m["ctrl"]),
 		Shift: asBool(m["shift"]),
 		Alt: asBool(m["alt"]),
+		Meta: asBool(m["meta"]),
+		CapsLock: asBool(m["caps_lock"]),
+		NumLock: asBool(m["num_lock"]),
+		ScrollLock: asBool(m["scroll_lock"]),
+		Code: KeyCode(asText(m["code"])),
+		Scancode: int64(asNumber(m["scancode"])),
+		Form: asText(m["form"]),
+		FormId: int64(asNumber(m["form_id"])),
 	}
 }
 
@@ -1289,6 +1626,14 @@ func (r KeyEvent) jsonValue() map[string]any {
 		"ctrl": r.Ctrl,
 		"shift": r.Shift,
 		"alt": r.Alt,
+		"meta": r.Meta,
+		"caps_lock": r.CapsLock,
+		"num_lock": r.NumLock,
+		"scroll_lock": r.ScrollLock,
+		"code": string(r.Code),
+		"scancode": r.Scancode,
+		"form": r.Form,
+		"form_id": r.FormId,
 	}
 }
 
@@ -1974,6 +2319,30 @@ func (c aylisForm) SetFrameReuseKb(v int64) { c.Set("frame_reuse_kb", v) }
 func (c aylisForm) Topmost() bool { return asBool(c.Get("topmost")) }
 func (c aylisForm) SetTopmost(v bool) { c.Set("topmost", v) }
 
+func (c aylisForm) Bottommost() bool { return asBool(c.Get("bottommost")) }
+func (c aylisForm) SetBottommost(v bool) { c.Set("bottommost", v) }
+
+func (c aylisForm) KeepAwake() KeepAwake { return KeepAwake(asText(c.Get("keep_awake"))) }
+func (c aylisForm) SetKeepAwake(v KeepAwake) { c.Set("keep_awake", string(v)) }
+
+func (c aylisForm) ConfineCursor() CursorConfine { return CursorConfine(asText(c.Get("confine_cursor"))) }
+func (c aylisForm) SetConfineCursor(v CursorConfine) { c.Set("confine_cursor", string(v)) }
+
+func (c aylisForm) WindowOpacity() float64 { return asNumber(c.Get("window_opacity")) }
+func (c aylisForm) SetWindowOpacity(v float64) { c.Set("window_opacity", v) }
+
+func (c aylisForm) FullScreenMode() FullScreenMode { return FullScreenMode(asText(c.Get("full_screen_mode"))) }
+func (c aylisForm) SetFullScreenMode(v FullScreenMode) { c.Set("full_screen_mode", string(v)) }
+
+func (c aylisForm) VideoWidth() int64 { return int64(asNumber(c.Get("video_width"))) }
+func (c aylisForm) SetVideoWidth(v int64) { c.Set("video_width", v) }
+
+func (c aylisForm) VideoHeight() int64 { return int64(asNumber(c.Get("video_height"))) }
+func (c aylisForm) SetVideoHeight(v int64) { c.Set("video_height", v) }
+
+func (c aylisForm) VideoRefresh() float64 { return asNumber(c.Get("video_refresh")) }
+func (c aylisForm) SetVideoRefresh(v float64) { c.Set("video_refresh", v) }
+
 func (c aylisForm) ShowInTaskbar() bool { return asBool(c.Get("show_in_taskbar")) }
 func (c aylisForm) SetShowInTaskbar(v bool) { c.Set("show_in_taskbar", v) }
 
@@ -2022,6 +2391,9 @@ func (c aylisForm) SetGpu(v string) { c.Set("gpu", v) }
 func (c aylisForm) Present() FormPresent { return FormPresent(asText(c.Get("present"))) }
 func (c aylisForm) SetPresent(v FormPresent) { c.Set("present", string(v)) }
 
+func (c aylisForm) BlendCompositor() FormBlendCompositor { return FormBlendCompositor(asText(c.Get("blend_compositor"))) }
+func (c aylisForm) SetBlendCompositor(v FormBlendCompositor) { c.Set("blend_compositor", string(v)) }
+
 func (c aylisForm) SpanMonitors() bool { return asBool(c.Get("span_monitors")) }
 func (c aylisForm) SetSpanMonitors(v bool) { c.Set("span_monitors", v) }
 
@@ -2042,6 +2414,12 @@ func (c aylisForm) SetFrameRate(v float64) { c.Set("frame_rate", v) }
 
 func (c aylisForm) Orientation() FormOrientation { return FormOrientation(asText(c.Get("orientation"))) }
 func (c aylisForm) SetOrientation(v FormOrientation) { c.Set("orientation", string(v)) }
+
+func (c aylisForm) Host() *aylis.Component { return c.GetRef("host") }
+func (c aylisForm) SetHost(v aylis.Ref) { c.SetRef("host", v) }
+
+func (c aylisForm) Dockable() bool { return asBool(c.Get("dockable")) }
+func (c aylisForm) SetDockable(v bool) { c.Set("dockable", v) }
 
 func (c aylisForm) OnShow() string { return asText(c.Get("on_show")) }
 func (c aylisForm) SetOnShow(v string) { c.Set("on_show", v) }
@@ -2069,6 +2447,27 @@ func (c aylisForm) SetOnNavigate(v string) { c.Set("on_navigate", v) }
 
 func (c aylisForm) OnGpuChange() string { return asText(c.Get("on_gpu_change")) }
 func (c aylisForm) SetOnGpuChange(v string) { c.Set("on_gpu_change", v) }
+
+func (c aylisForm) OnDock() string { return asText(c.Get("on_dock")) }
+func (c aylisForm) SetOnDock(v string) { c.Set("on_dock", v) }
+
+func (c aylisForm) OnUndock() string { return asText(c.Get("on_undock")) }
+func (c aylisForm) SetOnUndock(v string) { c.Set("on_undock", v) }
+
+func (c aylisForm) OnFilesDrop() string { return asText(c.Get("on_files_drop")) }
+func (c aylisForm) SetOnFilesDrop(v string) { c.Set("on_files_drop", v) }
+
+func (c aylisForm) OnViewChange() string { return asText(c.Get("on_view_change")) }
+func (c aylisForm) SetOnViewChange(v string) { c.Set("on_view_change", v) }
+
+func (c aylisForm) OnTopmostLost() string { return asText(c.Get("on_topmost_lost")) }
+func (c aylisForm) SetOnTopmostLost(v string) { c.Set("on_topmost_lost", v) }
+
+func (c aylisForm) OnScaleChange() string { return asText(c.Get("on_scale_change")) }
+func (c aylisForm) SetOnScaleChange(v string) { c.Set("on_scale_change", v) }
+
+func (c aylisForm) OnResizeEnd() string { return asText(c.Get("on_resize_end")) }
+func (c aylisForm) SetOnResizeEnd(v string) { c.Set("on_resize_end", v) }
 
 func (c aylisForm) ClientWidth() float64 { return asNumber(c.Get("client_width")) }
 func (c aylisForm) SetClientWidth(v float64) { c.Set("client_width", v) }
@@ -2328,8 +2727,16 @@ func (c aylisForm) SetOnDragDrop(v string) { c.Set("on_drag_drop", v) }
 func (c aylisForm) OnDragEnd() string { return asText(c.Get("on_drag_end")) }
 func (c aylisForm) SetOnDragEnd(v string) { c.Set("on_drag_end", v) }
 func (c aylisForm) MoveToMonitor(monitor int64) { c.App.Send("invoke", aylis.M{"target": c.ID, "method": "move_to_monitor", "args": []any{monitor}}) }
+func (c aylisForm) RequestAttention(critical bool) { c.App.Send("invoke", aylis.M{"target": c.ID, "method": "request_attention", "args": []any{critical}}) }
+func (c aylisForm) BringToFront() { c.App.Send("invoke", aylis.M{"target": c.ID, "method": "bring_to_front", "args": []any{}}) }
+func (c aylisForm) SetActivationToken(token string) { c.App.Send("invoke", aylis.M{"target": c.ID, "method": "set_activation_token", "args": []any{token}}) }
+func (c aylisForm) WindowScale() float64 { return asNumber(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "window_scale", "args": []any{}})) }
+func (c aylisForm) PointerOver() bool { return asBool(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "pointer_over", "args": []any{}})) }
+func (c aylisForm) Place(monitor int64, x int64, y int64, width int64, height int64, activate bool) { c.App.Send("invoke", aylis.M{"target": c.ID, "method": "place", "args": []any{monitor, x, y, width, height, activate}}) }
 func (c aylisForm) GpuAdapter() string { return asText(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "gpu_adapter", "args": []any{}})) }
 func (c aylisForm) GpuAdapters() []string { return asList(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "gpu_adapters", "args": []any{}})) }
+func (c aylisForm) DropX() float64 { return asNumber(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "drop_x", "args": []any{}})) }
+func (c aylisForm) DropY() float64 { return asNumber(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "drop_y", "args": []any{}})) }
 func (c aylisForm) RenderRgba(x float64, y float64, width float64, height float64, scale float64) string { return asText(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "render_rgba", "args": []any{x, y, width, height, scale}})) }
 func (c aylisForm) Focused() string { return asText(askCmd(c.App, "focused", aylis.M{"target": c.ID})) }
 func (c aylisForm) FocusNext() { c.App.Send("focus_next", aylis.M{"target": c.ID}) }
@@ -2649,6 +3056,9 @@ func (c aylisLabel) SetLineHeight(v float64) { c.Set("line_height", v) }
 
 func (c aylisLabel) TextShadow() *aylis.Shadow { return aylis.ShadowFromJSON(c.Get("text_shadow")) }
 func (c aylisLabel) SetTextShadow(v *aylis.Shadow) { c.Set("text_shadow", v.JSON()) }
+
+func (c aylisLabel) MaxLines() int64 { return int64(asNumber(c.Get("max_lines"))) }
+func (c aylisLabel) SetMaxLines(v int64) { c.Set("max_lines", v) }
 
 func (c aylisLabel) FocusControl() *aylis.Component { return c.GetRef("focus_control") }
 func (c aylisLabel) SetFocusControl(v aylis.Ref) { c.SetRef("focus_control", v) }
@@ -3475,6 +3885,18 @@ func (c aylisPanel) SetCharMap(v string) { c.Set("char_map", v) }
 func (c aylisPanel) Gap() float64 { return asNumber(c.Get("gap")) }
 func (c aylisPanel) SetGap(v float64) { c.Set("gap", v) }
 
+func (c aylisPanel) HoverFill() aylis.Color { return aylis.ColorFromJSON(c.Get("hover_fill")) }
+func (c aylisPanel) SetHoverFill(v aylis.Color) { c.Set("hover_fill", v.JSON()) }
+
+func (c aylisPanel) PressedFill() aylis.Color { return aylis.ColorFromJSON(c.Get("pressed_fill")) }
+func (c aylisPanel) SetPressedFill(v aylis.Color) { c.Set("pressed_fill", v.JSON()) }
+
+func (c aylisPanel) Interactive() bool { return asBool(c.Get("interactive")) }
+func (c aylisPanel) SetInteractive(v bool) { c.Set("interactive", v) }
+
+func (c aylisPanel) SelectedFill() aylis.Color { return aylis.ColorFromJSON(c.Get("selected_fill")) }
+func (c aylisPanel) SetSelectedFill(v aylis.Color) { c.Set("selected_fill", v.JSON()) }
+
 func (c aylisPanel) Fill() aylis.Color { return aylis.ColorFromJSON(c.Get("fill")) }
 func (c aylisPanel) SetFill(v aylis.Color) { c.Set("fill", v.JSON()) }
 
@@ -3498,6 +3920,9 @@ func (c aylisPanel) SetStroke(v aylis.Color) { c.Set("stroke", v.JSON()) }
 
 func (c aylisPanel) StrokeWidth() float64 { return asNumber(c.Get("stroke_width")) }
 func (c aylisPanel) SetStrokeWidth(v float64) { c.Set("stroke_width", v) }
+
+func (c aylisPanel) StrokeDash() []float64 { return asNumbers(c.Get("stroke_dash")) }
+func (c aylisPanel) SetStrokeDash(v []float64) { c.Set("stroke_dash", numbersText(v)) }
 
 func (c aylisPanel) Radius() aylis.Bounds { return aylis.BoundsFromJSON(c.Get("radius")) }
 func (c aylisPanel) SetRadius(v aylis.Bounds) { c.Set("radius", v.JSON()) }

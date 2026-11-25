@@ -1036,7 +1036,7 @@ fn shortcuts_prefer_the_embedded_form_with_focus() {
     let inside_edit = ui.add(Edit::new(""), inner);
     ui.layout();
     let (modifiers, key) = parse_shortcut("Ctrl+S").unwrap();
-    let ctrl_s = KeyEvent { key, modifiers, repeat: false, form: None };
+    let ctrl_s = KeyEvent { key, modifiers, ..Default::default() };
     ui.set_focus(inside_edit);
     ui.key_down(outer, ctrl_s);
     ui.set_focus(outside_edit);
@@ -1048,7 +1048,7 @@ fn shortcuts_prefer_the_embedded_form_with_focus() {
 /// como tratada: o Ctrl+Z num campo não chega ao atalho do menu (o desfazer do form).
 #[test]
 fn edit_undoes_and_redoes_what_was_typed() {
-    let key = |key: Key, ctrl: bool, shift: bool| KeyEvent { key, modifiers: Modifiers { ctrl, shift, ..Default::default() }, repeat: false, form: None };
+    let key = |key: Key, ctrl: bool, shift: bool| KeyEvent { key, modifiers: Modifiers { ctrl, shift, ..Default::default() }, ..Default::default() };
     let mut ui = Ui::new();
     register(&mut ui);
     let form = ui.add_root(Form::new("Teste", 400.0, 200.0));

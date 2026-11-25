@@ -84,7 +84,7 @@ fn act(ui: &mut Ui, field: ComponentId, closed: MenuClosed, key: char) {
     }
     ui.set_focus(field);
     closed(ui, field);
-    let event = KeyEvent { key: Key::Char(key), modifiers: Modifiers { ctrl: true, ..Default::default() }, repeat: false, form: None };
+    let event = KeyEvent { key: Key::Char(key), modifiers: Modifiers { ctrl: true, ..Default::default() }, ..Default::default() };
     ui.with_component(field, |c, ctx| c.key_down(ctx, &event));
     ui.process_events();
     ui.request_repaint();

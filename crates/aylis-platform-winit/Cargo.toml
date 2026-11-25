@@ -22,7 +22,7 @@ release-diagnostics = ["diagnostics", "aylis-d2d?/release-diagnostics"]
 # Desktop: desenho na CPU, pixels mostrados com softbuffer.
 cpu = ["dep:softbuffer", "dep:aylis-skia"]
 # Desktop: desenho na GPU com OpenGL (glutin).
-gpu = ["dep:glutin", "dep:glutin-winit", "dep:raw-window-handle", "aylis-skia/gl", "dep:wayland-client", "dep:wayland-backend", "dep:wayland-protocols", "dep:wayland-sys"]
+gpu = ["dep:glutin", "dep:glutin-winit", "dep:raw-window-handle", "aylis-skia/gl", "dep:wayland-sys"]
 # Windows sem Skia: Direct2D + DirectWrite (já vêm no sistema). Executável bem menor;
 # use com `default-features = false` para tirar o Skia de vez.
 d2d = ["dep:aylis-d2d"]
@@ -124,11 +124,13 @@ x11-dl = "2.21"
 zbus = { version = "5", default-features = false, features = ["async-io", "blocking-api"] }
 # O corretor do sistema (Enchant), aberto em tempo de execução.
 libloading = "0.8"
-# A placa de cada janela no Wayland (`gpu_linux.rs`): o feedback do linux-dmabuf e a janela
-# EGL. As mesmas versões que o winit e o glutin já trazem.
-wayland-client = { version = "0.31", optional = true }
-wayland-backend = { version = "0.3", features = ["client_system"], optional = true }
-wayland-protocols = { version = "0.32", features = ["client"], optional = true }
+# A placa de cada janela no Wayland (`gpu_linux.rs`: o feedback do linux-dmabuf e a janela
+# EGL) e a ativação de uma janela aberta pelo token (`window_reports.rs`, o `xdg-activation`).
+# As mesmas versões que o winit e o glutin já trazem (sem peso a mais).
+wayland-client = "0.31"
+wayland-backend = { version = "0.3", features = ["client_system"] }
+# O `unstable`: o inibidor de atalhos do compositor (o `KeyboardCapture`, `keyboard_capture.rs`).
+wayland-protocols = { version = "0.32", features = ["client", "staging", "unstable"] }
 wayland-sys = { version = "0.31", features = ["client", "egl", "dlopen"], optional = true }
 
 # OpenGL: desktop e Android (o iOS não tem OpenGL no glutin).
@@ -143,9 +145,11 @@ accesskit = "0.25"
 accesskit_winit = { version = "0.34", default-features = false, features = ["accesskit_unix", "async-io", "rwh_06"] }
 
 # Área de transferência do Linux e do macOS: texto, HTML e imagem (o `image`, para o PNG do
-# Linux e o TIFF do macOS; o PNG já vem com o PaintBox).
+# Linux e o TIFF do macOS; o PNG já vem com o PaintBox). No Wayland, o `wayland-data-control`
+# fala com o compositor direto (sem ele, só pelo XWayland); o compositor sem o protocolo cai
+# no X11, como antes. No macOS o recurso não liga nada.
 [target.'cfg(not(any(windows, target_arch = "wasm32", target_os = "android", target_os = "ios")))'.dependencies]
-arboard = { version = "3", optional = true, default-features = false, features = ["image-data"] }
+arboard = { version = "3", optional = true, default-features = false, features = ["image-data", "wayland-data-control"] }
 
 [target.'cfg(not(any(target_arch = "wasm32", target_os = "android", target_os = "ios")))'.dependencies]
 # Diálogos de arquivo do sistema (OpenDialog/SaveDialog).

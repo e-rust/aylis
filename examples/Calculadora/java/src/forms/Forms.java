@@ -8,7 +8,7 @@ public final class Forms {
     /** Registra as classes dos forms e os handlers de todos. */
     public static void register(Aylis aylis) {
         Components.registerClasses();
-        aylis.on("frmCalculadora.form_key_down", ev -> FrmCalculadora.form_key_down(aylis, ev));
+        aylis.on("frmCalculadora.form_key_down", ev -> FrmCalculadora.form_key_down(aylis, Components.frmCalculadora, Components.KeyEvent.fromJson(ev.args())));
         aylis.on("frmCalculadora.limpar_historico_click", ev -> FrmCalculadora.limpar_historico_click(aylis, Components.frmCalculadora.senderAsButton(ev)));
         aylis.on("frmCalculadora.historico_item_click", ev -> FrmCalculadora.historico_item_click(aylis, Components.frmCalculadora.senderAsListView(ev), (long) Components.asNumber(ev.args())));
         aylis.on("frmCalculadora.memoria_item_click", ev -> FrmCalculadora.memoria_item_click(aylis, Components.frmCalculadora.senderAsListView(ev), (long) Components.asNumber(ev.args())));

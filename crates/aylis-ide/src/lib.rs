@@ -53,6 +53,7 @@ pub mod jobs;
 pub mod lang;
 pub mod lite;
 pub mod live;
+pub mod mdview;
 pub mod profiler;
 pub mod mcp;
 pub mod mcp_insight;

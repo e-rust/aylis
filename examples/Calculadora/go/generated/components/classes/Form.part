@@ -44,6 +44,30 @@ func (c aylisForm) SetFrameReuseKb(v int64) { c.Set("frame_reuse_kb", v) }
 func (c aylisForm) Topmost() bool { return asBool(c.Get("topmost")) }
 func (c aylisForm) SetTopmost(v bool) { c.Set("topmost", v) }
 
+func (c aylisForm) Bottommost() bool { return asBool(c.Get("bottommost")) }
+func (c aylisForm) SetBottommost(v bool) { c.Set("bottommost", v) }
+
+func (c aylisForm) KeepAwake() KeepAwake { return KeepAwake(asText(c.Get("keep_awake"))) }
+func (c aylisForm) SetKeepAwake(v KeepAwake) { c.Set("keep_awake", string(v)) }
+
+func (c aylisForm) ConfineCursor() CursorConfine { return CursorConfine(asText(c.Get("confine_cursor"))) }
+func (c aylisForm) SetConfineCursor(v CursorConfine) { c.Set("confine_cursor", string(v)) }
+
+func (c aylisForm) WindowOpacity() float64 { return asNumber(c.Get("window_opacity")) }
+func (c aylisForm) SetWindowOpacity(v float64) { c.Set("window_opacity", v) }
+
+func (c aylisForm) FullScreenMode() FullScreenMode { return FullScreenMode(asText(c.Get("full_screen_mode"))) }
+func (c aylisForm) SetFullScreenMode(v FullScreenMode) { c.Set("full_screen_mode", string(v)) }
+
+func (c aylisForm) VideoWidth() int64 { return int64(asNumber(c.Get("video_width"))) }
+func (c aylisForm) SetVideoWidth(v int64) { c.Set("video_width", v) }
+
+func (c aylisForm) VideoHeight() int64 { return int64(asNumber(c.Get("video_height"))) }
+func (c aylisForm) SetVideoHeight(v int64) { c.Set("video_height", v) }
+
+func (c aylisForm) VideoRefresh() float64 { return asNumber(c.Get("video_refresh")) }
+func (c aylisForm) SetVideoRefresh(v float64) { c.Set("video_refresh", v) }
+
 func (c aylisForm) ShowInTaskbar() bool { return asBool(c.Get("show_in_taskbar")) }
 func (c aylisForm) SetShowInTaskbar(v bool) { c.Set("show_in_taskbar", v) }
 
@@ -92,6 +116,9 @@ func (c aylisForm) SetGpu(v string) { c.Set("gpu", v) }
 func (c aylisForm) Present() FormPresent { return FormPresent(asText(c.Get("present"))) }
 func (c aylisForm) SetPresent(v FormPresent) { c.Set("present", string(v)) }
 
+func (c aylisForm) BlendCompositor() FormBlendCompositor { return FormBlendCompositor(asText(c.Get("blend_compositor"))) }
+func (c aylisForm) SetBlendCompositor(v FormBlendCompositor) { c.Set("blend_compositor", string(v)) }
+
 func (c aylisForm) SpanMonitors() bool { return asBool(c.Get("span_monitors")) }
 func (c aylisForm) SetSpanMonitors(v bool) { c.Set("span_monitors", v) }
 
@@ -112,6 +139,12 @@ func (c aylisForm) SetFrameRate(v float64) { c.Set("frame_rate", v) }
 
 func (c aylisForm) Orientation() FormOrientation { return FormOrientation(asText(c.Get("orientation"))) }
 func (c aylisForm) SetOrientation(v FormOrientation) { c.Set("orientation", string(v)) }
+
+func (c aylisForm) Host() *aylis.Component { return c.GetRef("host") }
+func (c aylisForm) SetHost(v aylis.Ref) { c.SetRef("host", v) }
+
+func (c aylisForm) Dockable() bool { return asBool(c.Get("dockable")) }
+func (c aylisForm) SetDockable(v bool) { c.Set("dockable", v) }
 
 func (c aylisForm) OnShow() string { return asText(c.Get("on_show")) }
 func (c aylisForm) SetOnShow(v string) { c.Set("on_show", v) }
@@ -139,6 +172,27 @@ func (c aylisForm) SetOnNavigate(v string) { c.Set("on_navigate", v) }
 
 func (c aylisForm) OnGpuChange() string { return asText(c.Get("on_gpu_change")) }
 func (c aylisForm) SetOnGpuChange(v string) { c.Set("on_gpu_change", v) }
+
+func (c aylisForm) OnDock() string { return asText(c.Get("on_dock")) }
+func (c aylisForm) SetOnDock(v string) { c.Set("on_dock", v) }
+
+func (c aylisForm) OnUndock() string { return asText(c.Get("on_undock")) }
+func (c aylisForm) SetOnUndock(v string) { c.Set("on_undock", v) }
+
+func (c aylisForm) OnFilesDrop() string { return asText(c.Get("on_files_drop")) }
+func (c aylisForm) SetOnFilesDrop(v string) { c.Set("on_files_drop", v) }
+
+func (c aylisForm) OnViewChange() string { return asText(c.Get("on_view_change")) }
+func (c aylisForm) SetOnViewChange(v string) { c.Set("on_view_change", v) }
+
+func (c aylisForm) OnTopmostLost() string { return asText(c.Get("on_topmost_lost")) }
+func (c aylisForm) SetOnTopmostLost(v string) { c.Set("on_topmost_lost", v) }
+
+func (c aylisForm) OnScaleChange() string { return asText(c.Get("on_scale_change")) }
+func (c aylisForm) SetOnScaleChange(v string) { c.Set("on_scale_change", v) }
+
+func (c aylisForm) OnResizeEnd() string { return asText(c.Get("on_resize_end")) }
+func (c aylisForm) SetOnResizeEnd(v string) { c.Set("on_resize_end", v) }
 
 func (c aylisForm) ClientWidth() float64 { return asNumber(c.Get("client_width")) }
 func (c aylisForm) SetClientWidth(v float64) { c.Set("client_width", v) }
@@ -398,8 +452,16 @@ func (c aylisForm) SetOnDragDrop(v string) { c.Set("on_drag_drop", v) }
 func (c aylisForm) OnDragEnd() string { return asText(c.Get("on_drag_end")) }
 func (c aylisForm) SetOnDragEnd(v string) { c.Set("on_drag_end", v) }
 func (c aylisForm) MoveToMonitor(monitor int64) { c.App.Send("invoke", aylis.M{"target": c.ID, "method": "move_to_monitor", "args": []any{monitor}}) }
+func (c aylisForm) RequestAttention(critical bool) { c.App.Send("invoke", aylis.M{"target": c.ID, "method": "request_attention", "args": []any{critical}}) }
+func (c aylisForm) BringToFront() { c.App.Send("invoke", aylis.M{"target": c.ID, "method": "bring_to_front", "args": []any{}}) }
+func (c aylisForm) SetActivationToken(token string) { c.App.Send("invoke", aylis.M{"target": c.ID, "method": "set_activation_token", "args": []any{token}}) }
+func (c aylisForm) WindowScale() float64 { return asNumber(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "window_scale", "args": []any{}})) }
+func (c aylisForm) PointerOver() bool { return asBool(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "pointer_over", "args": []any{}})) }
+func (c aylisForm) Place(monitor int64, x int64, y int64, width int64, height int64, activate bool) { c.App.Send("invoke", aylis.M{"target": c.ID, "method": "place", "args": []any{monitor, x, y, width, height, activate}}) }
 func (c aylisForm) GpuAdapter() string { return asText(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "gpu_adapter", "args": []any{}})) }
 func (c aylisForm) GpuAdapters() []string { return asList(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "gpu_adapters", "args": []any{}})) }
+func (c aylisForm) DropX() float64 { return asNumber(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "drop_x", "args": []any{}})) }
+func (c aylisForm) DropY() float64 { return asNumber(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "drop_y", "args": []any{}})) }
 func (c aylisForm) RenderRgba(x float64, y float64, width float64, height float64, scale float64) string { return asText(askCmd(c.App, "invoke", aylis.M{"target": c.ID, "method": "render_rgba", "args": []any{x, y, width, height, scale}})) }
 func (c aylisForm) Focused() string { return asText(askCmd(c.App, "focused", aylis.M{"target": c.ID})) }
 func (c aylisForm) FocusNext() { c.App.Send("focus_next", aylis.M{"target": c.ID}) }

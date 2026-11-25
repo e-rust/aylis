@@ -299,6 +299,14 @@ pub fn question_handlers(layout: &str) -> Vec<(String, String)> {
     out
 }
 
+/// O que o comentário do esqueleto de uma pergunta tipada acrescenta (como responder).
+pub(crate) fn question_hint(event: &str) -> &'static str {
+    match event {
+        "on_key_down" => "; `ui.suppress_key()` engole a tecla",
+        _ => "",
+    }
+}
+
 /// O evento-pergunta a que o handler `handler` do form `form` está ligado (no que está sendo
 /// gerado), se for um.
 pub(crate) fn question_event(form: &str, handler: &str) -> Option<String> {
@@ -2022,6 +2030,15 @@ pub fn update_rust_unit(existing: Option<String>, handlers: &[String], form: &st
         // Um evento que pergunta (o `before_post`, o `on_close_query`): `Err` recusa, com a
         // mensagem na tela.
         if let Some(event) = question_event(form, h) {
+            // A pergunta que declara o que leva (o `on_key_down`): tipada e com `Result`.
+            if let Some(sig) = handler_sig(form, h) {
+                stubs.push_str(&format!(
+                    "\n    /// `{event}`: `Err(mensagem)` recusa (o `?` repassa){}.\n    pub fn {h}(&mut self, {}) -> Result<(), String> {{\n        let _ = (ui, sender, value);\n        Ok(())\n    }}\n",
+                    question_hint(&event),
+                    crate::bindings::rust_handler_params(&sig)
+                ));
+                continue;
+            }
             stubs.push_str(&format!(
                 "\n    /// `{event}`: `Err(mensagem)` recusa (o `?` repassa).\n    pub fn {h}(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) -> Result<(), String> {{\n        let _ = (ui, sender, args);\n        Ok(())\n    }}\n"
             ));

@@ -270,26 +270,22 @@ pub fn catalog(ui: &Ui) -> String {
         let mut props = Map::new();
         for info in prop_infos_of(instance.as_ref()) {
             let kind = match info.kind {
-                // Os eventos que perguntam: `"question:campos"` (a IDE gera a assinatura certa).
+                // Os eventos que perguntam: `"question:campos"` (a IDE gera a assinatura certa);
+                // o que também declara o que leva, `"question:campos;event:tipo"` (o
+                // `on_key_down`: o handler recebe o `KeyEvent` e ainda responde).
                 PropKind::Event => match aylis_core::question::question_fields(info.name) {
                     Some(fields) => {
-                        props.insert(info.name.to_string(), Value::String(format!("question:{}", fields.join(","))));
+                        let mut text = format!("question:{}", fields.join(","));
+                        if info.event_arg != aylis_core::EventArg::Unknown {
+                            text.push_str(&format!(";event:{}", event_arg_text(info.event_arg, info.rust_type)));
+                        }
+                        props.insert(info.name.to_string(), Value::String(text));
                         continue;
                     }
                     // O que o evento leva, quando declarado (`"event:float"`, `"event:none"`):
                     // o handler gerado recebe o valor nesse tipo.
                     None if info.event_arg != aylis_core::EventArg::Unknown => {
-                        let arg = match info.event_arg {
-                            aylis_core::EventArg::Unknown | aylis_core::EventArg::None => "none".to_string(),
-                            aylis_core::EventArg::Pointer => "pointer".into(),
-                            aylis_core::EventArg::Wheel => "wheel".into(),
-                            aylis_core::EventArg::Gesture => "gesture".into(),
-                            aylis_core::EventArg::Swipe => "swipe".into(),
-                            aylis_core::EventArg::Key => "key".into(),
-                            aylis_core::EventArg::DateRange => "daterange".into(),
-                            aylis_core::EventArg::Value(kind) => catalog_kind(kind, info.rust_type),
-                        };
-                        props.insert(info.name.to_string(), Value::String(format!("event:{arg}")));
+                        props.insert(info.name.to_string(), Value::String(format!("event:{}", event_arg_text(info.event_arg, info.rust_type))));
                         continue;
                     }
                     // Os que se juntam enquanto o anterior não terminou no backend.
@@ -401,6 +397,20 @@ fn collect_record(kind: PropKind, out: &mut Map<String, Value>) {
     out.insert(r.name.to_string(), Value::Object(fields));
     for (_, k) in r.fields {
         collect_record(*k, out);
+    }
+}
+
+/// O que um evento leva, no catálogo (o `tipo` de `"event:tipo"`).
+fn event_arg_text(arg: aylis_core::EventArg, rust_type: &str) -> String {
+    match arg {
+        aylis_core::EventArg::Unknown | aylis_core::EventArg::None => "none".to_string(),
+        aylis_core::EventArg::Pointer => "pointer".into(),
+        aylis_core::EventArg::Wheel => "wheel".into(),
+        aylis_core::EventArg::Gesture => "gesture".into(),
+        aylis_core::EventArg::Swipe => "swipe".into(),
+        aylis_core::EventArg::Key => "key".into(),
+        aylis_core::EventArg::DateRange => "daterange".into(),
+        aylis_core::EventArg::Value(kind) => catalog_kind(kind, rust_type),
     }
 }
 

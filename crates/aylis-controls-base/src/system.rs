@@ -253,7 +253,7 @@ impl Component for ApplicationEvents {
 
     properties! {
         tag: i64 => "Misc";
-        events: on_key_down, on_key_press, on_exception: ExceptionEvent, on_terminate: (), on_second_instance: Vec<String>
+        events: on_key_down: aylis_core::KeyEvent, on_key_press, on_exception: ExceptionEvent, on_terminate: (), on_second_instance: Vec<String>
     }
 
     fn methods(&self) -> &'static [aylis_core::MethodInfo] {

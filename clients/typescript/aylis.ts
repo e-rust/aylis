@@ -390,6 +390,11 @@ export class Aylis {
   private waiting = 0;
   /** Handlers rodando agora: um evento que pergunta roda já, mesmo com um deles esperando um `call`. */
   private running = 0;
+  /**
+   * As respostas dos eventos que perguntam em andamento (a última é a do handler que roda), para
+   * o `reply` do handler tipado, que não recebe o evento.
+   */
+  private replies: ({ [key: string]: Json } | null)[] = [];
 
   /** `attach`: lê o stdin (falso nas sessões: quem lê é o servidor). */
   constructor(attach = true) {
@@ -448,6 +453,17 @@ export class Aylis {
 
   protected write(message: { [key: string]: Json }) {
     process.stdout.write(JSON.stringify(message) + "\n");
+  }
+
+  /**
+   * Dentro de um evento que pergunta: grava um campo da resposta, como o `ev.reply[name]` do
+   * handler que recebe o evento inteiro (o tipado não o recebe). `reply("key", "")` no
+   * `on_key_down` engole a tecla; uma exceção recusa. Num handler `async`, responda antes do
+   * primeiro `await`. Fora de um evento que pergunta, não faz nada.
+   */
+  reply(name: string, value: Json) {
+    const current = this.replies[this.replies.length - 1];
+    if (current) current[name] = value;
   }
 
   /** Envia um comando sem esperar resposta (erros chegam como evento "error"). */
@@ -631,6 +647,8 @@ export class Aylis {
     event.reply = {};
     const handler = this.handlers.get(`${event.form}.${event.handler}`) ?? this.handlers.get(event.handler);
     this.running++;
+    const reply = event.ask !== undefined ? event.reply : null;
+    this.replies.push(reply);
     try {
       if (!handler) {
         log("evento sem handler:", event.handler);
@@ -652,6 +670,9 @@ export class Aylis {
       }
     } finally {
       this.running--;
+      // Este, e não o último: outro evento pode ter entrado durante um `await` do handler.
+      const at = this.replies.lastIndexOf(reply);
+      if (at >= 0) this.replies.splice(at, 1);
       // O handler terminou: a tela deixa de mostrar o backend ocupado.
       const seq = (event as unknown as { seq?: number }).seq;
       if (seq !== undefined) this.send("done", { seq });

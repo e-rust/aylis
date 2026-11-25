@@ -1,5 +1,6 @@
 {
   "HttpClient": { "props": { "base_url": "https://api.exemplo.com/v1", "headers": [{"name": "Accept", "value": "application/json"}], "request_timeout": 15000 } },
+  "KeyboardCapture": { "props": { "alt_f4": true } },
   "WebSocketClient": { "props": { "url": "wss://eventos.exemplo.com/alertas", "reconnect_delay": 1000, "reconnect_max_delay": 30000 } },
   "McpResource": { "props": { "uri": "app://tabelas/{tabela}", "title": "Colunas de uma tabela", "description": "As colunas, os tipos e as chaves de uma tabela do sistema.", "mime_type": "application/json" } },
   "McpPrompt": { "props": { "prompt_name": "resumo_tabela", "title": "Resumir uma tabela", "arguments": "tabela: o nome da tabela; foco?: o que destacar", "text": "Leia app://tabelas/{tabela} e resuma para que serve a tabela, destacando {foco}." } },

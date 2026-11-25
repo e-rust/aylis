@@ -113,6 +113,14 @@ namespace App.Forms
     }
 
     /// <summary>Os valores de um enum do acesso tipado.</summary>
+    public enum CursorConfine
+    {
+        None,
+        Window,
+        Monitor,
+    }
+
+    /// <summary>Os valores de um enum do acesso tipado.</summary>
     public enum CursorShape
     {
         Default,
@@ -142,6 +150,14 @@ namespace App.Forms
         Semibold,
         Bold,
         Black,
+    }
+
+    /// <summary>Os valores de um enum do acesso tipado.</summary>
+    public enum FormBlendCompositor
+    {
+        Project,
+        Direct2d,
+        Direct3d,
     }
 
     /// <summary>Os valores de um enum do acesso tipado.</summary>
@@ -184,6 +200,13 @@ namespace App.Forms
     }
 
     /// <summary>Os valores de um enum do acesso tipado.</summary>
+    public enum FullScreenMode
+    {
+        Borderless,
+        Exclusive,
+    }
+
+    /// <summary>Os valores de um enum do acesso tipado.</summary>
     public enum GridLayoutStyle
     {
         Default,
@@ -195,6 +218,209 @@ namespace App.Forms
         Left,
         Right,
         Top,
+    }
+
+    /// <summary>Os valores de um enum do acesso tipado.</summary>
+    public enum KeepAwake
+    {
+        Off,
+        System,
+        Display,
+    }
+
+    /// <summary>Os valores de um enum do acesso tipado.</summary>
+    public enum KeyCode
+    {
+        Unidentified,
+        KeyA,
+        KeyB,
+        KeyC,
+        KeyD,
+        KeyE,
+        KeyF,
+        KeyG,
+        KeyH,
+        KeyI,
+        KeyJ,
+        KeyK,
+        KeyL,
+        KeyM,
+        KeyN,
+        KeyO,
+        KeyP,
+        KeyQ,
+        KeyR,
+        KeyS,
+        KeyT,
+        KeyU,
+        KeyV,
+        KeyW,
+        KeyX,
+        KeyY,
+        KeyZ,
+        Digit0,
+        Digit1,
+        Digit2,
+        Digit3,
+        Digit4,
+        Digit5,
+        Digit6,
+        Digit7,
+        Digit8,
+        Digit9,
+        Numpad0,
+        Numpad1,
+        Numpad2,
+        Numpad3,
+        Numpad4,
+        Numpad5,
+        Numpad6,
+        Numpad7,
+        Numpad8,
+        Numpad9,
+        F1,
+        F2,
+        F3,
+        F4,
+        F5,
+        F6,
+        F7,
+        F8,
+        F9,
+        F10,
+        F11,
+        F12,
+        F13,
+        F14,
+        F15,
+        F16,
+        F17,
+        F18,
+        F19,
+        F20,
+        F21,
+        F22,
+        F23,
+        F24,
+        F25,
+        F26,
+        F27,
+        F28,
+        F29,
+        F30,
+        F31,
+        F32,
+        F33,
+        F34,
+        F35,
+        Lang1,
+        Lang2,
+        Lang3,
+        Lang4,
+        Lang5,
+        Backquote,
+        Backslash,
+        BracketLeft,
+        BracketRight,
+        Comma,
+        Equal,
+        IntlBackslash,
+        IntlRo,
+        IntlYen,
+        Minus,
+        Period,
+        Quote,
+        Semicolon,
+        Slash,
+        AltLeft,
+        AltRight,
+        Backspace,
+        CapsLock,
+        ContextMenu,
+        ControlLeft,
+        ControlRight,
+        Enter,
+        MetaLeft,
+        MetaRight,
+        ShiftLeft,
+        ShiftRight,
+        Space,
+        Tab,
+        Convert,
+        KanaMode,
+        NonConvert,
+        Delete,
+        End,
+        Help,
+        Home,
+        Insert,
+        PageDown,
+        PageUp,
+        ArrowDown,
+        ArrowLeft,
+        ArrowRight,
+        ArrowUp,
+        NumLock,
+        NumpadAdd,
+        NumpadComma,
+        NumpadDecimal,
+        NumpadDivide,
+        NumpadEnter,
+        NumpadEqual,
+        NumpadMultiply,
+        NumpadSubtract,
+        Escape,
+        Fn,
+        PrintScreen,
+        ScrollLock,
+        Pause,
+        AudioVolumeDown,
+        AudioVolumeMute,
+        AudioVolumeUp,
+        MediaPlayPause,
+        MediaSelect,
+        MediaStop,
+        MediaTrackNext,
+        MediaTrackPrevious,
+        BrowserBack,
+        BrowserFavorites,
+        BrowserForward,
+        BrowserHome,
+        BrowserRefresh,
+        BrowserSearch,
+        BrowserStop,
+        LaunchApp1,
+        LaunchApp2,
+        LaunchMail,
+        Power,
+        Sleep,
+        WakeUp,
+        NumpadBackspace,
+        NumpadClear,
+        NumpadClearEntry,
+        NumpadHash,
+        NumpadMemoryAdd,
+        NumpadMemoryClear,
+        NumpadMemoryRecall,
+        NumpadMemoryStore,
+        NumpadMemorySubtract,
+        NumpadParenLeft,
+        NumpadParenRight,
+        NumpadStar,
+        FnLock,
+        Hiragana,
+        Katakana,
+        Again,
+        Copy,
+        Cut,
+        Find,
+        Open,
+        Paste,
+        Props,
+        Select,
+        Undo,
+        Resume,
+        Suspend,
     }
 
     /// <summary>Os valores de um enum do acesso tipado.</summary>
@@ -404,14 +630,19 @@ namespace App.Forms
         public static readonly string[] BorderStyle = ["sizeable", "single", "none", "custom"];
         public static readonly string[] ButtonStyle = ["", "accent", "danger", "elevated", "fab", "fab_extended", "flat", "ghost", "glass", "glass_prominent", "glossy", "icon", "icon_filled", "icon_outlined", "icon_tonal", "info", "link", "negative", "outline", "pill", "positive", "push", "reveal", "round", "rounded", "secondary", "success", "text", "tonal", "unelevated", "warning"];
         public static readonly string[] CloseAction = ["hide", "free"];
+        public static readonly string[] CursorConfine = ["none", "window", "monitor"];
         public static readonly string[] CursorShape = ["default", "pointer", "text", "wait", "crosshair", "move", "not_allowed", "resize_horizontal", "resize_vertical", "resize_ne_sw", "resize_nw_se", "grab", "grabbing", "none"];
         public static readonly string[] FontWeight = ["default", "thin", "light", "normal", "medium", "semibold", "bold", "black"];
+        public static readonly string[] FormBlendCompositor = ["project", "direct2d", "direct3d"];
         public static readonly string[] FormOrientation = ["project", "any", "portrait", "landscape", "sensor_portrait", "sensor_landscape"];
         public static readonly string[] FormPosition = ["center", "screen_center", "designed", "default", "top_left", "top_right", "bottom_left", "bottom_right"];
         public static readonly string[] FormPresent = ["project", "window", "composition", "composed"];
         public static readonly string[] FormStyle = [""];
+        public static readonly string[] FullScreenMode = ["borderless", "exclusive"];
         public static readonly string[] GridLayoutStyle = [""];
         public static readonly string[] IconPosition = ["left", "right", "top"];
+        public static readonly string[] KeepAwake = ["off", "system", "display"];
+        public static readonly string[] KeyCode = ["Unidentified", "KeyA", "KeyB", "KeyC", "KeyD", "KeyE", "KeyF", "KeyG", "KeyH", "KeyI", "KeyJ", "KeyK", "KeyL", "KeyM", "KeyN", "KeyO", "KeyP", "KeyQ", "KeyR", "KeyS", "KeyT", "KeyU", "KeyV", "KeyW", "KeyX", "KeyY", "KeyZ", "Digit0", "Digit1", "Digit2", "Digit3", "Digit4", "Digit5", "Digit6", "Digit7", "Digit8", "Digit9", "Numpad0", "Numpad1", "Numpad2", "Numpad3", "Numpad4", "Numpad5", "Numpad6", "Numpad7", "Numpad8", "Numpad9", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14", "F15", "F16", "F17", "F18", "F19", "F20", "F21", "F22", "F23", "F24", "F25", "F26", "F27", "F28", "F29", "F30", "F31", "F32", "F33", "F34", "F35", "Lang1", "Lang2", "Lang3", "Lang4", "Lang5", "Backquote", "Backslash", "BracketLeft", "BracketRight", "Comma", "Equal", "IntlBackslash", "IntlRo", "IntlYen", "Minus", "Period", "Quote", "Semicolon", "Slash", "AltLeft", "AltRight", "Backspace", "CapsLock", "ContextMenu", "ControlLeft", "ControlRight", "Enter", "MetaLeft", "MetaRight", "ShiftLeft", "ShiftRight", "Space", "Tab", "Convert", "KanaMode", "NonConvert", "Delete", "End", "Help", "Home", "Insert", "PageDown", "PageUp", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowUp", "NumLock", "NumpadAdd", "NumpadComma", "NumpadDecimal", "NumpadDivide", "NumpadEnter", "NumpadEqual", "NumpadMultiply", "NumpadSubtract", "Escape", "Fn", "PrintScreen", "ScrollLock", "Pause", "AudioVolumeDown", "AudioVolumeMute", "AudioVolumeUp", "MediaPlayPause", "MediaSelect", "MediaStop", "MediaTrackNext", "MediaTrackPrevious", "BrowserBack", "BrowserFavorites", "BrowserForward", "BrowserHome", "BrowserRefresh", "BrowserSearch", "BrowserStop", "LaunchApp1", "LaunchApp2", "LaunchMail", "Power", "Sleep", "WakeUp", "NumpadBackspace", "NumpadClear", "NumpadClearEntry", "NumpadHash", "NumpadMemoryAdd", "NumpadMemoryClear", "NumpadMemoryRecall", "NumpadMemoryStore", "NumpadMemorySubtract", "NumpadParenLeft", "NumpadParenRight", "NumpadStar", "FnLock", "Hiragana", "Katakana", "Again", "Copy", "Cut", "Find", "Open", "Paste", "Props", "Select", "Undo", "Resume", "Suspend"];
         public static readonly string[] LabelStyle = ["", "caption", "error", "heading", "kbd", "link", "mono", "muted", "title"];
         public static readonly string[] LayerCaching = ["project", "on", "off"];
         public static readonly string[] LayoutStyle = [""];
@@ -464,14 +695,14 @@ namespace App.Forms
     }
 
     /// <summary>Um registro do acesso tipado (no fio, um objeto JSON com os mesmos campos).</summary>
-    public sealed record KeyEvent(string Key, bool Ctrl, bool Shift, bool Alt)
+    public sealed record KeyEvent(string Key, bool Ctrl, bool Shift, bool Alt, bool Meta, bool CapsLock, bool NumLock, bool ScrollLock, KeyCode Code, long Scancode, string Form, long FormId)
     {
         /// <summary>Com os padrões: <c>new KeyEvent { Campo = valor }</c> preenche só os dados.</summary>
         public KeyEvent() : this(FromJson(null)) { }
 
-        internal static KeyEvent FromJson(JsonNode? n) => new(Components.Text(n?["key"]), Components.Bool(n?["ctrl"]), Components.Bool(n?["shift"]), Components.Bool(n?["alt"]));
+        internal static KeyEvent FromJson(JsonNode? n) => new(Components.Text(n?["key"]), Components.Bool(n?["ctrl"]), Components.Bool(n?["shift"]), Components.Bool(n?["alt"]), Components.Bool(n?["meta"]), Components.Bool(n?["caps_lock"]), Components.Bool(n?["num_lock"]), Components.Bool(n?["scroll_lock"]), EnumNames.Of<KeyCode>(n?["code"], EnumNames.KeyCode), (long)Components.Number(n?["scancode"]), Components.Text(n?["form"]), (long)Components.Number(n?["form_id"]));
 
-        internal JsonObject ToJson() => new() { ["key"] = JsonValue.Create(Key), ["ctrl"] = JsonValue.Create(Ctrl), ["shift"] = JsonValue.Create(Shift), ["alt"] = JsonValue.Create(Alt) };
+        internal JsonObject ToJson() => new() { ["key"] = JsonValue.Create(Key), ["ctrl"] = JsonValue.Create(Ctrl), ["shift"] = JsonValue.Create(Shift), ["alt"] = JsonValue.Create(Alt), ["meta"] = JsonValue.Create(Meta), ["caps_lock"] = JsonValue.Create(CapsLock), ["num_lock"] = JsonValue.Create(NumLock), ["scroll_lock"] = JsonValue.Create(ScrollLock), ["code"] = JsonValue.Create(EnumNames.KeyCode[(int)Code]), ["scancode"] = JsonValue.Create(Scancode), ["form"] = JsonValue.Create(Form), ["form_id"] = JsonValue.Create(FormId) };
 
         internal static KeyEvent? FromText(JsonNode? v) => Components.Text(v) is { Length: > 0 } t && JsonNode.Parse(t) is JsonObject o ? FromJson(o) : null;
 
@@ -720,6 +951,14 @@ namespace App.Forms.AylisUi
         public LayerCaching LayerCache { get => EnumNames.Of<LayerCaching>(GetProp("layer_cache"), EnumNames.LayerCaching); set => SetProp("layer_cache", EnumNames.LayerCaching[(int)value]); }
         public long FrameReuseKb { get => (long)Number(GetProp("frame_reuse_kb")); set => SetProp("frame_reuse_kb", value); }
         public bool Topmost { get => Bool(GetProp("topmost")); set => SetProp("topmost", value); }
+        public bool Bottommost { get => Bool(GetProp("bottommost")); set => SetProp("bottommost", value); }
+        public KeepAwake KeepAwake { get => EnumNames.Of<KeepAwake>(GetProp("keep_awake"), EnumNames.KeepAwake); set => SetProp("keep_awake", EnumNames.KeepAwake[(int)value]); }
+        public CursorConfine ConfineCursor { get => EnumNames.Of<CursorConfine>(GetProp("confine_cursor"), EnumNames.CursorConfine); set => SetProp("confine_cursor", EnumNames.CursorConfine[(int)value]); }
+        public double WindowOpacity { get => Number(GetProp("window_opacity")); set => SetProp("window_opacity", value); }
+        public FullScreenMode FullScreenMode { get => EnumNames.Of<FullScreenMode>(GetProp("full_screen_mode"), EnumNames.FullScreenMode); set => SetProp("full_screen_mode", EnumNames.FullScreenMode[(int)value]); }
+        public long VideoWidth { get => (long)Number(GetProp("video_width")); set => SetProp("video_width", value); }
+        public long VideoHeight { get => (long)Number(GetProp("video_height")); set => SetProp("video_height", value); }
+        public double VideoRefresh { get => Number(GetProp("video_refresh")); set => SetProp("video_refresh", value); }
         public bool ShowInTaskbar { get => Bool(GetProp("show_in_taskbar")); set => SetProp("show_in_taskbar", value); }
         public AylisComponent? ActiveControl { get => GetRef("active_control"); set => SetRef("active_control", value); }
         public string[] TabOrder { get => ListOf(GetProp("tab_order")); set => SetProp("tab_order", string.Join(";", value)); }
@@ -736,6 +975,7 @@ namespace App.Forms.AylisUi
         public bool RememberPlacement { get => Bool(GetProp("remember_placement")); set => SetProp("remember_placement", value); }
         public string Gpu { get => Text(GetProp("gpu")); set => SetProp("gpu", value); }
         public FormPresent Present { get => EnumNames.Of<FormPresent>(GetProp("present"), EnumNames.FormPresent); set => SetProp("present", EnumNames.FormPresent[(int)value]); }
+        public FormBlendCompositor BlendCompositor { get => EnumNames.Of<FormBlendCompositor>(GetProp("blend_compositor"), EnumNames.FormBlendCompositor); set => SetProp("blend_compositor", EnumNames.FormBlendCompositor[(int)value]); }
         public bool SpanMonitors { get => Bool(GetProp("span_monitors")); set => SetProp("span_monitors", value); }
         public bool PhysicalPixels { get => Bool(GetProp("physical_pixels")); set => SetProp("physical_pixels", value); }
         public bool ActivateOnShow { get => Bool(GetProp("activate_on_show")); set => SetProp("activate_on_show", value); }
@@ -743,6 +983,8 @@ namespace App.Forms.AylisUi
         public CloseAction CloseAction { get => EnumNames.Of<CloseAction>(GetProp("close_action"), EnumNames.CloseAction); set => SetProp("close_action", EnumNames.CloseAction[(int)value]); }
         public double FrameRate { get => Number(GetProp("frame_rate")); set => SetProp("frame_rate", value); }
         public FormOrientation Orientation { get => EnumNames.Of<FormOrientation>(GetProp("orientation"), EnumNames.FormOrientation); set => SetProp("orientation", EnumNames.FormOrientation[(int)value]); }
+        public AylisComponent? Host { get => GetRef("host"); set => SetRef("host", value); }
+        public bool Dockable { get => Bool(GetProp("dockable")); set => SetProp("dockable", value); }
         public string OnShow { get => Text(GetProp("on_show")); set => SetProp("on_show", value); }
         public string OnWindowCreated { get => Text(GetProp("on_window_created")); set => SetProp("on_window_created", value); }
         public string OnClose { get => Text(GetProp("on_close")); set => SetProp("on_close", value); }
@@ -752,6 +994,13 @@ namespace App.Forms.AylisUi
         public string OnRestore { get => Text(GetProp("on_restore")); set => SetProp("on_restore", value); }
         public string OnNavigate { get => Text(GetProp("on_navigate")); set => SetProp("on_navigate", value); }
         public string OnGpuChange { get => Text(GetProp("on_gpu_change")); set => SetProp("on_gpu_change", value); }
+        public string OnDock { get => Text(GetProp("on_dock")); set => SetProp("on_dock", value); }
+        public string OnUndock { get => Text(GetProp("on_undock")); set => SetProp("on_undock", value); }
+        public string OnFilesDrop { get => Text(GetProp("on_files_drop")); set => SetProp("on_files_drop", value); }
+        public string OnViewChange { get => Text(GetProp("on_view_change")); set => SetProp("on_view_change", value); }
+        public string OnTopmostLost { get => Text(GetProp("on_topmost_lost")); set => SetProp("on_topmost_lost", value); }
+        public string OnScaleChange { get => Text(GetProp("on_scale_change")); set => SetProp("on_scale_change", value); }
+        public string OnResizeEnd { get => Text(GetProp("on_resize_end")); set => SetProp("on_resize_end", value); }
         public double ClientWidth { get => Number(GetProp("client_width")); set => SetProp("client_width", value); }
         public double ClientHeight { get => Number(GetProp("client_height")); set => SetProp("client_height", value); }
         public double Left { get => Number(GetProp("left")); set => SetProp("left", value); }
@@ -839,8 +1088,16 @@ namespace App.Forms.AylisUi
         public string OnDragDrop { get => Text(GetProp("on_drag_drop")); set => SetProp("on_drag_drop", value); }
         public string OnDragEnd { get => Text(GetProp("on_drag_end")); set => SetProp("on_drag_end", value); }
         public void MoveToMonitor(long monitor) => Aylis.Send("invoke", new JsonObject { ["target"] = Id, ["method"] = "move_to_monitor", ["args"] = new JsonArray(monitor) });
+        public void RequestAttention(bool critical) => Aylis.Send("invoke", new JsonObject { ["target"] = Id, ["method"] = "request_attention", ["args"] = new JsonArray(critical) });
+        public void BringToFront() => Aylis.Send("invoke", new JsonObject { ["target"] = Id, ["method"] = "bring_to_front", ["args"] = new JsonArray() });
+        public void SetActivationToken(string token) => Aylis.Send("invoke", new JsonObject { ["target"] = Id, ["method"] = "set_activation_token", ["args"] = new JsonArray(token) });
+        public double WindowScale() => Number(Aylis.Call("invoke", new JsonObject { ["target"] = Id, ["method"] = "window_scale", ["args"] = new JsonArray() }));
+        public bool PointerOver() => Bool(Aylis.Call("invoke", new JsonObject { ["target"] = Id, ["method"] = "pointer_over", ["args"] = new JsonArray() }));
+        public void Place(long monitor, long x, long y, long width, long height, bool activate) => Aylis.Send("invoke", new JsonObject { ["target"] = Id, ["method"] = "place", ["args"] = new JsonArray(monitor, x, y, width, height, activate) });
         public string GpuAdapter() => Text(Aylis.Call("invoke", new JsonObject { ["target"] = Id, ["method"] = "gpu_adapter", ["args"] = new JsonArray() }));
         public string[] GpuAdapters() => ListOf(Aylis.Call("invoke", new JsonObject { ["target"] = Id, ["method"] = "gpu_adapters", ["args"] = new JsonArray() }));
+        public double DropX() => Number(Aylis.Call("invoke", new JsonObject { ["target"] = Id, ["method"] = "drop_x", ["args"] = new JsonArray() }));
+        public double DropY() => Number(Aylis.Call("invoke", new JsonObject { ["target"] = Id, ["method"] = "drop_y", ["args"] = new JsonArray() }));
         public string RenderRgba(double x, double y, double width, double height, double scale) => Text(Aylis.Call("invoke", new JsonObject { ["target"] = Id, ["method"] = "render_rgba", ["args"] = new JsonArray(x, y, width, height, scale) }));
         public string Focused() => Text(Aylis.Call("focused", new JsonObject { ["target"] = Id }));
         public void FocusNext() => Aylis.Send("focus_next", new JsonObject { ["target"] = Id });
@@ -958,6 +1215,7 @@ namespace App.Forms.AylisUi
         public double OutlineWidth { get => Number(GetProp("outline_width")); set => SetProp("outline_width", value); }
         public double LineHeight { get => Number(GetProp("line_height")); set => SetProp("line_height", value); }
         public Shadow? TextShadow { get => Shadow.FromJson(GetProp("text_shadow")); set => SetProp("text_shadow", (value?.ToJson() ?? "")); }
+        public long MaxLines { get => (long)Number(GetProp("max_lines")); set => SetProp("max_lines", value); }
         public AylisComponent? FocusControl { get => GetRef("focus_control"); set => SetRef("focus_control", value); }
         public double Left { get => Number(GetProp("left")); set => SetProp("left", value); }
         public double Top { get => Number(GetProp("top")); set => SetProp("top", value); }
@@ -1246,6 +1504,10 @@ namespace App.Forms.AylisUi
         public bool CharsOverride { get => Bool(GetProp("chars_override")); set => SetProp("chars_override", value); }
         public string CharMap { get => Text(GetProp("char_map")); set => SetProp("char_map", value); }
         public double Gap { get => Number(GetProp("gap")); set => SetProp("gap", value); }
+        public Color HoverFill { get => Color.FromJson(GetProp("hover_fill")); set => SetProp("hover_fill", value.ToJson()); }
+        public Color PressedFill { get => Color.FromJson(GetProp("pressed_fill")); set => SetProp("pressed_fill", value.ToJson()); }
+        public bool Interactive { get => Bool(GetProp("interactive")); set => SetProp("interactive", value); }
+        public Color SelectedFill { get => Color.FromJson(GetProp("selected_fill")); set => SetProp("selected_fill", value.ToJson()); }
         public Color Fill { get => Color.FromJson(GetProp("fill")); set => SetProp("fill", value.ToJson()); }
         public Color Fill2 { get => Color.FromJson(GetProp("fill2")); set => SetProp("fill2", value.ToJson()); }
         public Color FillMid { get => Color.FromJson(GetProp("fill_mid")); set => SetProp("fill_mid", value.ToJson()); }
@@ -1254,6 +1516,7 @@ namespace App.Forms.AylisUi
         public bool GradientRadial { get => Bool(GetProp("gradient_radial")); set => SetProp("gradient_radial", value); }
         public Color Stroke { get => Color.FromJson(GetProp("stroke")); set => SetProp("stroke", value.ToJson()); }
         public double StrokeWidth { get => Number(GetProp("stroke_width")); set => SetProp("stroke_width", value); }
+        public double[] StrokeDash { get => NumbersOf(GetProp("stroke_dash")); set => SetProp("stroke_dash", NumbersText(value)); }
         public Bounds Radius { get => Bounds.FromJson(GetProp("radius")); set => SetProp("radius", value.ToJson()); }
         public double Left { get => Number(GetProp("left")); set => SetProp("left", value); }
         public double Top { get => Number(GetProp("top")); set => SetProp("top", value); }

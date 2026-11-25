@@ -257,6 +257,11 @@ pub struct Project {
     /// navegadores: sempre pelo compositor do Windows).
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub present: String,
+    /// Quem junta as camadas com `blend_mode` ao fundo no Direct2D: vazio ou `direct2d`, o
+    /// efeito do Direct2D; `direct3d`, o shader do Aylis em Direct3D 11
+    /// ([`aylis_core::gpu::BlendCompositor`]). Cada form pode ter o seu.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub blend_compositor: String,
     /// De onde vem o Aylis no `Cargo.toml` (o relatório do Tabernáculo, G11/G03):
     /// `crates.io` (a versão publicada que a IDE usa; o padrão dos projetos novos), uma pasta
     /// (relativa ao projeto ou absoluta: um Aylis fixo, que o gerador não troca) ou vazio (a
@@ -511,6 +516,13 @@ impl Project {
     /// A orientação da tela do app (o `orientation`; um nome desconhecido gira com o aparelho).
     pub fn orientation(&self) -> aylis_core::ScreenOrientation {
         aylis_core::ScreenOrientation::parse(&self.orientation).unwrap_or_default()
+    }
+
+    /// O compositor da mistura do app (o `blend_compositor`; vazio ou desconhecido: o efeito
+    /// do Direct2D).
+    pub fn blend_compositor(&self) -> aylis_core::gpu::BlendCompositor {
+        use aylis_core::PropEnum;
+        aylis_core::gpu::BlendCompositor::from_name(self.blend_compositor.trim()).unwrap_or_default()
     }
 
     /// Os comandos antes e depois da compilação, para mostrar (o "Confiar neste projeto?").
@@ -1493,6 +1505,7 @@ pub fn create_at(dir: &Path, name: &str, language: Language) -> Result<Project, 
         text: Some(TextOptions::default()),
         gpu: String::new(),
         present: String::new(),
+        blend_compositor: String::new(),
         // Projetos novos: o Aylis do crates.io, que compila em qualquer máquina (G11).
         sdk: SDK_CRATES_IO.into(),
         dev_address: String::new(),
@@ -2133,6 +2146,7 @@ pub fn install_with(ui: &mut Ui, project: &Project, files: Files) -> Result<Comp
     aylis_core::image_cache::set_limits(image_cache.limits());
     aylis_core::image_cache::set_auto_layers(image_cache.auto_layers);
     aylis_core::image_cache::set_frame_reuse_kb(image_cache.frame_reuse_kb);
+    aylis_core::gpu::set_blend_compositor(project.blend_compositor());
     aylis_core::canvas::set_text_antialias(project.text_antialias.mode());
     if let Some(z) = project.zoom {
         ui.set_zoom(z.value);

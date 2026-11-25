@@ -53,8 +53,10 @@ static void apertar(aylis::Aylis& app, const std::string& texto) {
     if (calc.tecla(texto)) atualizar(app);
 }
 
-void form_key_down(aylis::Aylis& app, const aylis::Event& ev) {
-    std::string botao = motor::botao_do_teclado(ev.args["key"].str(), ev.args["ctrl"].boolean(), ev.args["shift"].boolean());
+void form_key_down(aylis::Aylis& app, aylis_components::Form sender, aylis_components::KeyEvent value) {
+    // app.reply("key", "") engoliria a tecla.
+    (void)sender;
+    std::string botao = motor::botao_do_teclado(value.key, value.ctrl, value.shift);
     if (botao == "historico") historico_click(app, frmCalculadora.btnHistorico);
     else if (!botao.empty()) apertar(app, botao);
 }

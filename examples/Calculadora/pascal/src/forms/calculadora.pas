@@ -12,7 +12,7 @@ uses
 type
   TFrmCalculadora = class(TFrmCalculadoraBase)
   published
-    procedure form_key_down(Sender: TAylisComponent; var Key: string; Event: TJSONObject);
+    procedure form_key_down(Sender: TForm; Value: TKeyEvent);
     procedure limpar_historico_click(Sender: TButton);
     procedure historico_item_click(Sender: TListView; Value: Int64);
     procedure memoria_item_click(Sender: TListView; Value: Int64);
@@ -123,15 +123,12 @@ begin
     Atualizar(Aylis);
 end;
 
-procedure TFrmCalculadora.form_key_down(Sender: TAylisComponent; var Key: string; Event: TJSONObject);
+{ Aylis.Reply('key', '') engoliria a tecla. }
+procedure TFrmCalculadora.form_key_down(Sender: TForm; Value: TKeyEvent);
 var
-  Args: TJSONObject;
   Botao: string;
 begin
-  if not (Event.Find('args') is TJSONObject) then
-    Exit;
-  Args := TJSONObject(Event.Find('args'));
-  Botao := BotaoDoTeclado(Args.Get('key', ''), Args.Get('ctrl', False), Args.Get('shift', False));
+  Botao := BotaoDoTeclado(Value.Key, Value.Ctrl, Value.Shift);
   if Botao = 'historico' then
     historico_click(btnHistorico)
   else if Botao <> '' then

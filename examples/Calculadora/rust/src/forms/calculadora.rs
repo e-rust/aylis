@@ -4,7 +4,7 @@
 use aylis::prelude::*;
 
 use crate::motor::{Calculadora, botao_do_teclado, formatar};
-use crate::generated::{Button, FrmCalculadora, ListView, ListViewItem};
+use crate::generated::{Button, Form, FrmCalculadora, ListView, ListViewItem};
 
 /// O estado do form: a calculadora desta janela (duas janelas, duas contas).
 pub struct Data {
@@ -82,14 +82,15 @@ impl FrmCalculadora {
         }
     }
 
-    pub fn form_key_down(&mut self, ui: &mut Ui, sender: ComponentId, args: &EventArgs) {
+    /// `on_key_down`: a tecla já vem tipada; `ui.suppress_key()` engoliria a tecla.
+    pub fn form_key_down(&mut self, ui: &mut Ui, sender: Form, value: KeyEvent) -> Result<(), String> {
         let _ = sender;
-        let EventArgs::Key(k) = args else { return };
-        match botao_do_teclado(&nome_da_tecla(k.key), k.modifiers.ctrl, k.modifiers.shift) {
+        match botao_do_teclado(&nome_da_tecla(value.key), value.modifiers.ctrl, value.modifiers.shift) {
             Some("historico") => self.historico_click(ui, self.btnHistorico),
             Some(texto) => self.apertar(ui, texto),
             None => {}
         }
+        Ok(())
     }
 
     pub fn limpar_historico_click(&mut self, ui: &mut Ui, sender: Button) {

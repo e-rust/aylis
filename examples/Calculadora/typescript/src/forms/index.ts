@@ -8,7 +8,7 @@ import * as calculadora from "./calculadora.ts";
 
 /** Registra os handlers de todos os forms. */
 export function registerForms(aylis: Aylis) {
-    aylis.on("frmCalculadora.form_key_down", (ev) => calculadora.form_key_down(aylis, ev));
+    aylis.on("frmCalculadora.form_key_down", (ev) => calculadora.form_key_down(aylis, components.frmCalculadora, components.keyEventFromJson(ev.args)));
     aylis.on("frmCalculadora.limpar_historico_click", (ev) => calculadora.limpar_historico_click(aylis, components.frmCalculadora.senderAsButton(ev)!));
     aylis.on("frmCalculadora.historico_item_click", (ev) => calculadora.historico_item_click(aylis, components.frmCalculadora.senderAsListView(ev)!, Number(ev.args ?? 0)));
     aylis.on("frmCalculadora.memoria_item_click", (ev) => calculadora.memoria_item_click(aylis, components.frmCalculadora.senderAsListView(ev)!, Number(ev.args ?? 0)));

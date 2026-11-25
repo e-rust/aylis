@@ -50,10 +50,46 @@ impl App {
         })
     }
 
+    /// A janela `index` mudou de tamanho (o `Resized`, o `ScaleFactorChanged` ou o tamanho que o
+    /// winit aplicou na hora, [`request_size`]): o form, o lugar guardado, a forma e a placa
+    /// acompanham.
+    pub(crate) fn window_resized(&mut self, index: usize) {
+        // Minimizou ou voltou: o form fica sabendo (o relatório do Tabernáculo, P06).
+        let minimized = self.windows[index].window.is_minimized() == Some(true);
+        if minimized != self.windows[index].minimized {
+            self.windows[index].minimized = minimized;
+            let form = self.windows[index].form;
+            self.ui.set_form_minimized(form, minimized);
+            self.ui.fire(form, if minimized { "on_minimize" } else { "on_restore" }, &aylis_core::EventArgs::None);
+        }
+        self.sync_form_size(index);
+        self.store_placement(index);
+        #[cfg(windows)]
+        self.apply_shape(index);
+        // Maximizar ou encaixar (Win+Shift+seta) também leva a outro monitor.
+        self.follow_monitor(index, false);
+        self.windows[index].window.request_redraw();
+    }
+
+    /// As janelas dos `forms` cujo tamanho o winit aplicou na hora ([`request_size`] deu
+    /// `true`): o que o `Resized` faria.
+    pub(crate) fn sizes_applied(&mut self, forms: &[ComponentId]) {
+        for &form in forms {
+            if let Some(index) = self.windows.iter().position(|w| w.form == form && !w.is_extra()) {
+                // O `on_resize_end` também conta este tamanho.
+                let size = self.windows[index].window.inner_size();
+                self.report_window_change(index, &WindowEvent::Resized(size));
+                self.window_resized(index);
+            }
+        }
+    }
+
     /// Executa os pedidos à janela (`Ui::window_command`): a barra de título própria.
     pub(crate) fn apply_window_commands(&mut self) {
         use aylis_core::{ResizeEdge, WindowCommand};
         use winit::window::ResizeDirection as D;
+        // As janelas que o winit redimensionou na hora (Wayland, macOS), sem `Resized` depois.
+        let mut applied: Vec<ComponentId> = Vec::new();
         for (form, command) in self.ui.take_window_commands() {
             // A propriedade `gpu` do form mudou: a janela confere a placa (precisa do backend
             // mutável, então fica fora do `match` abaixo).
@@ -94,6 +130,11 @@ impl App {
                 for index in indices {
                     self.apply_cursor_confine(index);
                 }
+                continue;
+            }
+            // Pega o token de ativação do `Ui` (precisa dele mutável).
+            if command == WindowCommand::BringToFront {
+                self.bring_window_to_front(form);
                 continue;
             }
             let Some(w) = self.window_of(form) else { continue };
@@ -233,7 +274,9 @@ impl App {
                         // O winit pede o tamanho de dentro: tira a moldura que a janela tem agora.
                         let (outer, inner) = (window.outer_size(), window.inner_size());
                         let frame = (outer.width.saturating_sub(inner.width), outer.height.saturating_sub(inner.height));
-                        let _ = window.request_inner_size(winit::dpi::PhysicalSize::new(width.saturating_sub(frame.0).max(1), height.saturating_sub(frame.1).max(1)));
+                        if request_size(window, winit::dpi::PhysicalSize::new(width.saturating_sub(frame.0).max(1), height.saturating_sub(frame.1).max(1))) {
+                            applied.push(form);
+                        }
                         if activate {
                             window.focus_window();
                         }
@@ -253,7 +296,9 @@ impl App {
                 }
                 // A área cliente do tamanho do form (J11): o tamanho pedido é o de dentro, e o
                 // `Resized` que vem depois confirma (ou o sistema limita, e o form fica com o que
-                // coube). No celular e no navegador o form ocupa a tela: nada a fazer.
+                // coube). No Wayland não vem `Resized`: o winit aplica na hora (`request_size`), e
+                // a superfície e o form acompanham no fim desta volta. No celular e no navegador
+                // o form ocupa a tela: nada a fazer.
                 WindowCommand::ApplySize => {
                     if let Some(cb) = self.ui.control(form).filter(|_| !SINGLE_SURFACE) {
                         let zoom = self.ui.form_zoom(form) as f64;
@@ -262,7 +307,9 @@ impl App {
                         let scale = if self.ui.physical_pixels(form) { 1.0 } else { window.scale_factor() };
                         let now = window.inner_size().to_logical::<f64>(scale);
                         if (now.width - want.width).abs() > 0.5 || (now.height - want.height).abs() > 0.5 {
-                            let _ = window.request_inner_size(want.to_physical::<u32>(scale));
+                            if request_size(window, want.to_physical::<u32>(scale)) {
+                                applied.push(form);
+                            }
                         }
                     }
                 }
@@ -282,9 +329,10 @@ impl App {
                 }
                 #[cfg(not(windows))]
                 WindowCommand::UpdateCorners => {}
-                WindowCommand::Close | WindowCommand::UpdateGpu | WindowCommand::UpdateSpan | WindowCommand::UpdateScale | WindowCommand::UpdateOptions | WindowCommand::UpdateKeepAwake | WindowCommand::UpdateCursorConfine => {}
+                WindowCommand::Close | WindowCommand::BringToFront | WindowCommand::UpdateGpu | WindowCommand::UpdateSpan | WindowCommand::UpdateScale | WindowCommand::UpdateOptions | WindowCommand::UpdateKeepAwake | WindowCommand::UpdateCursorConfine => {}
             }
         }
+        self.sizes_applied(&applied);
     }
 
     /// O botão maximizar das barras próprias (Windows): o mouse que chegou pela moldura vai
@@ -524,4 +572,15 @@ fn show_window(ui: &Ui, form: ComponentId, window: &Window, activate: bool) -> b
     return hidden_before;
     #[cfg(not(windows))]
     false
+}
+
+/// Pede o tamanho de dentro da janela. `true` quando o winit o aplicou na hora: no Wayland (o
+/// tamanho é do cliente, `xdg_surface.set_window_geometry`) e no macOS ele devolve o tamanho novo
+/// e não manda `Resized` (a doc do `request_inner_size`: "resize event in such case may not be
+/// generated"), então quem chamou faz o que o `Resized` faria ([`App::sizes_applied`]). Sem isso,
+/// no GNOME a superfície ficava do tamanho de antes e a janela não mudava (conferido em 24/11).
+/// Nos outros, o pedido vai ao sistema e o `Resized` chega depois (`false`).
+pub(crate) fn request_size(window: &Window, size: winit::dpi::PhysicalSize<u32>) -> bool {
+    let before = window.inner_size();
+    window.request_inner_size(size).is_some_and(|now| now != before)
 }

@@ -762,6 +762,9 @@ struct ProjectScan {
     variants: std::collections::HashMap<String, Vec<String>>,
     units: std::collections::HashMap<String, std::path::PathBuf>,
     sources: Vec<std::path::PathBuf>,
+    /// Os Markdown do projeto (o README, o `AGENTS.md`, a pasta `docs`...): abrem no editor, e
+    /// o Design mostra formatado ([`crate::mdview`]).
+    docs: Vec<std::path::PathBuf>,
 }
 
 impl ProjectScan {
@@ -780,8 +783,34 @@ impl ProjectScan {
             }
         }
         scan.sources = aylis_project::symbols::sources(project);
+        scan.docs = markdown_files(&project.dir());
         scan
     }
+}
+
+/// Os `.md` da pasta do projeto, em ordem. Fora as pastas de compilação e as escondidas (as de
+/// [`crate::projectsearch::SKIP`]), a `forms` (os 1009 JSON do ERP, sem documento nenhum) e a
+/// `generated`. O tipo de cada entrada vem da própria listagem, sem consultar o disco arquivo a
+/// arquivo (no OneDrive, cada consulta pesa).
+fn markdown_files(root: &std::path::Path) -> Vec<std::path::PathBuf> {
+    let mut out = Vec::new();
+    let mut stack = vec![root.to_path_buf()];
+    while let Some(dir) = stack.pop() {
+        let Ok(entries) = std::fs::read_dir(&dir) else { continue };
+        for e in entries.flatten() {
+            let name = e.file_name().to_string_lossy().into_owned();
+            if e.file_type().is_ok_and(|t| t.is_dir()) {
+                let top = dir == root && name == "forms";
+                if !top && name != "generated" && !name.starts_with('.') && !crate::projectsearch::SKIP.contains(&name.as_str()) {
+                    stack.push(e.path());
+                }
+            } else if crate::mdview::is_markdown(std::path::Path::new(&name)) {
+                out.push(e.path());
+            }
+        }
+    }
+    out.sort();
+    out
 }
 
 thread_local! {
@@ -960,6 +989,21 @@ fn project_nodes(
     }
     if !code_root.children.is_empty() {
         roots.push(code_root);
+    }
+    // Os Markdown, nas pastas deles a partir da do projeto.
+    let docs_key = "dir:docs".to_string();
+    let mut docs_root = group(&docs_key, "Documentos".to_string());
+    let root_dir = project.dir();
+    for file in &scan.docs {
+        let rel = file.strip_prefix(&root_dir).unwrap_or(file).to_string_lossy().replace('\\', "/");
+        let mut parts: Vec<String> = rel.split('/').map(str::to_string).collect();
+        let name = parts.pop().unwrap_or_default();
+        let mut node = TreeNode::new(name);
+        node.data = format!("file:{}", file.display());
+        folder(&mut docs_root.children, &parts, &docs_key, opened).push(node);
+    }
+    if !docs_root.children.is_empty() {
+        roots.push(docs_root);
     }
     if !generated_root.children.is_empty() {
         roots.push(generated_root);

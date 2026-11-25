@@ -422,6 +422,9 @@ public class Aylis {
     // handlers rodando (um evento que pergunta roda mesmo durante um call).
     private int waiting;
     private int running;
+    // As respostas dos eventos que perguntam em andamento (a última é a do handler que roda), para
+    // o reply do handler tipado, que não recebe o evento.
+    private final List<Map<String, Object>> replies = new ArrayList<>();
     // A thread que lê (a do loop): um call de outra thread leria a mesma entrada.
     private Thread owner;
     // Numa sessão (Server.serve): as mensagens chegam por aqui e saem pelo servidor.
@@ -516,6 +519,16 @@ public class Aylis {
         m.put("cmd", cmd);
         if (fields != null) m.putAll(fields);
         return m;
+    }
+
+    /**
+     * Dentro de um evento que pergunta: grava um campo da resposta, como o {@code ev.reply().put}
+     * do handler que recebe o evento inteiro (o tipado não o recebe). {@code reply("key", "")} no
+     * {@code on_key_down} engole a tecla; uma exceção recusa. Fora de um evento que pergunta, não
+     * faz nada.
+     */
+    public void reply(String name, Object value) {
+        if (!replies.isEmpty() && replies.get(replies.size() - 1) != null) replies.get(replies.size() - 1).put(name, value);
     }
 
     /** Envia um comando sem esperar resposta (erros chegam como evento "error"). */
@@ -733,6 +746,7 @@ public class Aylis {
                 Pointer.from(m.get("pointer")));
         Consumer<Event> h = handlers.getOrDefault(ev.form() + "." + ev.handler(), handlers.get(ev.handler()));
         running++;
+        replies.add(ask != null ? ev.reply() : null);
         try {
             if (h == null) {
                 log("evento sem handler:", ev.handler());
@@ -752,6 +766,7 @@ public class Aylis {
             }
         } finally {
             running--;
+            replies.remove(replies.size() - 1);
             // O handler terminou: a tela deixa de mostrar o backend ocupado.
             if (m.get("seq") instanceof Number seq) send("done", obj("seq", seq.longValue()));
         }

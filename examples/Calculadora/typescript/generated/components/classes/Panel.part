@@ -37,6 +37,30 @@ export class Panel extends AylisComponent {
     set gap(value: number) {
         this.setProp("gap", value);
     }
+    get hoverFill(): Promise<Color> {
+        return this.getProp("hover_fill").then(Color.fromJson);
+    }
+    set hoverFill(value: Color) {
+        this.setProp("hover_fill", value.toJson());
+    }
+    get pressedFill(): Promise<Color> {
+        return this.getProp("pressed_fill").then(Color.fromJson);
+    }
+    set pressedFill(value: Color) {
+        this.setProp("pressed_fill", value.toJson());
+    }
+    get interactive(): Promise<boolean> {
+        return this.getProp("interactive") as Promise<any>;
+    }
+    set interactive(value: boolean) {
+        this.setProp("interactive", value);
+    }
+    get selectedFill(): Promise<Color> {
+        return this.getProp("selected_fill").then(Color.fromJson);
+    }
+    set selectedFill(value: Color) {
+        this.setProp("selected_fill", value.toJson());
+    }
     get fill(): Promise<Color> {
         return this.getProp("fill").then(Color.fromJson);
     }
@@ -84,6 +108,12 @@ export class Panel extends AylisComponent {
     }
     set strokeWidth(value: number) {
         this.setProp("stroke_width", value);
+    }
+    get strokeDash(): Promise<number[]> {
+        return this.getProp("stroke_dash").then(numbersOf);
+    }
+    set strokeDash(value: number[]) {
+        this.setProp("stroke_dash", value.join(";"));
     }
     get radius(): Promise<Bounds> {
         return this.getProp("radius").then(Bounds.fromJson);

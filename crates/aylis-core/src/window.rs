@@ -78,6 +78,19 @@ pub enum WindowCommand {
     /// de tarefas até o usuário ativá-la (`true`, urgente: a janela pisca também); no macOS, o
     /// ícone pula no Dock (urgente: até ativar); no Linux, a dica de urgência do gerenciador.
     RequestAttention(bool),
+    /// Traz a janela para a frente com o foco, mesmo quando o app não recebeu a última entrada
+    /// (o app avisado por outro processo, a segunda abertura, um atalho global). Minimizada,
+    /// volta; escondida pelo [`Hide`](Self::Hide), continua escondida (use o [`Show`](Self::Show)).
+    /// - **Windows:** o caminho forçado do `force_foreground` (sem precisar da propriedade).
+    /// - **X11:** o `_NET_ACTIVE_WINDOW` (o gerenciador de janelas decide; os comuns aceitam).
+    /// - **Wayland:** só com um token de ativação (`xdg-activation`): o
+    ///   `XDG_ACTIVATION_TOKEN` com que o app abriu, lido uma vez, ou o que o app passou em
+    ///   [`Ui::set_activation_token`](crate::Ui::set_activation_token) (o da segunda abertura).
+    ///   Sem token, o compositor não deixa um programa tomar o foco sozinho: vira o pedido de
+    ///   atenção ([`RequestAttention`](Self::RequestAttention)), e o compositor marca a janela.
+    /// - **macOS:** o pedido de foco do sistema.
+    /// - **Celular e navegador:** sem efeito.
+    BringToFront,
     /// O `topmost` ou o `bottommost` do form mudou: a janela fica por cima de todas, por baixo
     /// de todas ou normal.
     UpdateLevel,

@@ -193,6 +193,11 @@ inline constexpr const char* CloseAction_names[] = {"hide", "free"};
 inline const char* to_string(CloseAction v) { return CloseAction_names[static_cast<int>(v)]; }
 
 // Os valores de um enum do acesso tipado.
+enum class CursorConfine { None, Window, Monitor };
+inline constexpr const char* CursorConfine_names[] = {"none", "window", "monitor"};
+inline const char* to_string(CursorConfine v) { return CursorConfine_names[static_cast<int>(v)]; }
+
+// Os valores de um enum do acesso tipado.
 enum class CursorShape { Default, Pointer, Text, Wait, Crosshair, Move, NotAllowed, ResizeHorizontal, ResizeVertical, ResizeNeSw, ResizeNwSe, Grab, Grabbing, None };
 inline constexpr const char* CursorShape_names[] = {"default", "pointer", "text", "wait", "crosshair", "move", "not_allowed", "resize_horizontal", "resize_vertical", "resize_ne_sw", "resize_nw_se", "grab", "grabbing", "none"};
 inline const char* to_string(CursorShape v) { return CursorShape_names[static_cast<int>(v)]; }
@@ -201,6 +206,11 @@ inline const char* to_string(CursorShape v) { return CursorShape_names[static_ca
 enum class FontWeight { Default, Thin, Light, Normal, Medium, Semibold, Bold, Black };
 inline constexpr const char* FontWeight_names[] = {"default", "thin", "light", "normal", "medium", "semibold", "bold", "black"};
 inline const char* to_string(FontWeight v) { return FontWeight_names[static_cast<int>(v)]; }
+
+// Os valores de um enum do acesso tipado.
+enum class FormBlendCompositor { Project, Direct2d, Direct3d };
+inline constexpr const char* FormBlendCompositor_names[] = {"project", "direct2d", "direct3d"};
+inline const char* to_string(FormBlendCompositor v) { return FormBlendCompositor_names[static_cast<int>(v)]; }
 
 // Os valores de um enum do acesso tipado.
 enum class FormOrientation { Project, Any, Portrait, Landscape, SensorPortrait, SensorLandscape };
@@ -223,6 +233,11 @@ inline constexpr const char* FormStyle_names[] = {""};
 inline const char* to_string(FormStyle v) { return FormStyle_names[static_cast<int>(v)]; }
 
 // Os valores de um enum do acesso tipado.
+enum class FullScreenMode { Borderless, Exclusive };
+inline constexpr const char* FullScreenMode_names[] = {"borderless", "exclusive"};
+inline const char* to_string(FullScreenMode v) { return FullScreenMode_names[static_cast<int>(v)]; }
+
+// Os valores de um enum do acesso tipado.
 enum class GridLayoutStyle { Default };
 inline constexpr const char* GridLayoutStyle_names[] = {""};
 inline const char* to_string(GridLayoutStyle v) { return GridLayoutStyle_names[static_cast<int>(v)]; }
@@ -231,6 +246,16 @@ inline const char* to_string(GridLayoutStyle v) { return GridLayoutStyle_names[s
 enum class IconPosition { Left, Right, Top };
 inline constexpr const char* IconPosition_names[] = {"left", "right", "top"};
 inline const char* to_string(IconPosition v) { return IconPosition_names[static_cast<int>(v)]; }
+
+// Os valores de um enum do acesso tipado.
+enum class KeepAwake { Off, System, Display };
+inline constexpr const char* KeepAwake_names[] = {"off", "system", "display"};
+inline const char* to_string(KeepAwake v) { return KeepAwake_names[static_cast<int>(v)]; }
+
+// Os valores de um enum do acesso tipado.
+enum class KeyCode { Unidentified, KeyA, KeyB, KeyC, KeyD, KeyE, KeyF, KeyG, KeyH, KeyI, KeyJ, KeyK, KeyL, KeyM, KeyN, KeyO, KeyP, KeyQ, KeyR, KeyS, KeyT, KeyU, KeyV, KeyW, KeyX, KeyY, KeyZ, Digit0, Digit1, Digit2, Digit3, Digit4, Digit5, Digit6, Digit7, Digit8, Digit9, Numpad0, Numpad1, Numpad2, Numpad3, Numpad4, Numpad5, Numpad6, Numpad7, Numpad8, Numpad9, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31, F32, F33, F34, F35, Lang1, Lang2, Lang3, Lang4, Lang5, Backquote, Backslash, BracketLeft, BracketRight, Comma, Equal, IntlBackslash, IntlRo, IntlYen, Minus, Period, Quote, Semicolon, Slash, AltLeft, AltRight, Backspace, CapsLock, ContextMenu, ControlLeft, ControlRight, Enter, MetaLeft, MetaRight, ShiftLeft, ShiftRight, Space, Tab, Convert, KanaMode, NonConvert, Delete, End, Help, Home, Insert, PageDown, PageUp, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, NumLock, NumpadAdd, NumpadComma, NumpadDecimal, NumpadDivide, NumpadEnter, NumpadEqual, NumpadMultiply, NumpadSubtract, Escape, Fn, PrintScreen, ScrollLock, Pause, AudioVolumeDown, AudioVolumeMute, AudioVolumeUp, MediaPlayPause, MediaSelect, MediaStop, MediaTrackNext, MediaTrackPrevious, BrowserBack, BrowserFavorites, BrowserForward, BrowserHome, BrowserRefresh, BrowserSearch, BrowserStop, LaunchApp1, LaunchApp2, LaunchMail, Power, Sleep, WakeUp, NumpadBackspace, NumpadClear, NumpadClearEntry, NumpadHash, NumpadMemoryAdd, NumpadMemoryClear, NumpadMemoryRecall, NumpadMemoryStore, NumpadMemorySubtract, NumpadParenLeft, NumpadParenRight, NumpadStar, FnLock, Hiragana, Katakana, Again, Copy, Cut, Find, Open, Paste, Props, Select, Undo, Resume, Suspend };
+inline constexpr const char* KeyCode_names[] = {"Unidentified", "KeyA", "KeyB", "KeyC", "KeyD", "KeyE", "KeyF", "KeyG", "KeyH", "KeyI", "KeyJ", "KeyK", "KeyL", "KeyM", "KeyN", "KeyO", "KeyP", "KeyQ", "KeyR", "KeyS", "KeyT", "KeyU", "KeyV", "KeyW", "KeyX", "KeyY", "KeyZ", "Digit0", "Digit1", "Digit2", "Digit3", "Digit4", "Digit5", "Digit6", "Digit7", "Digit8", "Digit9", "Numpad0", "Numpad1", "Numpad2", "Numpad3", "Numpad4", "Numpad5", "Numpad6", "Numpad7", "Numpad8", "Numpad9", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14", "F15", "F16", "F17", "F18", "F19", "F20", "F21", "F22", "F23", "F24", "F25", "F26", "F27", "F28", "F29", "F30", "F31", "F32", "F33", "F34", "F35", "Lang1", "Lang2", "Lang3", "Lang4", "Lang5", "Backquote", "Backslash", "BracketLeft", "BracketRight", "Comma", "Equal", "IntlBackslash", "IntlRo", "IntlYen", "Minus", "Period", "Quote", "Semicolon", "Slash", "AltLeft", "AltRight", "Backspace", "CapsLock", "ContextMenu", "ControlLeft", "ControlRight", "Enter", "MetaLeft", "MetaRight", "ShiftLeft", "ShiftRight", "Space", "Tab", "Convert", "KanaMode", "NonConvert", "Delete", "End", "Help", "Home", "Insert", "PageDown", "PageUp", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowUp", "NumLock", "NumpadAdd", "NumpadComma", "NumpadDecimal", "NumpadDivide", "NumpadEnter", "NumpadEqual", "NumpadMultiply", "NumpadSubtract", "Escape", "Fn", "PrintScreen", "ScrollLock", "Pause", "AudioVolumeDown", "AudioVolumeMute", "AudioVolumeUp", "MediaPlayPause", "MediaSelect", "MediaStop", "MediaTrackNext", "MediaTrackPrevious", "BrowserBack", "BrowserFavorites", "BrowserForward", "BrowserHome", "BrowserRefresh", "BrowserSearch", "BrowserStop", "LaunchApp1", "LaunchApp2", "LaunchMail", "Power", "Sleep", "WakeUp", "NumpadBackspace", "NumpadClear", "NumpadClearEntry", "NumpadHash", "NumpadMemoryAdd", "NumpadMemoryClear", "NumpadMemoryRecall", "NumpadMemoryStore", "NumpadMemorySubtract", "NumpadParenLeft", "NumpadParenRight", "NumpadStar", "FnLock", "Hiragana", "Katakana", "Again", "Copy", "Cut", "Find", "Open", "Paste", "Props", "Select", "Undo", "Resume", "Suspend"};
+inline const char* to_string(KeyCode v) { return KeyCode_names[static_cast<int>(v)]; }
 
 // Os valores de um enum do acesso tipado.
 enum class LabelStyle { Default, Caption, Error, Heading, Kbd, Link, Mono, Muted, Title };
@@ -394,6 +419,14 @@ struct KeyEvent {
     bool ctrl = false;
     bool shift = false;
     bool alt = false;
+    bool meta = false;
+    bool caps_lock = false;
+    bool num_lock = false;
+    bool scroll_lock = false;
+    KeyCode code = static_cast<KeyCode>(0);
+    long long scancode = 0;
+    std::string form;
+    long long form_id = 0;
 
     static KeyEvent from_json(const aylis::Json& v) {
         KeyEvent r;
@@ -401,6 +434,14 @@ struct KeyEvent {
         r.ctrl = v["ctrl"].boolean();
         r.shift = v["shift"].boolean();
         r.alt = v["alt"].boolean();
+        r.meta = v["meta"].boolean();
+        r.caps_lock = v["caps_lock"].boolean();
+        r.num_lock = v["num_lock"].boolean();
+        r.scroll_lock = v["scroll_lock"].boolean();
+        r.code = enum_of_<KeyCode>(v["code"], KeyCode_names);
+        r.scancode = static_cast<long long>(v["scancode"].number());
+        r.form = v["form"].str();
+        r.form_id = static_cast<long long>(v["form_id"].number());
         return r;
     }
 
@@ -410,6 +451,14 @@ struct KeyEvent {
         o.set("ctrl", aylis::Json(ctrl));
         o.set("shift", aylis::Json(shift));
         o.set("alt", aylis::Json(alt));
+        o.set("meta", aylis::Json(meta));
+        o.set("caps_lock", aylis::Json(caps_lock));
+        o.set("num_lock", aylis::Json(num_lock));
+        o.set("scroll_lock", aylis::Json(scroll_lock));
+        o.set("code", aylis::Json(KeyCode_names[static_cast<int>(code)]));
+        o.set("scancode", aylis::Json(scancode));
+        o.set("form", aylis::Json(form));
+        o.set("form_id", aylis::Json(form_id));
         return o;
     }
 
@@ -853,6 +902,22 @@ struct Form : aylis::FormBase {
     void set_frame_reuse_kb(long long v) const { set_prop_("frame_reuse_kb", v); }
     bool topmost() const { return get_prop_("topmost").boolean(); }
     void set_topmost(bool v) const { set_prop_("topmost", v); }
+    bool bottommost() const { return get_prop_("bottommost").boolean(); }
+    void set_bottommost(bool v) const { set_prop_("bottommost", v); }
+    KeepAwake keep_awake() const { return enum_of_<KeepAwake>(get_prop_("keep_awake"), KeepAwake_names); }
+    void set_keep_awake(KeepAwake v) const { set_prop_("keep_awake", aylis::Json(KeepAwake_names[static_cast<int>(v)])); }
+    CursorConfine confine_cursor() const { return enum_of_<CursorConfine>(get_prop_("confine_cursor"), CursorConfine_names); }
+    void set_confine_cursor(CursorConfine v) const { set_prop_("confine_cursor", aylis::Json(CursorConfine_names[static_cast<int>(v)])); }
+    double window_opacity() const { return get_prop_("window_opacity").number(); }
+    void set_window_opacity(double v) const { set_prop_("window_opacity", v); }
+    FullScreenMode full_screen_mode() const { return enum_of_<FullScreenMode>(get_prop_("full_screen_mode"), FullScreenMode_names); }
+    void set_full_screen_mode(FullScreenMode v) const { set_prop_("full_screen_mode", aylis::Json(FullScreenMode_names[static_cast<int>(v)])); }
+    long long video_width() const { return static_cast<long long>(get_prop_("video_width").number()); }
+    void set_video_width(long long v) const { set_prop_("video_width", v); }
+    long long video_height() const { return static_cast<long long>(get_prop_("video_height").number()); }
+    void set_video_height(long long v) const { set_prop_("video_height", v); }
+    double video_refresh() const { return get_prop_("video_refresh").number(); }
+    void set_video_refresh(double v) const { set_prop_("video_refresh", v); }
     bool show_in_taskbar() const { return get_prop_("show_in_taskbar").boolean(); }
     void set_show_in_taskbar(bool v) const { set_prop_("show_in_taskbar", v); }
     std::optional<aylis::Component> active_control() const { return get_ref_("active_control"); }
@@ -885,6 +950,8 @@ struct Form : aylis::FormBase {
     void set_gpu(const std::string& v) const { set_prop_("gpu", v); }
     FormPresent present() const { return enum_of_<FormPresent>(get_prop_("present"), FormPresent_names); }
     void set_present(FormPresent v) const { set_prop_("present", aylis::Json(FormPresent_names[static_cast<int>(v)])); }
+    FormBlendCompositor blend_compositor() const { return enum_of_<FormBlendCompositor>(get_prop_("blend_compositor"), FormBlendCompositor_names); }
+    void set_blend_compositor(FormBlendCompositor v) const { set_prop_("blend_compositor", aylis::Json(FormBlendCompositor_names[static_cast<int>(v)])); }
     bool span_monitors() const { return get_prop_("span_monitors").boolean(); }
     void set_span_monitors(bool v) const { set_prop_("span_monitors", v); }
     bool physical_pixels() const { return get_prop_("physical_pixels").boolean(); }
@@ -899,6 +966,10 @@ struct Form : aylis::FormBase {
     void set_frame_rate(double v) const { set_prop_("frame_rate", v); }
     FormOrientation orientation() const { return enum_of_<FormOrientation>(get_prop_("orientation"), FormOrientation_names); }
     void set_orientation(FormOrientation v) const { set_prop_("orientation", aylis::Json(FormOrientation_names[static_cast<int>(v)])); }
+    std::optional<aylis::Component> host() const { return get_ref_("host"); }
+    void set_host(const std::optional<aylis::Component>& v) const { set_ref_("host", v); }
+    bool dockable() const { return get_prop_("dockable").boolean(); }
+    void set_dockable(bool v) const { set_prop_("dockable", v); }
     std::string on_show() const { return get_prop_("on_show").str(); }
     void set_on_show(const std::string& v) const { set_prop_("on_show", v); }
     std::string on_window_created() const { return get_prop_("on_window_created").str(); }
@@ -917,6 +988,20 @@ struct Form : aylis::FormBase {
     void set_on_navigate(const std::string& v) const { set_prop_("on_navigate", v); }
     std::string on_gpu_change() const { return get_prop_("on_gpu_change").str(); }
     void set_on_gpu_change(const std::string& v) const { set_prop_("on_gpu_change", v); }
+    std::string on_dock() const { return get_prop_("on_dock").str(); }
+    void set_on_dock(const std::string& v) const { set_prop_("on_dock", v); }
+    std::string on_undock() const { return get_prop_("on_undock").str(); }
+    void set_on_undock(const std::string& v) const { set_prop_("on_undock", v); }
+    std::string on_files_drop() const { return get_prop_("on_files_drop").str(); }
+    void set_on_files_drop(const std::string& v) const { set_prop_("on_files_drop", v); }
+    std::string on_view_change() const { return get_prop_("on_view_change").str(); }
+    void set_on_view_change(const std::string& v) const { set_prop_("on_view_change", v); }
+    std::string on_topmost_lost() const { return get_prop_("on_topmost_lost").str(); }
+    void set_on_topmost_lost(const std::string& v) const { set_prop_("on_topmost_lost", v); }
+    std::string on_scale_change() const { return get_prop_("on_scale_change").str(); }
+    void set_on_scale_change(const std::string& v) const { set_prop_("on_scale_change", v); }
+    std::string on_resize_end() const { return get_prop_("on_resize_end").str(); }
+    void set_on_resize_end(const std::string& v) const { set_prop_("on_resize_end", v); }
     double client_width() const { return get_prop_("client_width").number(); }
     void set_client_width(double v) const { set_prop_("client_width", v); }
     double client_height() const { return get_prop_("client_height").number(); }
@@ -1090,8 +1175,16 @@ struct Form : aylis::FormBase {
     std::string on_drag_end() const { return get_prop_("on_drag_end").str(); }
     void set_on_drag_end(const std::string& v) const { set_prop_("on_drag_end", v); }
     void move_to_monitor(long long monitor) const { tell_("invoke", {{"target", aylis::Json(id_)}, {"method", "move_to_monitor"}, {"args", aylis::Json::array({monitor})}}); }
+    void request_attention(bool critical) const { tell_("invoke", {{"target", aylis::Json(id_)}, {"method", "request_attention"}, {"args", aylis::Json::array({critical})}}); }
+    void bring_to_front() const { tell_("invoke", {{"target", aylis::Json(id_)}, {"method", "bring_to_front"}, {"args", aylis::Json::array({})}}); }
+    void set_activation_token(const std::string& token) const { tell_("invoke", {{"target", aylis::Json(id_)}, {"method", "set_activation_token"}, {"args", aylis::Json::array({token})}}); }
+    double window_scale() const { return ask_("invoke", {{"target", aylis::Json(id_)}, {"method", "window_scale"}, {"args", aylis::Json::array({})}}).number(); }
+    bool pointer_over() const { return ask_("invoke", {{"target", aylis::Json(id_)}, {"method", "pointer_over"}, {"args", aylis::Json::array({})}}).boolean(); }
+    void place(long long monitor, long long x, long long y, long long width, long long height, bool activate) const { tell_("invoke", {{"target", aylis::Json(id_)}, {"method", "place"}, {"args", aylis::Json::array({monitor, x, y, width, height, activate})}}); }
     std::string gpu_adapter() const { return ask_("invoke", {{"target", aylis::Json(id_)}, {"method", "gpu_adapter"}, {"args", aylis::Json::array({})}}).str(); }
     std::vector<std::string> gpu_adapters() const { return list_of_(ask_("invoke", {{"target", aylis::Json(id_)}, {"method", "gpu_adapters"}, {"args", aylis::Json::array({})}})); }
+    double drop_x() const { return ask_("invoke", {{"target", aylis::Json(id_)}, {"method", "drop_x"}, {"args", aylis::Json::array({})}}).number(); }
+    double drop_y() const { return ask_("invoke", {{"target", aylis::Json(id_)}, {"method", "drop_y"}, {"args", aylis::Json::array({})}}).number(); }
     std::string render_rgba(double x, double y, double width, double height, double scale) const { return ask_("invoke", {{"target", aylis::Json(id_)}, {"method", "render_rgba"}, {"args", aylis::Json::array({x, y, width, height, scale})}}).str(); }
     void show() const { tell_("show", {{"target", aylis::Json(id_)}}); }
     bool close() const { return ask_("close", {{"target", aylis::Json(id_)}}).boolean(); }
@@ -1316,6 +1409,8 @@ struct Label : aylis::Component {
     void set_line_height(double v) const { set_prop_("line_height", v); }
     std::optional<aylis::Shadow> text_shadow() const { return aylis::Shadow::from_json(get_prop_("text_shadow")); }
     void set_text_shadow(const std::optional<aylis::Shadow>& v) const { set_prop_("text_shadow", (v ? v->to_json() : std::string())); }
+    long long max_lines() const { return static_cast<long long>(get_prop_("max_lines").number()); }
+    void set_max_lines(long long v) const { set_prop_("max_lines", v); }
     std::optional<aylis::Component> focus_control() const { return get_ref_("focus_control"); }
     void set_focus_control(const std::optional<aylis::Component>& v) const { set_ref_("focus_control", v); }
     double left() const { return get_prop_("left").number(); }
@@ -1879,6 +1974,14 @@ struct Panel : aylis::Component {
     void set_char_map(const std::string& v) const { set_prop_("char_map", v); }
     double gap() const { return get_prop_("gap").number(); }
     void set_gap(double v) const { set_prop_("gap", v); }
+    aylis::Color hover_fill() const { return aylis::Color::from_json(get_prop_("hover_fill")); }
+    void set_hover_fill(const aylis::Color& v) const { set_prop_("hover_fill", v.to_json()); }
+    aylis::Color pressed_fill() const { return aylis::Color::from_json(get_prop_("pressed_fill")); }
+    void set_pressed_fill(const aylis::Color& v) const { set_prop_("pressed_fill", v.to_json()); }
+    bool interactive() const { return get_prop_("interactive").boolean(); }
+    void set_interactive(bool v) const { set_prop_("interactive", v); }
+    aylis::Color selected_fill() const { return aylis::Color::from_json(get_prop_("selected_fill")); }
+    void set_selected_fill(const aylis::Color& v) const { set_prop_("selected_fill", v.to_json()); }
     aylis::Color fill() const { return aylis::Color::from_json(get_prop_("fill")); }
     void set_fill(const aylis::Color& v) const { set_prop_("fill", v.to_json()); }
     aylis::Color fill2() const { return aylis::Color::from_json(get_prop_("fill2")); }
@@ -1895,6 +1998,8 @@ struct Panel : aylis::Component {
     void set_stroke(const aylis::Color& v) const { set_prop_("stroke", v.to_json()); }
     double stroke_width() const { return get_prop_("stroke_width").number(); }
     void set_stroke_width(double v) const { set_prop_("stroke_width", v); }
+    std::vector<double> stroke_dash() const { return numbers_of_(get_prop_("stroke_dash")); }
+    void set_stroke_dash(const std::vector<double>& v) const { set_prop_("stroke_dash", numbers_text_(v)); }
     aylis::Bounds radius() const { return aylis::Bounds::from_json(get_prop_("radius")); }
     void set_radius(const aylis::Bounds& v) const { set_prop_("radius", v.to_json()); }
     double left() const { return get_prop_("left").number(); }

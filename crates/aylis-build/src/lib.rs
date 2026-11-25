@@ -99,6 +99,7 @@ pub const CLASSES: &[(&str, &str)] = &[
     ("Biometrics", ""),
     ("AppLink", ""),
     ("UrlScheme", ""),
+    ("KeyboardCapture", ""),
     ("SystemBars", ""),
     ("Location", ""),
     ("Battery", ""),
@@ -322,6 +323,8 @@ pub const CLASS_PLATFORMS: &[(&str, &[Platform])] = {
         ("WmiQuery", &[Windows]),
         // As barras do sistema do celular (e a `theme-color` do navegador).
         ("SystemBars", &[Android, Ios, Web]),
+        // As teclas do sistema: o gancho do Windows, o `XGrabKeyboard` e o inibidor do Wayland.
+        ("KeyboardCapture", &[Windows, Linux]),
         ("McpServer", &[Windows, MacOs, Linux]),
         ("McpTool", &[Windows, MacOs, Linux]),
         ("McpResource", &[Windows, MacOs, Linux]),

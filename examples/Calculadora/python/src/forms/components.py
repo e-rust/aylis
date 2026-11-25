@@ -188,6 +188,14 @@ class CloseAction(str, Enum):
     FREE = "free"
 
 
+class CursorConfine(str, Enum):
+    """Os valores de um enum do acesso tipado."""
+
+    NONE = "none"
+    WINDOW = "window"
+    MONITOR = "monitor"
+
+
 class CursorShape(str, Enum):
     """Os valores de um enum do acesso tipado."""
 
@@ -218,6 +226,14 @@ class FontWeight(str, Enum):
     SEMIBOLD = "semibold"
     BOLD = "bold"
     BLACK = "black"
+
+
+class FormBlendCompositor(str, Enum):
+    """Os valores de um enum do acesso tipado."""
+
+    PROJECT = "project"
+    DIRECT2D = "direct2d"
+    DIRECT3D = "direct3d"
 
 
 class FormOrientation(str, Enum):
@@ -259,6 +275,13 @@ class FormStyle(str, Enum):
     DEFAULT = ""
 
 
+class FullScreenMode(str, Enum):
+    """Os valores de um enum do acesso tipado."""
+
+    BORDERLESS = "borderless"
+    EXCLUSIVE = "exclusive"
+
+
 class GridLayoutStyle(str, Enum):
     """Os valores de um enum do acesso tipado."""
 
@@ -271,6 +294,209 @@ class IconPosition(str, Enum):
     LEFT = "left"
     RIGHT = "right"
     TOP = "top"
+
+
+class KeepAwake(str, Enum):
+    """Os valores de um enum do acesso tipado."""
+
+    OFF = "off"
+    SYSTEM = "system"
+    DISPLAY = "display"
+
+
+class KeyCode(str, Enum):
+    """Os valores de um enum do acesso tipado."""
+
+    UNIDENTIFIED = "Unidentified"
+    KEY_A = "KeyA"
+    KEY_B = "KeyB"
+    KEY_C = "KeyC"
+    KEY_D = "KeyD"
+    KEY_E = "KeyE"
+    KEY_F = "KeyF"
+    KEY_G = "KeyG"
+    KEY_H = "KeyH"
+    KEY_I = "KeyI"
+    KEY_J = "KeyJ"
+    KEY_K = "KeyK"
+    KEY_L = "KeyL"
+    KEY_M = "KeyM"
+    KEY_N = "KeyN"
+    KEY_O = "KeyO"
+    KEY_P = "KeyP"
+    KEY_Q = "KeyQ"
+    KEY_R = "KeyR"
+    KEY_S = "KeyS"
+    KEY_T = "KeyT"
+    KEY_U = "KeyU"
+    KEY_V = "KeyV"
+    KEY_W = "KeyW"
+    KEY_X = "KeyX"
+    KEY_Y = "KeyY"
+    KEY_Z = "KeyZ"
+    DIGIT0 = "Digit0"
+    DIGIT1 = "Digit1"
+    DIGIT2 = "Digit2"
+    DIGIT3 = "Digit3"
+    DIGIT4 = "Digit4"
+    DIGIT5 = "Digit5"
+    DIGIT6 = "Digit6"
+    DIGIT7 = "Digit7"
+    DIGIT8 = "Digit8"
+    DIGIT9 = "Digit9"
+    NUMPAD0 = "Numpad0"
+    NUMPAD1 = "Numpad1"
+    NUMPAD2 = "Numpad2"
+    NUMPAD3 = "Numpad3"
+    NUMPAD4 = "Numpad4"
+    NUMPAD5 = "Numpad5"
+    NUMPAD6 = "Numpad6"
+    NUMPAD7 = "Numpad7"
+    NUMPAD8 = "Numpad8"
+    NUMPAD9 = "Numpad9"
+    F1 = "F1"
+    F2 = "F2"
+    F3 = "F3"
+    F4 = "F4"
+    F5 = "F5"
+    F6 = "F6"
+    F7 = "F7"
+    F8 = "F8"
+    F9 = "F9"
+    F10 = "F10"
+    F11 = "F11"
+    F12 = "F12"
+    F13 = "F13"
+    F14 = "F14"
+    F15 = "F15"
+    F16 = "F16"
+    F17 = "F17"
+    F18 = "F18"
+    F19 = "F19"
+    F20 = "F20"
+    F21 = "F21"
+    F22 = "F22"
+    F23 = "F23"
+    F24 = "F24"
+    F25 = "F25"
+    F26 = "F26"
+    F27 = "F27"
+    F28 = "F28"
+    F29 = "F29"
+    F30 = "F30"
+    F31 = "F31"
+    F32 = "F32"
+    F33 = "F33"
+    F34 = "F34"
+    F35 = "F35"
+    LANG1 = "Lang1"
+    LANG2 = "Lang2"
+    LANG3 = "Lang3"
+    LANG4 = "Lang4"
+    LANG5 = "Lang5"
+    BACKQUOTE = "Backquote"
+    BACKSLASH = "Backslash"
+    BRACKET_LEFT = "BracketLeft"
+    BRACKET_RIGHT = "BracketRight"
+    COMMA = "Comma"
+    EQUAL = "Equal"
+    INTL_BACKSLASH = "IntlBackslash"
+    INTL_RO = "IntlRo"
+    INTL_YEN = "IntlYen"
+    MINUS = "Minus"
+    PERIOD = "Period"
+    QUOTE = "Quote"
+    SEMICOLON = "Semicolon"
+    SLASH = "Slash"
+    ALT_LEFT = "AltLeft"
+    ALT_RIGHT = "AltRight"
+    BACKSPACE = "Backspace"
+    CAPS_LOCK = "CapsLock"
+    CONTEXT_MENU = "ContextMenu"
+    CONTROL_LEFT = "ControlLeft"
+    CONTROL_RIGHT = "ControlRight"
+    ENTER = "Enter"
+    META_LEFT = "MetaLeft"
+    META_RIGHT = "MetaRight"
+    SHIFT_LEFT = "ShiftLeft"
+    SHIFT_RIGHT = "ShiftRight"
+    SPACE = "Space"
+    TAB = "Tab"
+    CONVERT = "Convert"
+    KANA_MODE = "KanaMode"
+    NON_CONVERT = "NonConvert"
+    DELETE = "Delete"
+    END = "End"
+    HELP = "Help"
+    HOME = "Home"
+    INSERT = "Insert"
+    PAGE_DOWN = "PageDown"
+    PAGE_UP = "PageUp"
+    ARROW_DOWN = "ArrowDown"
+    ARROW_LEFT = "ArrowLeft"
+    ARROW_RIGHT = "ArrowRight"
+    ARROW_UP = "ArrowUp"
+    NUM_LOCK = "NumLock"
+    NUMPAD_ADD = "NumpadAdd"
+    NUMPAD_COMMA = "NumpadComma"
+    NUMPAD_DECIMAL = "NumpadDecimal"
+    NUMPAD_DIVIDE = "NumpadDivide"
+    NUMPAD_ENTER = "NumpadEnter"
+    NUMPAD_EQUAL = "NumpadEqual"
+    NUMPAD_MULTIPLY = "NumpadMultiply"
+    NUMPAD_SUBTRACT = "NumpadSubtract"
+    ESCAPE = "Escape"
+    FN = "Fn"
+    PRINT_SCREEN = "PrintScreen"
+    SCROLL_LOCK = "ScrollLock"
+    PAUSE = "Pause"
+    AUDIO_VOLUME_DOWN = "AudioVolumeDown"
+    AUDIO_VOLUME_MUTE = "AudioVolumeMute"
+    AUDIO_VOLUME_UP = "AudioVolumeUp"
+    MEDIA_PLAY_PAUSE = "MediaPlayPause"
+    MEDIA_SELECT = "MediaSelect"
+    MEDIA_STOP = "MediaStop"
+    MEDIA_TRACK_NEXT = "MediaTrackNext"
+    MEDIA_TRACK_PREVIOUS = "MediaTrackPrevious"
+    BROWSER_BACK = "BrowserBack"
+    BROWSER_FAVORITES = "BrowserFavorites"
+    BROWSER_FORWARD = "BrowserForward"
+    BROWSER_HOME = "BrowserHome"
+    BROWSER_REFRESH = "BrowserRefresh"
+    BROWSER_SEARCH = "BrowserSearch"
+    BROWSER_STOP = "BrowserStop"
+    LAUNCH_APP1 = "LaunchApp1"
+    LAUNCH_APP2 = "LaunchApp2"
+    LAUNCH_MAIL = "LaunchMail"
+    POWER = "Power"
+    SLEEP = "Sleep"
+    WAKE_UP = "WakeUp"
+    NUMPAD_BACKSPACE = "NumpadBackspace"
+    NUMPAD_CLEAR = "NumpadClear"
+    NUMPAD_CLEAR_ENTRY = "NumpadClearEntry"
+    NUMPAD_HASH = "NumpadHash"
+    NUMPAD_MEMORY_ADD = "NumpadMemoryAdd"
+    NUMPAD_MEMORY_CLEAR = "NumpadMemoryClear"
+    NUMPAD_MEMORY_RECALL = "NumpadMemoryRecall"
+    NUMPAD_MEMORY_STORE = "NumpadMemoryStore"
+    NUMPAD_MEMORY_SUBTRACT = "NumpadMemorySubtract"
+    NUMPAD_PAREN_LEFT = "NumpadParenLeft"
+    NUMPAD_PAREN_RIGHT = "NumpadParenRight"
+    NUMPAD_STAR = "NumpadStar"
+    FN_LOCK = "FnLock"
+    HIRAGANA = "Hiragana"
+    KATAKANA = "Katakana"
+    AGAIN = "Again"
+    COPY = "Copy"
+    CUT = "Cut"
+    FIND = "Find"
+    OPEN = "Open"
+    PASTE = "Paste"
+    PROPS = "Props"
+    SELECT = "Select"
+    UNDO = "Undo"
+    RESUME = "Resume"
+    SUSPEND = "Suspend"
 
 
 class LabelStyle(str, Enum):
@@ -540,6 +766,14 @@ class KeyEvent:
     ctrl: "bool" = False
     shift: "bool" = False
     alt: "bool" = False
+    meta: "bool" = False
+    caps_lock: "bool" = False
+    num_lock: "bool" = False
+    scroll_lock: "bool" = False
+    code: "KeyCode" = dataclasses.field(default_factory=lambda: next(iter(KeyCode)))
+    scancode: "int" = 0
+    form: "str" = ""
+    form_id: "int" = 0
 
     @staticmethod
     def from_json(data):
@@ -548,6 +782,14 @@ class KeyEvent:
             ctrl=bool(data.get("ctrl") or False),
             shift=bool(data.get("shift") or False),
             alt=bool(data.get("alt") or False),
+            meta=bool(data.get("meta") or False),
+            caps_lock=bool(data.get("caps_lock") or False),
+            num_lock=bool(data.get("num_lock") or False),
+            scroll_lock=bool(data.get("scroll_lock") or False),
+            code=_enum(KeyCode, data.get("code")),
+            scancode=int(data.get("scancode") or 0),
+            form=str(data.get("form") or ""),
+            form_id=int(data.get("form_id") or 0),
         )
 
     def to_json(self):
@@ -556,6 +798,14 @@ class KeyEvent:
             "ctrl": self.ctrl,
             "shift": self.shift,
             "alt": self.alt,
+            "meta": self.meta,
+            "caps_lock": self.caps_lock,
+            "num_lock": self.num_lock,
+            "scroll_lock": self.scroll_lock,
+            "code": self.code.value,
+            "scancode": self.scancode,
+            "form": self.form,
+            "form_id": self.form_id,
         }
 
 
@@ -1585,6 +1835,70 @@ class Form(AylisForm):
         self._set("topmost", value)
 
     @property
+    def bottommost(self) -> bool:
+        return self._get("bottommost")
+
+    @bottommost.setter
+    def bottommost(self, value: bool) -> None:
+        self._set("bottommost", value)
+
+    @property
+    def keep_awake(self) -> KeepAwake:
+        return _enum(KeepAwake, self._get("keep_awake"))
+
+    @keep_awake.setter
+    def keep_awake(self, value: KeepAwake) -> None:
+        self._set("keep_awake", value.value)
+
+    @property
+    def confine_cursor(self) -> CursorConfine:
+        return _enum(CursorConfine, self._get("confine_cursor"))
+
+    @confine_cursor.setter
+    def confine_cursor(self, value: CursorConfine) -> None:
+        self._set("confine_cursor", value.value)
+
+    @property
+    def window_opacity(self) -> float:
+        return self._get("window_opacity")
+
+    @window_opacity.setter
+    def window_opacity(self, value: float) -> None:
+        self._set("window_opacity", value)
+
+    @property
+    def full_screen_mode(self) -> FullScreenMode:
+        return _enum(FullScreenMode, self._get("full_screen_mode"))
+
+    @full_screen_mode.setter
+    def full_screen_mode(self, value: FullScreenMode) -> None:
+        self._set("full_screen_mode", value.value)
+
+    @property
+    def video_width(self) -> int:
+        return self._get("video_width")
+
+    @video_width.setter
+    def video_width(self, value: int) -> None:
+        self._set("video_width", value)
+
+    @property
+    def video_height(self) -> int:
+        return self._get("video_height")
+
+    @video_height.setter
+    def video_height(self, value: int) -> None:
+        self._set("video_height", value)
+
+    @property
+    def video_refresh(self) -> float:
+        return self._get("video_refresh")
+
+    @video_refresh.setter
+    def video_refresh(self, value: float) -> None:
+        self._set("video_refresh", value)
+
+    @property
     def show_in_taskbar(self) -> bool:
         return self._get("show_in_taskbar")
 
@@ -1713,6 +2027,14 @@ class Form(AylisForm):
         self._set("present", value.value)
 
     @property
+    def blend_compositor(self) -> FormBlendCompositor:
+        return _enum(FormBlendCompositor, self._get("blend_compositor"))
+
+    @blend_compositor.setter
+    def blend_compositor(self, value: FormBlendCompositor) -> None:
+        self._set("blend_compositor", value.value)
+
+    @property
     def span_monitors(self) -> bool:
         return self._get("span_monitors")
 
@@ -1767,6 +2089,22 @@ class Form(AylisForm):
     @orientation.setter
     def orientation(self, value: FormOrientation) -> None:
         self._set("orientation", value.value)
+
+    @property
+    def host(self) -> AylisComponent | None:
+        return self._get_ref("host")
+
+    @host.setter
+    def host(self, value: AylisComponent | None) -> None:
+        self._set_ref("host", value)
+
+    @property
+    def dockable(self) -> bool:
+        return self._get("dockable")
+
+    @dockable.setter
+    def dockable(self, value: bool) -> None:
+        self._set("dockable", value)
 
     @property
     def on_show(self) -> str:
@@ -1839,6 +2177,62 @@ class Form(AylisForm):
     @on_gpu_change.setter
     def on_gpu_change(self, value: str) -> None:
         self._set("on_gpu_change", value)
+
+    @property
+    def on_dock(self) -> str:
+        return self._get("on_dock")
+
+    @on_dock.setter
+    def on_dock(self, value: str) -> None:
+        self._set("on_dock", value)
+
+    @property
+    def on_undock(self) -> str:
+        return self._get("on_undock")
+
+    @on_undock.setter
+    def on_undock(self, value: str) -> None:
+        self._set("on_undock", value)
+
+    @property
+    def on_files_drop(self) -> str:
+        return self._get("on_files_drop")
+
+    @on_files_drop.setter
+    def on_files_drop(self, value: str) -> None:
+        self._set("on_files_drop", value)
+
+    @property
+    def on_view_change(self) -> str:
+        return self._get("on_view_change")
+
+    @on_view_change.setter
+    def on_view_change(self, value: str) -> None:
+        self._set("on_view_change", value)
+
+    @property
+    def on_topmost_lost(self) -> str:
+        return self._get("on_topmost_lost")
+
+    @on_topmost_lost.setter
+    def on_topmost_lost(self, value: str) -> None:
+        self._set("on_topmost_lost", value)
+
+    @property
+    def on_scale_change(self) -> str:
+        return self._get("on_scale_change")
+
+    @on_scale_change.setter
+    def on_scale_change(self, value: str) -> None:
+        self._set("on_scale_change", value)
+
+    @property
+    def on_resize_end(self) -> str:
+        return self._get("on_resize_end")
+
+    @on_resize_end.setter
+    def on_resize_end(self, value: str) -> None:
+        self._set("on_resize_end", value)
 
     @property
     def client_width(self) -> float:
@@ -2531,11 +2925,35 @@ class Form(AylisForm):
     def move_to_monitor(self, monitor: int) -> None:
         self.aylis.send("invoke", target=self.id, method="move_to_monitor", args=[monitor])
 
+    def request_attention(self, critical: bool) -> None:
+        self.aylis.send("invoke", target=self.id, method="request_attention", args=[critical])
+
+    def bring_to_front(self) -> None:
+        self.aylis.send("invoke", target=self.id, method="bring_to_front", args=[])
+
+    def set_activation_token(self, token: str) -> None:
+        self.aylis.send("invoke", target=self.id, method="set_activation_token", args=[token])
+
+    def window_scale(self) -> float:
+        return self.aylis.call("invoke", target=self.id, method="window_scale", args=[])
+
+    def pointer_over(self) -> bool:
+        return self.aylis.call("invoke", target=self.id, method="pointer_over", args=[])
+
+    def place(self, monitor: int, x: int, y: int, width: int, height: int, activate: bool) -> None:
+        self.aylis.send("invoke", target=self.id, method="place", args=[monitor, x, y, width, height, activate])
+
     def gpu_adapter(self) -> str:
         return self.aylis.call("invoke", target=self.id, method="gpu_adapter", args=[])
 
     def gpu_adapters(self) -> list[str]:
         return _list(self.aylis.call("invoke", target=self.id, method="gpu_adapters", args=[]))
+
+    def drop_x(self) -> float:
+        return self.aylis.call("invoke", target=self.id, method="drop_x", args=[])
+
+    def drop_y(self) -> float:
+        return self.aylis.call("invoke", target=self.id, method="drop_y", args=[])
 
     def render_rgba(self, x: float, y: float, width: float, height: float, scale: float) -> str:
         return self.aylis.call("invoke", target=self.id, method="render_rgba", args=[x, y, width, height, scale])
@@ -3380,6 +3798,14 @@ class Label(AylisComponent):
     @text_shadow.setter
     def text_shadow(self, value: Shadow | None) -> None:
         self._set("text_shadow", (value.to_json() if value else ""))
+
+    @property
+    def max_lines(self) -> int:
+        return self._get("max_lines")
+
+    @max_lines.setter
+    def max_lines(self, value: int) -> None:
+        self._set("max_lines", value)
 
     @property
     def focus_control(self) -> AylisComponent | None:
@@ -5571,6 +5997,38 @@ class Panel(AylisComponent):
         self._set("gap", value)
 
     @property
+    def hover_fill(self) -> Color:
+        return Color.from_json(self._get("hover_fill"))
+
+    @hover_fill.setter
+    def hover_fill(self, value: Color) -> None:
+        self._set("hover_fill", value.to_json())
+
+    @property
+    def pressed_fill(self) -> Color:
+        return Color.from_json(self._get("pressed_fill"))
+
+    @pressed_fill.setter
+    def pressed_fill(self, value: Color) -> None:
+        self._set("pressed_fill", value.to_json())
+
+    @property
+    def interactive(self) -> bool:
+        return self._get("interactive")
+
+    @interactive.setter
+    def interactive(self, value: bool) -> None:
+        self._set("interactive", value)
+
+    @property
+    def selected_fill(self) -> Color:
+        return Color.from_json(self._get("selected_fill"))
+
+    @selected_fill.setter
+    def selected_fill(self, value: Color) -> None:
+        self._set("selected_fill", value.to_json())
+
+    @property
     def fill(self) -> Color:
         return Color.from_json(self._get("fill"))
 
@@ -5633,6 +6091,14 @@ class Panel(AylisComponent):
     @stroke_width.setter
     def stroke_width(self, value: float) -> None:
         self._set("stroke_width", value)
+
+    @property
+    def stroke_dash(self) -> list[float]:
+        return _numbers(self._get("stroke_dash"))
+
+    @stroke_dash.setter
+    def stroke_dash(self, value: list[float]) -> None:
+        self._set("stroke_dash", ";".join(repr(float(x)) for x in value))
 
     @property
     def radius(self) -> Bounds:

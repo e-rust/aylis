@@ -526,7 +526,7 @@ pub fn execute(ui: &mut Ui, command: &Value) -> Result<Value, String> {
             modifiers.ctrl |= extra.ctrl;
             modifiers.alt |= extra.alt;
             modifiers.meta |= extra.meta;
-            let event = aylis_core::KeyEvent { key, modifiers, repeat: false, form: None };
+            let event = aylis_core::KeyEvent { key, modifiers, ..Default::default() };
             ui.key_down(root, event);
             ui.key_up(root, event);
             Ok(Value::Null)
@@ -1294,6 +1294,10 @@ fn args_to_json(ui: &Ui, args: &EventArgs) -> Value {
             "meta": k.modifiers.meta,
             "caps_lock": k.modifiers.caps_lock,
             "num_lock": k.modifiers.num_lock,
+            "scroll_lock": k.modifiers.scroll_lock,
+            // A tecla física (`KeyA`, `IntlRo`; independente do layout) e o código nativo dela.
+            "code": k.code.name(),
+            "scancode": k.scancode,
             // A janela em que a tecla chegou: o nome e o id do form.
             "form": k.form.and_then(|f| ui.name(f)).unwrap_or_default(),
             "form_id": k.form.map_or(Value::Null, |f| Value::from(f.to_u64())),

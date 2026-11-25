@@ -106,10 +106,16 @@ export type ButtonStyle = "" | "accent" | "danger" | "elevated" | "fab" | "fab_e
 export type CloseAction = "hide" | "free";
 
 /** Os valores de um enum do acesso tipado. */
+export type CursorConfine = "none" | "window" | "monitor";
+
+/** Os valores de um enum do acesso tipado. */
 export type CursorShape = "default" | "pointer" | "text" | "wait" | "crosshair" | "move" | "not_allowed" | "resize_horizontal" | "resize_vertical" | "resize_ne_sw" | "resize_nw_se" | "grab" | "grabbing" | "none";
 
 /** Os valores de um enum do acesso tipado. */
 export type FontWeight = "default" | "thin" | "light" | "normal" | "medium" | "semibold" | "bold" | "black";
+
+/** Os valores de um enum do acesso tipado. */
+export type FormBlendCompositor = "project" | "direct2d" | "direct3d";
 
 /** Os valores de um enum do acesso tipado. */
 export type FormOrientation = "project" | "any" | "portrait" | "landscape" | "sensor_portrait" | "sensor_landscape";
@@ -124,10 +130,19 @@ export type FormPresent = "project" | "window" | "composition" | "composed";
 export type FormStyle = "";
 
 /** Os valores de um enum do acesso tipado. */
+export type FullScreenMode = "borderless" | "exclusive";
+
+/** Os valores de um enum do acesso tipado. */
 export type GridLayoutStyle = "";
 
 /** Os valores de um enum do acesso tipado. */
 export type IconPosition = "left" | "right" | "top";
+
+/** Os valores de um enum do acesso tipado. */
+export type KeepAwake = "off" | "system" | "display";
+
+/** Os valores de um enum do acesso tipado. */
+export type KeyCode = "Unidentified" | "KeyA" | "KeyB" | "KeyC" | "KeyD" | "KeyE" | "KeyF" | "KeyG" | "KeyH" | "KeyI" | "KeyJ" | "KeyK" | "KeyL" | "KeyM" | "KeyN" | "KeyO" | "KeyP" | "KeyQ" | "KeyR" | "KeyS" | "KeyT" | "KeyU" | "KeyV" | "KeyW" | "KeyX" | "KeyY" | "KeyZ" | "Digit0" | "Digit1" | "Digit2" | "Digit3" | "Digit4" | "Digit5" | "Digit6" | "Digit7" | "Digit8" | "Digit9" | "Numpad0" | "Numpad1" | "Numpad2" | "Numpad3" | "Numpad4" | "Numpad5" | "Numpad6" | "Numpad7" | "Numpad8" | "Numpad9" | "F1" | "F2" | "F3" | "F4" | "F5" | "F6" | "F7" | "F8" | "F9" | "F10" | "F11" | "F12" | "F13" | "F14" | "F15" | "F16" | "F17" | "F18" | "F19" | "F20" | "F21" | "F22" | "F23" | "F24" | "F25" | "F26" | "F27" | "F28" | "F29" | "F30" | "F31" | "F32" | "F33" | "F34" | "F35" | "Lang1" | "Lang2" | "Lang3" | "Lang4" | "Lang5" | "Backquote" | "Backslash" | "BracketLeft" | "BracketRight" | "Comma" | "Equal" | "IntlBackslash" | "IntlRo" | "IntlYen" | "Minus" | "Period" | "Quote" | "Semicolon" | "Slash" | "AltLeft" | "AltRight" | "Backspace" | "CapsLock" | "ContextMenu" | "ControlLeft" | "ControlRight" | "Enter" | "MetaLeft" | "MetaRight" | "ShiftLeft" | "ShiftRight" | "Space" | "Tab" | "Convert" | "KanaMode" | "NonConvert" | "Delete" | "End" | "Help" | "Home" | "Insert" | "PageDown" | "PageUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight" | "ArrowUp" | "NumLock" | "NumpadAdd" | "NumpadComma" | "NumpadDecimal" | "NumpadDivide" | "NumpadEnter" | "NumpadEqual" | "NumpadMultiply" | "NumpadSubtract" | "Escape" | "Fn" | "PrintScreen" | "ScrollLock" | "Pause" | "AudioVolumeDown" | "AudioVolumeMute" | "AudioVolumeUp" | "MediaPlayPause" | "MediaSelect" | "MediaStop" | "MediaTrackNext" | "MediaTrackPrevious" | "BrowserBack" | "BrowserFavorites" | "BrowserForward" | "BrowserHome" | "BrowserRefresh" | "BrowserSearch" | "BrowserStop" | "LaunchApp1" | "LaunchApp2" | "LaunchMail" | "Power" | "Sleep" | "WakeUp" | "NumpadBackspace" | "NumpadClear" | "NumpadClearEntry" | "NumpadHash" | "NumpadMemoryAdd" | "NumpadMemoryClear" | "NumpadMemoryRecall" | "NumpadMemoryStore" | "NumpadMemorySubtract" | "NumpadParenLeft" | "NumpadParenRight" | "NumpadStar" | "FnLock" | "Hiragana" | "Katakana" | "Again" | "Copy" | "Cut" | "Find" | "Open" | "Paste" | "Props" | "Select" | "Undo" | "Resume" | "Suspend";
 
 /** Os valores de um enum do acesso tipado. */
 export type LabelStyle = "" | "caption" | "error" | "heading" | "kbd" | "link" | "mono" | "muted" | "title";
@@ -235,6 +250,14 @@ export interface KeyEvent {
     ctrl: boolean;
     shift: boolean;
     alt: boolean;
+    meta: boolean;
+    capsLock: boolean;
+    numLock: boolean;
+    scrollLock: boolean;
+    code: KeyCode;
+    scancode: number;
+    form: string;
+    formId: number;
 }
 
 export function keyEventFromJson(v: any): KeyEvent {
@@ -243,6 +266,14 @@ export function keyEventFromJson(v: any): KeyEvent {
         ctrl: Boolean(v?.ctrl),
         shift: Boolean(v?.shift),
         alt: Boolean(v?.alt),
+        meta: Boolean(v?.meta),
+        capsLock: Boolean(v?.caps_lock),
+        numLock: Boolean(v?.num_lock),
+        scrollLock: Boolean(v?.scroll_lock),
+        code: (v?.code ?? "") as KeyCode,
+        scancode: Number(v?.scancode ?? 0),
+        form: String(v?.form ?? ""),
+        formId: Number(v?.form_id ?? 0),
     };
 }
 
@@ -252,6 +283,14 @@ export function keyEventToJson(r: KeyEvent): any {
         ctrl: r.ctrl,
         shift: r.shift,
         alt: r.alt,
+        meta: r.meta,
+        caps_lock: r.capsLock,
+        num_lock: r.numLock,
+        scroll_lock: r.scrollLock,
+        code: r.code,
+        scancode: r.scancode,
+        form: r.form,
+        form_id: r.formId,
     };
 }
 
@@ -1074,6 +1113,54 @@ export class Form extends AylisForm {
     set topmost(value: boolean) {
         this.setProp("topmost", value);
     }
+    get bottommost(): Promise<boolean> {
+        return this.getProp("bottommost") as Promise<any>;
+    }
+    set bottommost(value: boolean) {
+        this.setProp("bottommost", value);
+    }
+    get keepAwake(): Promise<KeepAwake> {
+        return this.getProp("keep_awake") as Promise<any>;
+    }
+    set keepAwake(value: KeepAwake) {
+        this.setProp("keep_awake", value);
+    }
+    get confineCursor(): Promise<CursorConfine> {
+        return this.getProp("confine_cursor") as Promise<any>;
+    }
+    set confineCursor(value: CursorConfine) {
+        this.setProp("confine_cursor", value);
+    }
+    get windowOpacity(): Promise<number> {
+        return this.getProp("window_opacity") as Promise<any>;
+    }
+    set windowOpacity(value: number) {
+        this.setProp("window_opacity", value);
+    }
+    get fullScreenMode(): Promise<FullScreenMode> {
+        return this.getProp("full_screen_mode") as Promise<any>;
+    }
+    set fullScreenMode(value: FullScreenMode) {
+        this.setProp("full_screen_mode", value);
+    }
+    get videoWidth(): Promise<number> {
+        return this.getProp("video_width") as Promise<any>;
+    }
+    set videoWidth(value: number) {
+        this.setProp("video_width", value);
+    }
+    get videoHeight(): Promise<number> {
+        return this.getProp("video_height") as Promise<any>;
+    }
+    set videoHeight(value: number) {
+        this.setProp("video_height", value);
+    }
+    get videoRefresh(): Promise<number> {
+        return this.getProp("video_refresh") as Promise<any>;
+    }
+    set videoRefresh(value: number) {
+        this.setProp("video_refresh", value);
+    }
     get showInTaskbar(): Promise<boolean> {
         return this.getProp("show_in_taskbar") as Promise<any>;
     }
@@ -1170,6 +1257,12 @@ export class Form extends AylisForm {
     set present(value: FormPresent) {
         this.setProp("present", value);
     }
+    get blendCompositor(): Promise<FormBlendCompositor> {
+        return this.getProp("blend_compositor") as Promise<any>;
+    }
+    set blendCompositor(value: FormBlendCompositor) {
+        this.setProp("blend_compositor", value);
+    }
     get spanMonitors(): Promise<boolean> {
         return this.getProp("span_monitors") as Promise<any>;
     }
@@ -1211,6 +1304,18 @@ export class Form extends AylisForm {
     }
     set orientation(value: FormOrientation) {
         this.setProp("orientation", value);
+    }
+    get host(): Promise<AylisComponent | null> {
+        return this.getRef("host");
+    }
+    set host(value: AylisComponent | null) {
+        this.setRef("host", value);
+    }
+    get dockable(): Promise<boolean> {
+        return this.getProp("dockable") as Promise<any>;
+    }
+    set dockable(value: boolean) {
+        this.setProp("dockable", value);
     }
     get onShow(): Promise<string> {
         return this.getProp("on_show") as Promise<any>;
@@ -1265,6 +1370,48 @@ export class Form extends AylisForm {
     }
     set onGpuChange(value: string) {
         this.setProp("on_gpu_change", value);
+    }
+    get onDock(): Promise<string> {
+        return this.getProp("on_dock") as Promise<any>;
+    }
+    set onDock(value: string) {
+        this.setProp("on_dock", value);
+    }
+    get onUndock(): Promise<string> {
+        return this.getProp("on_undock") as Promise<any>;
+    }
+    set onUndock(value: string) {
+        this.setProp("on_undock", value);
+    }
+    get onFilesDrop(): Promise<string> {
+        return this.getProp("on_files_drop") as Promise<any>;
+    }
+    set onFilesDrop(value: string) {
+        this.setProp("on_files_drop", value);
+    }
+    get onViewChange(): Promise<string> {
+        return this.getProp("on_view_change") as Promise<any>;
+    }
+    set onViewChange(value: string) {
+        this.setProp("on_view_change", value);
+    }
+    get onTopmostLost(): Promise<string> {
+        return this.getProp("on_topmost_lost") as Promise<any>;
+    }
+    set onTopmostLost(value: string) {
+        this.setProp("on_topmost_lost", value);
+    }
+    get onScaleChange(): Promise<string> {
+        return this.getProp("on_scale_change") as Promise<any>;
+    }
+    set onScaleChange(value: string) {
+        this.setProp("on_scale_change", value);
+    }
+    get onResizeEnd(): Promise<string> {
+        return this.getProp("on_resize_end") as Promise<any>;
+    }
+    set onResizeEnd(value: string) {
+        this.setProp("on_resize_end", value);
     }
     get clientWidth(): Promise<number> {
         return this.getProp("client_width") as Promise<any>;
@@ -1785,11 +1932,35 @@ export class Form extends AylisForm {
     moveToMonitor(monitor: number) {
         this.aylis.send("invoke", { target: this.id, method: "move_to_monitor", args: [monitor] });
     }
+    requestAttention(critical: boolean) {
+        this.aylis.send("invoke", { target: this.id, method: "request_attention", args: [critical] });
+    }
+    bringToFront() {
+        this.aylis.send("invoke", { target: this.id, method: "bring_to_front", args: [] });
+    }
+    setActivationToken(token: string) {
+        this.aylis.send("invoke", { target: this.id, method: "set_activation_token", args: [token] });
+    }
+    windowScale(): Promise<number> {
+        return this.aylis.call("invoke", { target: this.id, method: "window_scale", args: [] }) as Promise<any>;
+    }
+    pointerOver(): Promise<boolean> {
+        return this.aylis.call("invoke", { target: this.id, method: "pointer_over", args: [] }) as Promise<any>;
+    }
+    place(monitor: number, x: number, y: number, width: number, height: number, activate: boolean) {
+        this.aylis.send("invoke", { target: this.id, method: "place", args: [monitor, x, y, width, height, activate] });
+    }
     gpuAdapter(): Promise<string> {
         return this.aylis.call("invoke", { target: this.id, method: "gpu_adapter", args: [] }) as Promise<any>;
     }
     gpuAdapters(): Promise<string[]> {
         return this.aylis.call("invoke", { target: this.id, method: "gpu_adapters", args: [] }).then(listOf);
+    }
+    dropX(): Promise<number> {
+        return this.aylis.call("invoke", { target: this.id, method: "drop_x", args: [] }) as Promise<any>;
+    }
+    dropY(): Promise<number> {
+        return this.aylis.call("invoke", { target: this.id, method: "drop_y", args: [] }) as Promise<any>;
     }
     renderRgba(x: number, y: number, width: number, height: number, scale: number): Promise<string> {
         return this.aylis.call("invoke", { target: this.id, method: "render_rgba", args: [x, y, width, height, scale] }) as Promise<any>;
@@ -2428,6 +2599,12 @@ export class Label extends AylisComponent {
     }
     set textShadow(value: Shadow | null) {
         this.setProp("text_shadow", (value ? value.toJson() : ""));
+    }
+    get maxLines(): Promise<number> {
+        return this.getProp("max_lines") as Promise<any>;
+    }
+    set maxLines(value: number) {
+        this.setProp("max_lines", value);
     }
     get focusControl(): Promise<AylisComponent | null> {
         return this.getRef("focus_control");
@@ -4076,6 +4253,30 @@ export class Panel extends AylisComponent {
     set gap(value: number) {
         this.setProp("gap", value);
     }
+    get hoverFill(): Promise<Color> {
+        return this.getProp("hover_fill").then(Color.fromJson);
+    }
+    set hoverFill(value: Color) {
+        this.setProp("hover_fill", value.toJson());
+    }
+    get pressedFill(): Promise<Color> {
+        return this.getProp("pressed_fill").then(Color.fromJson);
+    }
+    set pressedFill(value: Color) {
+        this.setProp("pressed_fill", value.toJson());
+    }
+    get interactive(): Promise<boolean> {
+        return this.getProp("interactive") as Promise<any>;
+    }
+    set interactive(value: boolean) {
+        this.setProp("interactive", value);
+    }
+    get selectedFill(): Promise<Color> {
+        return this.getProp("selected_fill").then(Color.fromJson);
+    }
+    set selectedFill(value: Color) {
+        this.setProp("selected_fill", value.toJson());
+    }
     get fill(): Promise<Color> {
         return this.getProp("fill").then(Color.fromJson);
     }
@@ -4123,6 +4324,12 @@ export class Panel extends AylisComponent {
     }
     set strokeWidth(value: number) {
         this.setProp("stroke_width", value);
+    }
+    get strokeDash(): Promise<number[]> {
+        return this.getProp("stroke_dash").then(numbersOf);
+    }
+    set strokeDash(value: number[]) {
+        this.setProp("stroke_dash", value.join(";"));
     }
     get radius(): Promise<Bounds> {
         return this.getProp("radius").then(Bounds.fromJson);

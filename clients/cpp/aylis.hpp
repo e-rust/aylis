@@ -626,6 +626,14 @@ public:
 #endif
     }
 
+    /// Dentro de um evento que pergunta: grava um campo da resposta, como o `ev.reply.set` do
+    /// handler que recebe o evento inteiro (o tipado não o recebe). `reply("key", "")` no
+    /// `on_key_down` engole a tecla; uma exceção recusa. Fora de um evento que pergunta, não faz
+    /// nada.
+    void reply(const std::string& name, Json value) {
+        if (!replies_.empty() && replies_.back()) replies_.back()->set(name, std::move(value));
+    }
+
     /// Envia um comando sem esperar resposta (erros chegam como evento "error").
     void send(const std::string& cmd, Json fields = Json::object()) { write(message(cmd, std::move(fields))); }
 
@@ -814,6 +822,7 @@ public:
         auto it = handlers_.find(ev.form + "." + ev.handler);
         if (it == handlers_.end()) it = handlers_.find(ev.handler);
         ++running_;
+        replies_.push_back(ev.ask >= 0 ? &ev.reply : nullptr);
         try {
             if (it == handlers_.end()) {
                 log("evento sem handler: " + ev.handler);
@@ -832,6 +841,7 @@ public:
             }
         }
         --running_;
+        replies_.pop_back();
         // O handler terminou: a tela deixa de mostrar o backend ocupado.
         if (m["seq"].kind() == Json::Kind::Number) send("done", {{"seq", Json(static_cast<long long>(m["seq"].number()))}});
     }
@@ -898,6 +908,9 @@ private:
     /// roda mesmo durante um call).
     int waiting_ = 0;
     int running_ = 0;
+    /// As respostas dos eventos que perguntam em andamento (a última é a do handler que roda),
+    /// para o `reply` do handler tipado, que não recebe o evento.
+    std::vector<Json*> replies_;
     /// A thread que lê (a do loop).
     std::thread::id owner_;
     /// Os `post` do desktop (sem sessão).

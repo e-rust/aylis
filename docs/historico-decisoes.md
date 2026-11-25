@@ -442,3 +442,34 @@ Decididos pelo autor em 24/11, como recomendado ("o restante seguir o recomendad
 | Iniciar com o sistema | Mecanismo no framework, decisão no app: ligar e desligar o início junto com o login (a chave `Run` no Windows, o item de login no macOS, o autostart no Linux). |
 | A IDE aberta pelo MCP: o F12 do autor no fonte que o agente editava apagou uma linha — "deveria ter um readonly por padrão na IDE aberta pelo MCP e um botão que eu pudesse liberar a edição... o Ctrl+Z nesses casos desfaz até o que a LLM fez e pode perder o trabalho dela" | Com a IDE aberta pela ponte do MCP (`AYLIS_IDE_MCP` ao iniciar), os fontes do usuário abrem só leitura para o teclado, com a faixa e o botão "Liberar edição", que libera a aba à vista e recomeça o desfazer ali; o agente continua editando. Opção nas Opções da IDE, ligada por padrão; aberta pelo usuário, nada muda. A corrida em si foi corrigida à parte: antes de gerar, o fonte atrás do disco recarrega, e o salvar não grava por cima do que mudou no disco (vira conflito, como no foco). |
 | ClearType no Direct2D (o texto só em cinza parecia serrilhado) | A suavização simétrica no cinza, que melhora sem diferença entre os renderizadores, e o ClearType como opção do projeto, desligada, onde há subpixel (Direct2D e Skia), documentado como diferença aceita, porque o navegador não faz subpixel. |
+| A tecla física: o teclado só entregava o caractere, e o app que repassa o teclado a outra máquina errava a pontuação do ABNT2 ao traduzir para scancode | O `KeyEvent` passa a levar a tecla física (`code`, com os nomes do `code` do DOM, iguais em todas as plataformas) e o código nativo do sistema (`scancode`), também no protocolo e nas outras linguagens: a entrada é o que o app não alcança, então é do framework (regra 1). A gravação de uso não guarda a física, que diria a senha. |
+
+## 19. A janela de vídeo de um app de controle remoto, igual no Windows e no Linux (24/11)
+
+Um app de controle remoto usava o `on_message` e o `hwnd`, que só existem no Windows, para o
+que o núcleo não dava. Decidido pelo autor em 24/11, item a item:
+
+| Pedido | Decisão |
+|---|---|
+| Capturar o teclado inteiro com a janela em foco (Super, Alt+Tab, Ctrl+Esc) | "Um componente novo talvez": um componente não visual, desligado por padrão (mexe em segurança), que captura as teclas do sistema enquanto a janela dele está em foco. |
+| A escala da janela fora do Windows | Sim: a escala da janela e o evento quando ela muda. |
+| O tamanho da área interna em pixels físicos | Não precisa: já existe (`client_width`/`client_height` com `physical_pixels`, `is_maximized`). |
+| O evento de fim de redimensionamento | Sim. |
+| O cursor a partir de uma imagem | Sim. |
+| O Scroll Lock e o estado das travas fora de um evento de tecla | Sim. |
+| Trazer a janela para a frente | Sim (no Wayland, pelo token de ativação; sem ele, o pedido de atenção). |
+| Saber se o ponteiro está sobre a janela | Sim. |
+| O `on_key_down` gerado sem o `KeyEvent` tipado (o `on_key_up` tem) | "Já deveria ter sido resolvido antes... o quanto antes resolver melhor": tipar, mesmo mudando a assinatura dos handlers que já existem. |
+| Os defeitos vistos no caminho (o clippy no código gerado, as aspas no `set_property` do MCP, a posição do ponteiro no Wayland, a roda sem documentação, o clipboard no Wayland) | Corrigir todos. |
+
+## 20. A mistura na placa: o compositor em Direct3D ao lado do Direct2D (24/11)
+
+Uma grade de vídeos com marca d'água em negativo (`examples/MarcaDagua`, `blend_mode: difference`)
+mostrou que cada camada misturada custava ~210 µs no Direct2D, quase tudo criando texturas e
+mandando o desenho à placa, e não na conta da mistura (2 µs). Decidido pelo autor em 24/11:
+
+| Pedido | Decisão |
+|---|---|
+| Cortar o custo da inversão | Primeiro o ajuste do Direct2D (reaproveitar alvos, fundo e efeitos): de 116 para 39 ms com 256 células. |
+| Fazer a mistura "direto na placa", em Direct3D | Sim, mesmo com pouco ganho medido nesse caso (~10%): "no futuro em apps que precisarem de controle total, deve ter disponível". Fica um compositor do Aylis em Direct3D 11 com as fórmulas do W3C. |
+| Qual dos dois usar | O app escolhe: `blend_compositor` no projeto, no form e no `RenderSettings`; o padrão segue o Direct2D (o que já existia), e onde o Direct3D não se aplica fica o efeito do Direct2D. |

@@ -21,6 +21,10 @@
 //! - `cursor` (itens 13 e 16): a cada 1 s (até 10 s), o mouse na tela e o form sob ele;
 //! - `keys` (itens 14 e 32): duas janelas; cada tecla escreve o Caps Lock, o Num Lock, o form em
 //!   que chegou (`KeyEvent.form`) e o `ui.active_form()`;
+//! - `grab` (24/11): o `KeyboardCapture` ligado (com o Alt+F4) e o cursor de imagem (uma mira de
+//!   32 × 32 com o ponto no meio) no form; cada tecla escreve o nome, a física e as três travas,
+//!   e o `on_capture_change` quando o teclado é preso e solto (troque de janela com o mouse);
+//!   aos 2 s e a cada 5 s, o `ui.lock_keys()` fora de um evento;
 //! - `tray` (item 18, com `--features tray`): o clique direito no ícone escreve `on_context`; o
 //!   primeiro é recusado, o segundo abre; aos 3 s o `open_menu` abre por código no mouse;
 //! - `transparency` (item 21): os "Efeitos de transparência" agora e cada mudança (desligue e
@@ -188,11 +192,61 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ui.on(events, "on_key_down", move |ui, _, args| {
                 let EventArgs::Key(k) = args else { return };
                 let name = |f: Option<ComponentId>| f.and_then(|f| ui.name(f).map(str::to_string));
-                say(format!("{:?}: caps {} num {} · form {:?} · ativo {:?}", k.key, k.modifiers.caps_lock, k.modifiers.num_lock, name(k.form), name(ui.active_form())));
+                say(format!(
+                    "{:?} (física {}, scancode 0x{:X}): caps {} num {} · form {:?} · ativo {:?}",
+                    k.key,
+                    k.code.name(),
+                    k.scancode,
+                    k.modifiers.caps_lock,
+                    k.modifiers.num_lock,
+                    name(k.form),
+                    name(ui.active_form())
+                ));
             });
             ui.set_timeout(200, move |ui| {
                 let _ = ui.show(other);
             });
+        }
+        "grab" => {
+            let capture = ui.create("KeyboardCapture", Some(form))?;
+            ui.on(capture, "on_capture_change", move |_, _, args| say(format!("on_capture_change: {args:?}")));
+            ui.set_prop(capture, "alt_f4", true)?;
+            ui.set_prop(capture, "active", true)?;
+            say(format!("available: {:?}", ui.get_prop(capture, "available")));
+            // A mira: branca com o contorno preto, o ponto de clique no meio.
+            let mut rgba = vec![0u8; 32 * 32 * 4];
+            for i in 0..32usize {
+                for (x, y) in [(i, 15), (i, 16), (15, i), (16, i)] {
+                    rgba[(y * 32 + x) * 4..(y * 32 + x) * 4 + 4].copy_from_slice(&[255, 255, 255, 255]);
+                }
+                for (x, y) in [(i, 14), (i, 17), (14, i), (17, i)] {
+                    if rgba[(y * 32 + x) * 4 + 3] == 0 {
+                        rgba[(y * 32 + x) * 4..(y * 32 + x) * 4 + 4].copy_from_slice(&[0, 0, 0, 255]);
+                    }
+                }
+            }
+            ui.set_cursor_image(form, &Image::rgba(32, 32, rgba), 16, 16)?;
+            let events = ui.create("ApplicationEvents", Some(form))?;
+            for event in ["on_key_down", "on_key_up"] {
+                ui.on(events, event, move |_, _, args| {
+                    let EventArgs::Key(k) = args else { return };
+                    let m = k.modifiers;
+                    say(format!(
+                        "{event} {:?} (física {}): caps {} num {} scroll {} · alt {} ctrl {} meta {}",
+                        k.key,
+                        k.code.name(),
+                        m.caps_lock,
+                        m.num_lock,
+                        m.scroll_lock,
+                        m.alt,
+                        m.ctrl,
+                        m.meta
+                    ));
+                });
+            }
+            for s in (2..=60u64).step_by(5) {
+                ui.set_timeout(s * 1000, move |ui| say(format!("{s} s: lock_keys {:?}", ui.lock_keys())));
+            }
         }
         "tray" => {
             let tray = ui.create("TrayIcon", Some(form))?;

@@ -37,6 +37,7 @@
 //! | [`Permissions`], [`Biometrics`] | consultar e pedir permissões; digital, rosto, Windows Hello |
 //! | [`AppLink`] | abrir endereços e outros apps, compartilhar, receber links e o que foi compartilhado |
 //! | [`UrlScheme`] | um prefixo de URL próprio (`meuapp://`) que abre o app e entrega o endereço no `on_link` |
+//! | [`KeyboardCapture`] | as teclas do sistema (Windows/Super, Alt+Tab, Ctrl+Esc) para a janela em foco |
 //! | [`SystemBars`] | a cor da barra de status e da de navegação do celular, a cor dos ícones e esconder as barras |
 //! | [`AnimatedText`] | texto com efeitos de entrada, saída e contínuos (apresentações) |
 //! | [`MessageDialog`], [`message_dlg`], [`show_message`], [`toast`] | caixas de mensagem e o aviso rápido (o toast do Android) |
@@ -62,7 +63,7 @@ pub use aylis_controls_charts::{
     unproject,
 };
 pub use aylis_controls_device::{
-    AppLink, BackgroundService, Battery, Biometrics, Bluetooth, Nfc, parse_hex, Compass, Gamepad, LightSensor, Location, LockScreen, MotionSensor, Network, Permissions, Phone, ProximitySensor,
+    AppLink, BackgroundService, Battery, Biometrics, Bluetooth, KeyboardCapture, Nfc, parse_hex, Compass, Gamepad, LightSensor, Location, LockScreen, MotionSensor, Network, Permissions, Phone, ProximitySensor,
     PushNotifications, PushTrigger, WakeAppAction, NotifyAction, Ringtone,
     Screen, SystemBars, UrlScheme, Vibration,
 };
@@ -184,6 +185,7 @@ pub fn register(ui: &mut Ui) {
     ui.register_class::<Biometrics>("System");
     ui.register_class::<AppLink>("System");
     ui.register_class::<UrlScheme>("System");
+    ui.register_class::<KeyboardCapture>("System");
     ui.register_class::<SystemBars>("Device");
     ui.register_class::<Location>("Device");
     ui.register_class::<Battery>("Device");

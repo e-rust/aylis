@@ -162,11 +162,11 @@ thread_local! {
     static CLIPBOARD: std::cell::RefCell<String> = const { std::cell::RefCell::new(String::new()) };
     /// O Caps Lock e o Num Lock da última tecla (o navegador só conta numa tecla: antes da
     /// primeira, desligados).
-    static LOCKS: std::cell::Cell<(bool, bool)> = const { std::cell::Cell::new((false, false)) };
+    static LOCKS: std::cell::Cell<aylis_core::LockKeys> = const { std::cell::Cell::new(aylis_core::LockKeys { caps_lock: false, num_lock: false, scroll_lock: false }) };
 }
 
-/// O Caps Lock e o Num Lock da última tecla.
-pub(crate) fn lock_keys() -> (bool, bool) {
+/// O Caps Lock, o Num Lock e o Scroll Lock da última tecla.
+pub(crate) fn lock_keys() -> aylis_core::LockKeys {
     LOCKS.get()
 }
 
@@ -241,7 +241,7 @@ pub(crate) fn watch_paste(poster: aylis_core::Poster) {
                 .and_then(|v| v.as_bool())
                 .unwrap_or(false)
         };
-        LOCKS.set((state("CapsLock"), state("NumLock")));
+        LOCKS.set(aylis_core::LockKeys { caps_lock: state("CapsLock"), num_lock: state("NumLock"), scroll_lock: state("ScrollLock") });
         if key.eq_ignore_ascii_case("v") && (flag("ctrlKey") || flag("metaKey")) && !flag("altKey") {
             e.stop_immediate_propagation();
         }
@@ -265,7 +265,7 @@ pub(crate) fn watch_paste(poster: aylis_core::Poster) {
         poster.post(|ui| {
             let Some(top) = ui.open_forms().last().copied() else { return };
             let modifiers = aylis_core::Modifiers { ctrl: true, ..Default::default() };
-            ui.key_down(top, aylis_core::KeyEvent { key: aylis_core::Key::Char('v'), modifiers, repeat: false, form: None });
+            ui.key_down(top, aylis_core::KeyEvent { key: aylis_core::Key::Char('v'), modifiers, ..Default::default() });
         });
     });
     let _ = window.add_event_listener_with_callback_and_bool("paste", on_paste.as_ref().unchecked_ref(), true);

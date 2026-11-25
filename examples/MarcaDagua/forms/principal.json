@@ -1,0 +1,173 @@
+{
+  "aylis": 1,
+  "root": {
+    "class": "Form",
+    "name": "frmPrincipal",
+    "caption": "Vídeos com marca d'água",
+    "on_show": "frmPrincipal_show",
+    "width": 1440,
+    "height": 800,
+    "children": [
+      {
+        "class": "Layout",
+        "name": "layBarra",
+        "height": 52,
+        "align": "top",
+        "padding": 8,
+        "children": [
+          {
+            "class": "Button",
+            "name": "btnAbrir",
+            "text": "Abrir vídeo",
+            "width": 120,
+            "align": "left",
+            "on_click": "btnAbrir_click"
+          },
+          {
+            "class": "Button",
+            "name": "btnTocar",
+            "text": "Pausar",
+            "width": 100,
+            "align": "left",
+            "margins": [8, 0, 0, 0],
+            "on_click": "btnTocar_click"
+          },
+          {
+            "class": "SegmentedControl",
+            "name": "segGrade",
+            "items": "1;4;9;16;36;64;100;256;400;625;1000",
+            "on_change": "segGrade_change",
+            "width": 560,
+            "align": "left",
+            "margins": [16, 0, 0, 0]
+          },
+          {
+            "class": "FpsMeter",
+            "name": "fpsMedidor",
+            "width": 150,
+            "align": "left",
+            "margins": [12, 0, 0, 0]
+          },
+          {
+            "class": "Edit",
+            "name": "edtTexto",
+            "text": "CÂMERA",
+            "placeholder": "Texto da marca",
+            "on_change": "edtTexto_change",
+            "align": "client",
+            "margins": [12, 0, 0, 0]
+          },
+          {
+            "class": "CheckBox",
+            "name": "chkInverter",
+            "text": "Inverter",
+            "checked": true,
+            "on_change": "chkInverter_change",
+            "width": 100,
+            "align": "right",
+            "margins": [12, 0, 0, 0]
+          },
+          {
+            "class": "CheckBox",
+            "name": "chkMover",
+            "text": "Mover",
+            "on_change": "chkMover_change",
+            "width": 90,
+            "align": "right",
+            "margins": [12, 0, 0, 0]
+          },
+          {
+            "class": "CheckBox",
+            "name": "chkVideo",
+            "text": "Vídeo",
+            "checked": true,
+            "on_change": "chkVideo_change",
+            "width": 90,
+            "align": "right",
+            "margins": [12, 0, 0, 0]
+          }
+        ]
+      },
+      {
+        "class": "GridLayout",
+        "name": "grdVideos",
+        "columns": 1,
+        "gap": 2,
+        "align": "client",
+        "fill": "#000000",
+        "on_resize": "grdVideos_resize",
+        "children": [
+          {
+            "class": "Layout",
+            "name": "layCelula",
+            "clip_children": true,
+            "fill": "#000000",
+            "children": [
+              {
+                "class": "Image",
+                "name": "imgQuadro",
+                "image": "assets/images/quadro.png",
+                "align": "client",
+                "visible": false,
+                "hit_test": false
+              },
+              {
+                "class": "VideoPlayer",
+                "name": "vpVideo",
+                "file": "assets/video/sample.mp4",
+                "autoplay": true,
+                "looping": true,
+                "muted": true,
+                "on_error": "vpVideo_error",
+                "align": "client"
+              },
+              {
+                "class": "Layout",
+                "name": "layMarca",
+                "align": "client",
+                "clip_children": true,
+                "blend_mode": "difference",
+                "children": [
+                  {
+                    "class": "Label",
+                    "name": "lblMarca",
+                    "h_align": "center",
+                    "wrap": true,
+                    "bold": true,
+                    "color": "#FFFFFF",
+                    "line_height": 3,
+                    "width": 1200,
+                    "height": 1200,
+                    "align": "center",
+                    "rotation": -30,
+                    "font_size": 22,
+                    "children": [
+                      {
+                        "class": "FloatAnimation",
+                        "name": "aniMarca",
+                        "property": "translate_x",
+                        "start_value": 0,
+                        "stop_value": 60,
+                        "duration": 2,
+                        "easing": "linear",
+                        "auto_reverse": true,
+                        "looping": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class": "OpenDialog",
+        "name": "dlgAbrir",
+        "title": "Abrir vídeo",
+        "filter": "Vídeos|*.mp4;*.mkv;*.avi;*.wmv;*.mov;*.webm|Todos os arquivos|*.*",
+        "on_select": "dlgAbrir_select"
+      }
+    ]
+  }
+}

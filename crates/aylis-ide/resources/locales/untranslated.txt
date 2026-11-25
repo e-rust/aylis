@@ -254,6 +254,8 @@ o registro atual mudou
 o registro foi gravado
 o renomeado não cai na raiz
 o tamanho mudou
+a escala da janela mudou (outro monitor, outra escala no sistema), com a escala nova
+o usuário parou de redimensionar a janela (no Windows, ao soltar a borda; fora dele, 300 ms sem tamanho novo)
 o texto do Label e o campo de outro dataset ficam de fora
 o texto escrito no designer (e o do tr("...") no código) é a chave; set_translations grava as traduções de um idioma (um idioma novo nasce assim)
 o valor mudou (pelo usuário ou pelo código)

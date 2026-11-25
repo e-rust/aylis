@@ -1,0 +1,101 @@
+{
+  "revisions": {
+    "frmPrincipal.btnAbrir_click": 1,
+    "frmPrincipal.btnTocar_click": 3,
+    "frmPrincipal.chkInverter_change": 2,
+    "frmPrincipal.chkMover_change": 1,
+    "frmPrincipal.chkVideo_change": 1,
+    "frmPrincipal.dlgAbrir_select": 3,
+    "frmPrincipal.edtTexto_change": 2,
+    "frmPrincipal.frmPrincipal_show": 3,
+    "frmPrincipal.grdVideos_resize": 1,
+    "frmPrincipal.segGrade_change": 1,
+    "frmPrincipal.vpVideo_error": 2
+  },
+  "languages": {
+    "rust": {
+      "bindings": {
+        "frmPrincipal/btnAbrir.on_click": "btnAbrir_click",
+        "frmPrincipal/btnTocar.on_click": "btnTocar_click",
+        "frmPrincipal/chkInverter.on_change": "chkInverter_change",
+        "frmPrincipal/chkMover.on_change": "chkMover_change",
+        "frmPrincipal/chkVideo.on_change": "chkVideo_change",
+        "frmPrincipal/dlgAbrir.on_select": "dlgAbrir_select",
+        "frmPrincipal/edtTexto.on_change": "edtTexto_change",
+        "frmPrincipal/frmPrincipal.on_show": "frmPrincipal_show",
+        "frmPrincipal/grdVideos.on_resize": "grdVideos_resize",
+        "frmPrincipal/segGrade.on_change": "segGrade_change",
+        "frmPrincipal/vpVideo.on_error": "vpVideo_error"
+      },
+      "handlers": {
+        "frmPrincipal.btnAbrir_click": {
+          "hash": "v2:4367d7fc7d34a421",
+          "seen": 1
+        },
+        "frmPrincipal.btnTocar_click": {
+          "hash": "v2:9c043247bd8c1cc0",
+          "seen": 3
+        },
+        "frmPrincipal.chkInverter_change": {
+          "hash": "v2:f11d3fedf6b710c0",
+          "seen": 2
+        },
+        "frmPrincipal.chkMover_change": {
+          "hash": "v2:03ad576e172873d1",
+          "seen": 1
+        },
+        "frmPrincipal.chkVideo_change": {
+          "hash": "v2:03ad576e172873d1",
+          "seen": 1
+        },
+        "frmPrincipal.dlgAbrir_select": {
+          "hash": "v2:337d4da91db3a983",
+          "seen": 3
+        },
+        "frmPrincipal.edtTexto_change": {
+          "hash": "v2:92c3f4ddc55e8800",
+          "seen": 2
+        },
+        "frmPrincipal.frmPrincipal_show": {
+          "hash": "v2:df8d27e8cf21ede9",
+          "seen": 3
+        },
+        "frmPrincipal.grdVideos_resize": {
+          "hash": "v2:92c3f4ddc55e8800",
+          "seen": 1
+        },
+        "frmPrincipal.segGrade_change": {
+          "hash": "v2:751322458083a9d2",
+          "seen": 1
+        },
+        "frmPrincipal.vpVideo_error": {
+          "hash": "v2:0dca388068354d52",
+          "seen": 2
+        }
+      }
+    }
+  },
+  "components": [
+    "aniMarca",
+    "btnAbrir",
+    "btnTocar",
+    "chkInverter",
+    "chkMover",
+    "chkVideo",
+    "dlgAbrir",
+    "edtTexto",
+    "fpsMedidor",
+    "frmPrincipal",
+    "grdVideos",
+    "imgQuadro",
+    "layBarra",
+    "layCelula",
+    "layMarca",
+    "layTela",
+    "lblInfo",
+    "lblMarca",
+    "lblTexto",
+    "segGrade",
+    "vpVideo"
+  ]
+}

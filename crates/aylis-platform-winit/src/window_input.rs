@@ -146,6 +146,8 @@ impl App {
                         Some(d) => w.window.set_cursor(winit::window::CursorIcon::from(d)),
                         None => w.window.set_cursor(self.cursor_of(&w.window, w.cursor)),
                     }
+                    // O cursor de imagem volta no `after_input` (a borda trocou o da janela).
+                    self.windows[index].cursor_image = u64::MAX;
                 }
                 // Arrastando com a janela de outro form por cima deste ponto: o destino é ela, e
                 // o form de baixo não recebe o movimento (senão o soltar caía nele).
@@ -495,13 +497,24 @@ impl App {
                 let _ = floating_mode;
                 self.ui.cursor(w.form)
             };
-            if cursor != w.cursor {
+            // O cursor de imagem (`Ui::set_cursor_image`), criado uma vez por imagem; até o
+            // `about_to_wait` criar, o da forma.
+            let image = if floating_mode { None } else { self.ui.cursor_image(w.form) };
+            let custom = image.as_ref().and_then(|i| self.cursor_images.get(i).map(|c| (i.id(), c)));
+            let image_id = custom.as_ref().map_or(0, |(id, _)| *id);
+            if cursor != w.cursor || image_id != w.cursor_image {
                 w.cursor = cursor;
-                #[cfg(windows)]
-                w.window.set_cursor(hand_cursors::cursor(hands, w.window.scale_factor(), cursor));
-                #[cfg(not(windows))]
-                w.window.set_cursor(input::cursor(cursor));
-                w.window.set_cursor_visible(cursor != CursorShape::None);
+                w.cursor_image = image_id;
+                if let Some((_, custom)) = custom {
+                    w.window.set_cursor(custom);
+                    w.window.set_cursor_visible(true);
+                } else {
+                    #[cfg(windows)]
+                    w.window.set_cursor(hand_cursors::cursor(hands, w.window.scale_factor(), cursor));
+                    #[cfg(not(windows))]
+                    w.window.set_cursor(input::cursor(cursor));
+                    w.window.set_cursor_visible(cursor != CursorShape::None);
+                }
             }
         }
         // No desktop o teclado é físico; ligar o IME lá mudaria a entrega das teclas.

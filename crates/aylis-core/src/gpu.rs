@@ -165,6 +165,74 @@ impl crate::PropEnum for FormPresent {
     }
 }
 
+/// Quem junta uma camada com `blend_mode` ao fundo no Direct2D (Windows): o efeito Blend do
+/// próprio Direct2D ou o compositor do Aylis em Direct3D 11 (um shader com as fórmulas do
+/// W3C). O resultado é o mesmo; o Direct3D é a base para o app que precisa de controle total
+/// da placa. O `"blend_compositor"` do `.aylisproj`, a propriedade `blend_compositor` do form
+/// ([`FormBlendCompositor`]) e o `RenderSettings` em execução; nos outros renderizadores, não
+/// muda nada.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum BlendCompositor {
+    /// O efeito Blend do Direct2D. O padrão.
+    #[default]
+    Direct2d,
+    /// O shader do Aylis em Direct3D 11, onde o alvo é uma textura da placa e os recortes são
+    /// retângulos; no resto (a captura na CPU, recorte arredondado), o efeito do Direct2D.
+    Direct3d,
+}
+
+impl crate::PropEnum for BlendCompositor {
+    const NAMES: &'static [&'static str] = &["direct2d", "direct3d"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::Direct2d, Self::Direct3d].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
+static BLEND_COMPOSITOR: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
+
+/// Grava o compositor da mistura do app (o do projeto ao abrir; o `RenderSettings` em execução).
+pub fn set_blend_compositor(compositor: BlendCompositor) {
+    BLEND_COMPOSITOR.store(compositor as u8, std::sync::atomic::Ordering::Relaxed);
+}
+
+/// O compositor da mistura do app.
+pub fn blend_compositor() -> BlendCompositor {
+    if BLEND_COMPOSITOR.load(std::sync::atomic::Ordering::Relaxed) == 1 { BlendCompositor::Direct3d } else { BlendCompositor::Direct2d }
+}
+
+/// O `blend_compositor` de um form: o do projeto ou um dos dois.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum FormBlendCompositor {
+    #[default]
+    Project,
+    Direct2d,
+    Direct3d,
+}
+
+impl FormBlendCompositor {
+    /// O compositor próprio do form (`None`: o do projeto).
+    pub fn own(self) -> Option<BlendCompositor> {
+        match self {
+            Self::Project => None,
+            Self::Direct2d => Some(BlendCompositor::Direct2d),
+            Self::Direct3d => Some(BlendCompositor::Direct3d),
+        }
+    }
+}
+
+impl crate::PropEnum for FormBlendCompositor {
+    const NAMES: &'static [&'static str] = &["project", "direct2d", "direct3d"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::Project, Self::Direct2d, Self::Direct3d].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
 static CHOICE: Mutex<GpuChoice> = Mutex::new(GpuChoice::Auto);
 
 /// Grava a escolha (a plataforma faz isso ao abrir, com a do projeto).

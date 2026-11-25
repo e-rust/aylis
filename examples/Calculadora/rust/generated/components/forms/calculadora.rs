@@ -113,6 +113,7 @@ impl FrmCalculadora {
     /// Monta a instância de um frmCalculadora recém-criado (o `register` liga). Um componente que
     /// sumiu do form ou mudou de classe impede o form de abrir, com a lista do que não bate.
     pub fn bind(ui: &mut Ui, root: ComponentId) -> Result<Box<dyn std::any::Any>, String> {
+        #[allow(unused_mut)] // um form sem componentes não acrescenta nada
         let mut problems: Vec<String> = Vec::new();
         let instance = Self {
             form: Form { id: root },
@@ -216,7 +217,8 @@ impl FrmCalculadora {
     }
 
     /// Os componentes do frmCalculadora aberto (o primeiro, se houver dois), sem o estado: valem
-    /// também enquanto um handler dele roda, quando o `get` dá `None`.
+    /// também enquanto um handler dele roda, quando o `get` dá `None`. É o caminho no
+    /// código que um handler do próprio frmCalculadora chama (no handler mesmo, o `self`).
     pub fn components(ui: &Ui) -> Option<FrmCalculadoraComponents> {
         ui.form_components(ui.find_path("frmCalculadora")?)
     }
@@ -251,6 +253,10 @@ impl FrmCalculadora {
     }
 
     /// O frmCalculadora aberto (o primeiro, se houver dois), para outro form ler ou mexer nele.
+    ///
+    /// Dentro de um handler do próprio frmCalculadora, dá `None`: a instância está emprestada ao
+    /// handler que roda. Ali, use o `self` do handler ou, no código chamado por ele,
+    /// [`components`](Self::components) (em debug, o `None` por empréstimo avisa no stderr).
     pub fn get(ui: &Ui) -> Option<&FrmCalculadora> {
         ui.form_instance(ui.find_path("frmCalculadora")?)
     }

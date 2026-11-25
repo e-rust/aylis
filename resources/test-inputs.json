@@ -56,6 +56,7 @@
   "aylis-controls/emoji": "pure",
   "aylis-controls/font_names": "pure",
   "aylis-controls/form_files_drop": "pure",
+  "aylis-controls/form_window": "pure",
   "aylis-controls/giant_screen": [
     "medicoes/giant_screen.json"
   ],

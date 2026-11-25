@@ -46,12 +46,10 @@ public static class FrmCalculadora
         if (calc.Tecla(texto)) Atualizar(aylis);
     }
 
-    public static void form_key_down(Aylis aylis, AylisEvent ev)
+    public static void form_key_down(Aylis aylis, AylisUi.Form sender, global::App.Forms.KeyEvent value)
     {
-        string tecla = ev.Args?["key"]?.GetValue<string>() ?? "";
-        bool ctrl = ev.Args?["ctrl"]?.GetValue<bool>() ?? false;
-        bool shift = ev.Args?["shift"]?.GetValue<bool>() ?? false;
-        string? botao = Calculadora.BotaoDoTeclado(tecla, ctrl, shift);
+        // aylis.Reply("key", "") engoliria a tecla.
+        string? botao = Calculadora.BotaoDoTeclado(value.Key, value.Ctrl, value.Shift);
         if (botao == "historico") historico_click(aylis, frmCalculadora.btnHistorico);
         else if (botao != null) Apertar(aylis, botao);
     }

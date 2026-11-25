@@ -75,6 +75,12 @@ type
 
   { Os valores de um enum do acesso tipado. }
   {$push}{$scopedenums on}
+  TFormBlendCompositor = (Project, Direct2d, Direct3d);
+  {$pop}
+  TFormBlendCompositorSet = set of TFormBlendCompositor;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
   TFormOrientation = (Project, Any, Portrait, Landscape, SensorPortrait, SensorLandscape);
   {$pop}
   TFormOrientationSet = set of TFormOrientation;
@@ -114,6 +120,12 @@ type
   TKeepAwake = (Off, System, Display);
   {$pop}
   TKeepAwakeSet = set of TKeepAwake;
+
+  { Os valores de um enum do acesso tipado. }
+  {$push}{$scopedenums on}
+  TKeyCode = (Unidentified, KeyA, KeyB, KeyC, KeyD, KeyE, KeyF, KeyG, KeyH, KeyI, KeyJ, KeyK, KeyL, KeyM, KeyN, KeyO, KeyP, KeyQ, KeyR, KeyS, KeyT, KeyU, KeyV, KeyW, KeyX, KeyY, KeyZ, Digit0, Digit1, Digit2, Digit3, Digit4, Digit5, Digit6, Digit7, Digit8, Digit9, Numpad0, Numpad1, Numpad2, Numpad3, Numpad4, Numpad5, Numpad6, Numpad7, Numpad8, Numpad9, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31, F32, F33, F34, F35, Lang1, Lang2, Lang3, Lang4, Lang5, Backquote, Backslash, BracketLeft, BracketRight, Comma, Equal, IntlBackslash, IntlRo, IntlYen, Minus, Period, Quote, Semicolon, Slash, AltLeft, AltRight, Backspace, CapsLock, ContextMenu, ControlLeft, ControlRight, Enter, MetaLeft, MetaRight, ShiftLeft, ShiftRight, Space, Tab, Convert, KanaMode, NonConvert, Delete, &End, Help, Home, Insert, PageDown, PageUp, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, NumLock, NumpadAdd, NumpadComma, NumpadDecimal, NumpadDivide, NumpadEnter, NumpadEqual, NumpadMultiply, NumpadSubtract, Escape, Fn, PrintScreen, ScrollLock, Pause, AudioVolumeDown, AudioVolumeMute, AudioVolumeUp, MediaPlayPause, MediaSelect, MediaStop, MediaTrackNext, MediaTrackPrevious, BrowserBack, BrowserFavorites, BrowserForward, BrowserHome, BrowserRefresh, BrowserSearch, BrowserStop, LaunchApp1, LaunchApp2, LaunchMail, Power, Sleep, WakeUp, NumpadBackspace, NumpadClear, NumpadClearEntry, NumpadHash, NumpadMemoryAdd, NumpadMemoryClear, NumpadMemoryRecall, NumpadMemoryStore, NumpadMemorySubtract, NumpadParenLeft, NumpadParenRight, NumpadStar, FnLock, Hiragana, Katakana, Again, Copy, Cut, Find, Open, Paste, Props, Select, Undo, Resume, Suspend);
+  {$pop}
+  TKeyCodeSet = set of TKeyCode;
 
   { Os valores de um enum do acesso tipado. }
   {$push}{$scopedenums on}
@@ -221,6 +233,9 @@ type
     Meta: Boolean;
     CapsLock: Boolean;
     NumLock: Boolean;
+    ScrollLock: Boolean;
+    Code: TKeyCode;
+    Scancode: Int64;
     Form: string;
     FormId: Int64;
   end;
@@ -639,6 +654,8 @@ type
     procedure SetGpu(Value: string);
     function GetPresent: TFormPresent;
     procedure SetPresent(Value: TFormPresent);
+    function GetBlendCompositor: TFormBlendCompositor;
+    procedure SetBlendCompositor(Value: TFormBlendCompositor);
     function GetSpanMonitors: Boolean;
     procedure SetSpanMonitors(Value: Boolean);
     function GetPhysicalPixels: Boolean;
@@ -685,6 +702,10 @@ type
     procedure SetOnViewChange(Value: string);
     function GetOnTopmostLost: string;
     procedure SetOnTopmostLost(Value: string);
+    function GetOnScaleChange: string;
+    procedure SetOnScaleChange(Value: string);
+    function GetOnResizeEnd: string;
+    procedure SetOnResizeEnd(Value: string);
     function GetClientWidth: Double;
     procedure SetClientWidth(Value: Double);
     function GetClientHeight: Double;
@@ -860,6 +881,10 @@ type
   public
     procedure MoveToMonitor(AMonitor: Int64);
     procedure RequestAttention(ACritical: Boolean);
+    procedure BringToFront;
+    procedure SetActivationToken(AToken: string);
+    function WindowScale: Double;
+    function PointerOver: Boolean;
     procedure Place(AMonitor: Int64; AX: Int64; AY: Int64; AWidth: Int64; AHeight: Int64; AActivate: Boolean);
     function GpuAdapter: string;
     function GpuAdapters: TStringArray;
@@ -907,6 +932,7 @@ type
     property RememberPlacement: Boolean read GetRememberPlacement write SetRememberPlacement;
     property Gpu: string read GetGpu write SetGpu;
     property Present: TFormPresent read GetPresent write SetPresent;
+    property BlendCompositor: TFormBlendCompositor read GetBlendCompositor write SetBlendCompositor;
     property SpanMonitors: Boolean read GetSpanMonitors write SetSpanMonitors;
     property PhysicalPixels: Boolean read GetPhysicalPixels write SetPhysicalPixels;
     property ActivateOnShow: Boolean read GetActivateOnShow write SetActivateOnShow;
@@ -930,6 +956,8 @@ type
     property OnFilesDrop: string read GetOnFilesDrop write SetOnFilesDrop;
     property OnViewChange: string read GetOnViewChange write SetOnViewChange;
     property OnTopmostLost: string read GetOnTopmostLost write SetOnTopmostLost;
+    property OnScaleChange: string read GetOnScaleChange write SetOnScaleChange;
+    property OnResizeEnd: string read GetOnResizeEnd write SetOnResizeEnd;
     property ClientWidth: Double read GetClientWidth write SetClientWidth;
     property ClientHeight: Double read GetClientHeight write SetClientHeight;
     property Left: Double read GetLeft write SetLeft;
@@ -1683,6 +1711,9 @@ function CursorShapeSetToJSON(const S: TCursorShapeSet): TJSONData;
 function FontWeightOf(Data: TJSONData): TFontWeight;
 function FontWeightSetOf(Data: TJSONData): TFontWeightSet;
 function FontWeightSetToJSON(const S: TFontWeightSet): TJSONData;
+function FormBlendCompositorOf(Data: TJSONData): TFormBlendCompositor;
+function FormBlendCompositorSetOf(Data: TJSONData): TFormBlendCompositorSet;
+function FormBlendCompositorSetToJSON(const S: TFormBlendCompositorSet): TJSONData;
 function FormOrientationOf(Data: TJSONData): TFormOrientation;
 function FormOrientationSetOf(Data: TJSONData): TFormOrientationSet;
 function FormOrientationSetToJSON(const S: TFormOrientationSet): TJSONData;
@@ -1704,6 +1735,9 @@ function IconPositionSetToJSON(const S: TIconPositionSet): TJSONData;
 function KeepAwakeOf(Data: TJSONData): TKeepAwake;
 function KeepAwakeSetOf(Data: TJSONData): TKeepAwakeSet;
 function KeepAwakeSetToJSON(const S: TKeepAwakeSet): TJSONData;
+function KeyCodeOf(Data: TJSONData): TKeyCode;
+function KeyCodeSetOf(Data: TJSONData): TKeyCodeSet;
+function KeyCodeSetToJSON(const S: TKeyCodeSet): TJSONData;
 function LabelStyleOf(Data: TJSONData): TLabelStyle;
 function LabelStyleSetOf(Data: TJSONData): TLabelStyleSet;
 function LabelStyleSetToJSON(const S: TLabelStyleSet): TJSONData;
@@ -2320,6 +2354,44 @@ begin
 end;
 
 const
+  FormBlendCompositorNames: array[TFormBlendCompositor] of string = ('project', 'direct2d', 'direct3d');
+
+function FormBlendCompositorOf(Data: TJSONData): TFormBlendCompositor;
+var
+  V: TFormBlendCompositor;
+begin
+  Result := Low(TFormBlendCompositor);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TFormBlendCompositor) to High(TFormBlendCompositor) do
+      if FormBlendCompositorNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function FormBlendCompositorSetOf(Data: TJSONData): TFormBlendCompositorSet;
+var
+  I: Integer;
+  V: TFormBlendCompositor;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TFormBlendCompositor) to High(TFormBlendCompositor) do
+      if FormBlendCompositorNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function FormBlendCompositorSetToJSON(const S: TFormBlendCompositorSet): TJSONData;
+var
+  V: TFormBlendCompositor;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TFormBlendCompositor) to High(TFormBlendCompositor) do
+    if V in S then
+      TJSONArray(Result).Add(FormBlendCompositorNames[V]);
+end;
+
+const
   FormOrientationNames: array[TFormOrientation] of string = ('project', 'any', 'portrait', 'landscape', 'sensor_portrait', 'sensor_landscape');
 
 function FormOrientationOf(Data: TJSONData): TFormOrientation;
@@ -2583,6 +2655,44 @@ begin
   for V := Low(TKeepAwake) to High(TKeepAwake) do
     if V in S then
       TJSONArray(Result).Add(KeepAwakeNames[V]);
+end;
+
+const
+  KeyCodeNames: array[TKeyCode] of string = ('Unidentified', 'KeyA', 'KeyB', 'KeyC', 'KeyD', 'KeyE', 'KeyF', 'KeyG', 'KeyH', 'KeyI', 'KeyJ', 'KeyK', 'KeyL', 'KeyM', 'KeyN', 'KeyO', 'KeyP', 'KeyQ', 'KeyR', 'KeyS', 'KeyT', 'KeyU', 'KeyV', 'KeyW', 'KeyX', 'KeyY', 'KeyZ', 'Digit0', 'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Numpad0', 'Numpad1', 'Numpad2', 'Numpad3', 'Numpad4', 'Numpad5', 'Numpad6', 'Numpad7', 'Numpad8', 'Numpad9', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'F13', 'F14', 'F15', 'F16', 'F17', 'F18', 'F19', 'F20', 'F21', 'F22', 'F23', 'F24', 'F25', 'F26', 'F27', 'F28', 'F29', 'F30', 'F31', 'F32', 'F33', 'F34', 'F35', 'Lang1', 'Lang2', 'Lang3', 'Lang4', 'Lang5', 'Backquote', 'Backslash', 'BracketLeft', 'BracketRight', 'Comma', 'Equal', 'IntlBackslash', 'IntlRo', 'IntlYen', 'Minus', 'Period', 'Quote', 'Semicolon', 'Slash', 'AltLeft', 'AltRight', 'Backspace', 'CapsLock', 'ContextMenu', 'ControlLeft', 'ControlRight', 'Enter', 'MetaLeft', 'MetaRight', 'ShiftLeft', 'ShiftRight', 'Space', 'Tab', 'Convert', 'KanaMode', 'NonConvert', 'Delete', 'End', 'Help', 'Home', 'Insert', 'PageDown', 'PageUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'NumLock', 'NumpadAdd', 'NumpadComma', 'NumpadDecimal', 'NumpadDivide', 'NumpadEnter', 'NumpadEqual', 'NumpadMultiply', 'NumpadSubtract', 'Escape', 'Fn', 'PrintScreen', 'ScrollLock', 'Pause', 'AudioVolumeDown', 'AudioVolumeMute', 'AudioVolumeUp', 'MediaPlayPause', 'MediaSelect', 'MediaStop', 'MediaTrackNext', 'MediaTrackPrevious', 'BrowserBack', 'BrowserFavorites', 'BrowserForward', 'BrowserHome', 'BrowserRefresh', 'BrowserSearch', 'BrowserStop', 'LaunchApp1', 'LaunchApp2', 'LaunchMail', 'Power', 'Sleep', 'WakeUp', 'NumpadBackspace', 'NumpadClear', 'NumpadClearEntry', 'NumpadHash', 'NumpadMemoryAdd', 'NumpadMemoryClear', 'NumpadMemoryRecall', 'NumpadMemoryStore', 'NumpadMemorySubtract', 'NumpadParenLeft', 'NumpadParenRight', 'NumpadStar', 'FnLock', 'Hiragana', 'Katakana', 'Again', 'Copy', 'Cut', 'Find', 'Open', 'Paste', 'Props', 'Select', 'Undo', 'Resume', 'Suspend');
+
+function KeyCodeOf(Data: TJSONData): TKeyCode;
+var
+  V: TKeyCode;
+begin
+  Result := Low(TKeyCode);
+  if (Data <> nil) and (Data.JSONType = jtString) then
+    for V := Low(TKeyCode) to High(TKeyCode) do
+      if KeyCodeNames[V] = Data.AsString then
+        Exit(V);
+end;
+
+function KeyCodeSetOf(Data: TJSONData): TKeyCodeSet;
+var
+  I: Integer;
+  V: TKeyCode;
+begin
+  Result := [];
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    Exit;
+  for I := 0 to TJSONArray(Data).Count - 1 do
+    for V := Low(TKeyCode) to High(TKeyCode) do
+      if KeyCodeNames[V] = TJSONArray(Data).Strings[I] then
+        Include(Result, V);
+end;
+
+function KeyCodeSetToJSON(const S: TKeyCodeSet): TJSONData;
+var
+  V: TKeyCode;
+begin
+  Result := TJSONArray.Create;
+  for V := Low(TKeyCode) to High(TKeyCode) do
+    if V in S then
+      TJSONArray(Result).Add(KeyCodeNames[V]);
 end;
 
 const
@@ -3246,6 +3356,9 @@ begin
   Result.Meta := O.Get('meta', False);
   Result.CapsLock := O.Get('caps_lock', False);
   Result.NumLock := O.Get('num_lock', False);
+  Result.ScrollLock := O.Get('scroll_lock', False);
+  Result.Code := KeyCodeOf(O.Find('code'));
+  Result.Scancode := O.Get('scancode', Int64(0));
   Result.Form := O.Get('form', '');
   Result.FormId := O.Get('form_id', Int64(0));
 end;
@@ -3260,6 +3373,9 @@ begin
   Result.Add('meta', R.Meta);
   Result.Add('caps_lock', R.CapsLock);
   Result.Add('num_lock', R.NumLock);
+  Result.Add('scroll_lock', R.ScrollLock);
+  Result.Add('code', KeyCodeNames[R.Code]);
+  Result.Add('scancode', R.Scancode);
   Result.Add('form', R.Form);
   Result.Add('form_id', R.FormId);
 end;
@@ -5022,6 +5138,16 @@ begin
   SetProp('present', TJSONString.Create(FormPresentNames[Value]));
 end;
 
+function TForm.GetBlendCompositor: TFormBlendCompositor;
+begin
+  Result := FormBlendCompositorOf(GetProp('blend_compositor'));
+end;
+
+procedure TForm.SetBlendCompositor(Value: TFormBlendCompositor);
+begin
+  SetProp('blend_compositor', TJSONString.Create(FormBlendCompositorNames[Value]));
+end;
+
 function TForm.GetSpanMonitors: Boolean;
 begin
   Result := GetProp('span_monitors').AsBoolean;
@@ -5250,6 +5376,26 @@ end;
 procedure TForm.SetOnTopmostLost(Value: string);
 begin
   SetProp('on_topmost_lost', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnScaleChange: string;
+begin
+  Result := AsText(GetProp('on_scale_change'));
+end;
+
+procedure TForm.SetOnScaleChange(Value: string);
+begin
+  SetProp('on_scale_change', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnResizeEnd: string;
+begin
+  Result := AsText(GetProp('on_resize_end'));
+end;
+
+procedure TForm.SetOnResizeEnd(Value: string);
+begin
+  SetProp('on_resize_end', TJSONString.Create(Value));
 end;
 
 function TForm.GetClientWidth: Double;
@@ -6120,6 +6266,26 @@ end;
 procedure TForm.RequestAttention(ACritical: Boolean);
 begin
   Aylis.Send('invoke', TJSONObject.Create(['target', Id, 'method', 'request_attention', 'args', TJSONArray.Create([ACritical])]));
+end;
+
+procedure TForm.BringToFront;
+begin
+  Aylis.Send('invoke', TJSONObject.Create(['target', Id, 'method', 'bring_to_front', 'args', TJSONArray.Create]));
+end;
+
+procedure TForm.SetActivationToken(AToken: string);
+begin
+  Aylis.Send('invoke', TJSONObject.Create(['target', Id, 'method', 'set_activation_token', 'args', TJSONArray.Create([AToken])]));
+end;
+
+function TForm.WindowScale: Double;
+begin
+  Result := Aylis.Call('invoke', TJSONObject.Create(['target', Id, 'method', 'window_scale', 'args', TJSONArray.Create])).AsFloat;
+end;
+
+function TForm.PointerOver: Boolean;
+begin
+  Result := Aylis.Call('invoke', TJSONObject.Create(['target', Id, 'method', 'pointer_over', 'args', TJSONArray.Create])).AsBoolean;
 end;
 
 procedure TForm.Place(AMonitor: Int64; AX: Int64; AY: Int64; AWidth: Int64; AHeight: Int64; AActivate: Boolean);

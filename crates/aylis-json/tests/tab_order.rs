@@ -39,7 +39,7 @@ fn tab_follows_the_form_list_across_levels_and_starts_at_active_control() {
     // os que faltam, na ordem da árvore.
     assert_eq!(names(&ui), ["edtCidade", "edtNome", "edtEmail", "btnSalvar"]);
     let tab = KeyEvent { key: Key::Tab, ..Default::default() };
-    let back = KeyEvent { key: Key::Tab, modifiers: Modifiers { shift: true, ..Default::default() }, repeat: false, form: None };
+    let back = KeyEvent { key: Key::Tab, modifiers: Modifiers { shift: true, ..Default::default() }, ..Default::default() };
     ui.key_down(form, tab);
     assert_eq!(name(&ui, ui.focused(form)), "btnSalvar");
     ui.key_down(form, tab);

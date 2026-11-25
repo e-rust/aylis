@@ -70,12 +70,9 @@ func apertar(app *aylis.Aylis, texto string) {
 	}
 }
 
-func (f FrmCalculadora) form_key_down(app *aylis.Aylis, ev aylis.Event) {
-	args, _ := ev.Args.(map[string]any)
-	tecla, _ := args["key"].(string)
-	ctrl, _ := args["ctrl"].(bool)
-	shift, _ := args["shift"].(bool)
-	switch botao := BotaoDoTeclado(tecla, ctrl, shift); botao {
+func (f FrmCalculadora) form_key_down(app *aylis.Aylis, sender aylisForm, value KeyEvent) {
+	// app.Reply("key", "") engoliria a tecla.
+	switch botao := BotaoDoTeclado(value.Key, value.Ctrl, value.Shift); botao {
 	case "historico":
 		f.historico_click(app, frmCalculadora.btnHistorico)
 	case "":

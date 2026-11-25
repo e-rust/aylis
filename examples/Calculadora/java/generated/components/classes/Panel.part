@@ -53,6 +53,38 @@
             setProp("gap", value);
         }
 
+        public Aylis.Color getHoverFill() {
+            return Aylis.Color.fromJson(getProp("hover_fill"));
+        }
+
+        public void setHoverFill(Aylis.Color value) {
+            setProp("hover_fill", value.toJson());
+        }
+
+        public Aylis.Color getPressedFill() {
+            return Aylis.Color.fromJson(getProp("pressed_fill"));
+        }
+
+        public void setPressedFill(Aylis.Color value) {
+            setProp("pressed_fill", value.toJson());
+        }
+
+        public boolean isInteractive() {
+            return asBool(getProp("interactive"));
+        }
+
+        public void setInteractive(boolean value) {
+            setProp("interactive", value);
+        }
+
+        public Aylis.Color getSelectedFill() {
+            return Aylis.Color.fromJson(getProp("selected_fill"));
+        }
+
+        public void setSelectedFill(Aylis.Color value) {
+            setProp("selected_fill", value.toJson());
+        }
+
         public Aylis.Color getFill() {
             return Aylis.Color.fromJson(getProp("fill"));
         }
@@ -115,6 +147,14 @@
 
         public void setStrokeWidth(double value) {
             setProp("stroke_width", value);
+        }
+
+        public java.util.List<Double> getStrokeDash() {
+            return asNumbers(getProp("stroke_dash"));
+        }
+
+        public void setStrokeDash(java.util.List<Double> value) {
+            setProp("stroke_dash", listText(value));
         }
 
         public Aylis.Bounds getRadius() {

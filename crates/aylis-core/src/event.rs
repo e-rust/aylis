@@ -21,6 +21,9 @@ pub struct Modifiers {
     pub caps_lock: bool,
     /// O Num Lock ligado (como o `caps_lock`; no macOS, sempre `false`).
     pub num_lock: bool,
+    /// O Scroll Lock ligado (como o `num_lock`; no Wayland sem o XWayland, sempre `false`).
+    /// Fora de um evento: [`Ui::lock_keys`](crate::Ui::lock_keys).
+    pub scroll_lock: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -74,10 +77,24 @@ pub struct ClickPointer {
 }
 
 /// Roda do mouse ou rolagem do touchpad.
+///
+/// O sinal do `delta` é o mesmo em todos os sistemas: **positivo = para cima** (`y`) **e para a
+/// esquerda** (`x`), a roda girada para longe de quem usa (o conteúdo de cima aparece). Para rolar
+/// uma lista, `scroll_y -= delta.y`.
+///
+/// As unidades:
+/// - com `lines: true` (uma roda com dentes, e a roda do mouse no navegador), cada dente vale o
+///   passo do app, [`ScrollOptions::wheel_step`](crate::ScrollOptions) (padrão [`WHEEL_LINE`] =
+///   100 pontos lógicos), **já multiplicado**: um dente para cima é `delta.y == 100.0`. Para
+///   contar dentes, `delta.y / ui.scroll_options().wheel_step`;
+/// - com `lines: false` (o touchpad, a roda sem dentes), os pixels do gesto em unidades
+///   lógicas, direto, sem o passo.
+///
+/// O handler tipado de outra linguagem recebe o mesmo valor em `dx`/`dy`.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct WheelEvent {
     pub position: PointF,
-    /// Deslocamento em unidades lógicas.
+    /// Deslocamento em unidades lógicas (positivo = para cima / para a esquerda; veja o tipo).
     pub delta: PointF,
     pub modifiers: Modifiers,
     /// Veio de um dedo arrastando (ou da inércia depois dele): o conteúdo deve acompanhar
@@ -207,6 +224,13 @@ pub struct KeyEvent {
     pub modifiers: Modifiers,
     /// Repetição automática por tecla mantida pressionada.
     pub repeat: bool,
+    /// A tecla física, independente do layout: o que repassa o teclado a outra máquina usa
+    /// esta, não o `key` (o caractere não diz a tecla). `Unidentified` no evento sintético.
+    pub code: crate::keycode::KeyCode,
+    /// O código nativo da tecla no sistema: no Windows, o scancode do conjunto 1 (`0xE0__` nas
+    /// estendidas); no Linux, o do evdev; no macOS, o `kVK_`. `0` onde o sistema não dá (web,
+    /// Android, iOS) e no evento sintético.
+    pub scancode: u32,
     /// O form (a janela) em que a tecla chegou: o form raiz, nunca um popup dele. O núcleo
     /// preenche ao receber a tecla ([`Ui::key_down`](crate::Ui::key_down)); quem cria o evento
     /// deixa `None`. Os atalhos do `ApplicationEvents` sabem a janela por aqui.

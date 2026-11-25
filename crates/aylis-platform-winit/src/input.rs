@@ -1,13 +1,13 @@
 //! Tradução dos eventos do winit para os tipos do aylis.
 
-use aylis_core::{CursorShape, Key, KeyEvent, Modifiers, PointerButton};
+use aylis_core::{CursorShape, Key, KeyCode, KeyEvent, Modifiers, PointerButton};
 use winit::event::{ElementState, MouseButton};
-use winit::keyboard::{Key as WinitKey, ModifiersState, NamedKey};
+use winit::keyboard::{Key as WinitKey, ModifiersState, NamedKey, PhysicalKey};
 use winit::window::CursorIcon;
 
 pub(crate) fn modifiers(state: ModifiersState) -> Modifiers {
-    let (caps_lock, num_lock) = crate::desktop::lock_keys();
-    Modifiers { shift: state.shift_key(), ctrl: state.control_key(), alt: state.alt_key(), meta: state.super_key(), caps_lock, num_lock }
+    let aylis_core::LockKeys { caps_lock, num_lock, scroll_lock } = crate::desktop::lock_keys();
+    Modifiers { shift: state.shift_key(), ctrl: state.control_key(), alt: state.alt_key(), meta: state.super_key(), caps_lock, num_lock, scroll_lock }
 }
 
 pub(crate) fn button(button: MouseButton) -> Option<PointerButton> {
@@ -22,10 +22,33 @@ pub(crate) fn button(button: MouseButton) -> Option<PointerButton> {
 }
 
 pub(crate) fn key_event(event: &winit::event::KeyEvent, modifiers: Modifiers) -> KeyEvent {
-    // O Caps Lock e o Num Lock de agora: a tecla que os troca não muda os modificadores do winit.
-    let (caps_lock, num_lock) = crate::desktop::lock_keys();
-    let modifiers = Modifiers { caps_lock, num_lock, ..modifiers };
-    KeyEvent { key: key(&event.logical_key), modifiers, repeat: event.repeat, form: None }
+    // As travas de agora: a tecla que as troca não muda os modificadores do winit.
+    let aylis_core::LockKeys { caps_lock, num_lock, scroll_lock } = crate::desktop::lock_keys();
+    let modifiers = Modifiers { caps_lock, num_lock, scroll_lock, ..modifiers };
+    KeyEvent { key: key(&event.logical_key), modifiers, repeat: event.repeat, code: code(event.physical_key), scancode: scancode(event.physical_key), form: None }
+}
+
+/// A tecla física. Os nomes do `KeyCode` do winit são os do `code` do DOM (a web traduz o
+/// `KeyboardEvent.code`; o Android, o keycode do sistema), menos `SuperLeft`/`SuperRight`, que o
+/// `KeyCode::from_name` aceita.
+fn code(physical: PhysicalKey) -> KeyCode {
+    match physical {
+        PhysicalKey::Code(code) => KeyCode::from_name(&format!("{code:?}")).unwrap_or_default(),
+        PhysicalKey::Unidentified(_) => KeyCode::Unidentified,
+    }
+}
+
+/// O código nativo (scancode do Windows, evdev do Linux, `kVK_` do macOS).
+#[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux", target_os = "freebsd", target_os = "dragonfly", target_os = "netbsd", target_os = "openbsd"))]
+fn scancode(physical: PhysicalKey) -> u32 {
+    use winit::platform::scancode::PhysicalKeyExtScancode;
+    physical.to_scancode().unwrap_or(0)
+}
+
+/// Web, Android e iOS: o sistema não dá o código nativo.
+#[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux", target_os = "freebsd", target_os = "dragonfly", target_os = "netbsd", target_os = "openbsd")))]
+fn scancode(_: PhysicalKey) -> u32 {
+    0
 }
 
 pub(crate) fn is_pressed(event: &winit::event::KeyEvent) -> bool {

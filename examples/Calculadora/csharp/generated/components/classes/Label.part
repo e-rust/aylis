@@ -17,6 +17,7 @@
         public double OutlineWidth { get => Number(GetProp("outline_width")); set => SetProp("outline_width", value); }
         public double LineHeight { get => Number(GetProp("line_height")); set => SetProp("line_height", value); }
         public Shadow? TextShadow { get => Shadow.FromJson(GetProp("text_shadow")); set => SetProp("text_shadow", (value?.ToJson() ?? "")); }
+        public long MaxLines { get => (long)Number(GetProp("max_lines")); set => SetProp("max_lines", value); }
         public AylisComponent? FocusControl { get => GetRef("focus_control"); set => SetRef("focus_control", value); }
         public double Left { get => Number(GetProp("left")); set => SetProp("left", value); }
         public double Top { get => Number(GetProp("top")); set => SetProp("top", value); }

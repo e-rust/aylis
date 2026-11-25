@@ -109,6 +109,12 @@ impl Label {
     pub fn set_text_shadow(self, ui: &mut Ui, value: Option<aylis::prelude::Shadow>) {
         handles::write(ui, self.id, "text_shadow", handles::shadow_value(value))
     }
+    pub fn max_lines(self, ui: &Ui) -> i64 {
+        handles::read(ui, self.id, "max_lines").and_then(|v| v.to_i64().ok()).unwrap_or_default()
+    }
+    pub fn set_max_lines(self, ui: &mut Ui, value: i64) {
+        handles::write(ui, self.id, "max_lines", value)
+    }
     pub fn focus_control(self, ui: &Ui) -> Option<ComponentId> {
         handles::read_ref(ui, self.id, "focus_control")
     }
@@ -451,10 +457,10 @@ impl Label {
     pub fn set_font_size(self, ui: &mut Ui, value: f64) {
         handles::write(ui, self.id, "font_size", value)
     }
-    pub fn font_weight(self, ui: &Ui) -> FontWeight {
-        handles::read_enum::<FontWeight>(ui, self.id, "font_weight")
+    pub fn font_weight(self, ui: &Ui) -> Option<aylis::prelude::FontWeight> {
+        handles::read_enum::<Option<aylis::prelude::FontWeight>>(ui, self.id, "font_weight")
     }
-    pub fn set_font_weight(self, ui: &mut Ui, value: FontWeight) {
+    pub fn set_font_weight(self, ui: &mut Ui, value: Option<aylis::prelude::FontWeight>) {
         handles::write(ui, self.id, "font_weight", PropValue::enum_value(value))
     }
     pub fn font_italic(self, ui: &Ui) -> bool {

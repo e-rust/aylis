@@ -57,7 +57,47 @@ impl Component for FrameView {
         canvas.save();
         canvas.clip_rect(r);
         let dest = RectF::new(r.x + dest.x + self.shift.x, r.y + dest.y + self.shift.y, dest.width, dest.height);
+        let dest = pixel_aligned(dest, canvas.device_scale(), size);
         canvas.draw_image(image, RectF::new(0.0, 0.0, size.width, size.height), dest, 1.0);
         canvas.restore();
+    }
+}
+
+/// O retângulo do quadro nos pixels da tela (`scale`: pixels por unidade, o
+/// `Canvas::device_scale`): o canto cai num pixel inteiro e, quando o quadro tem o tamanho do
+/// retângulo em pixels (o decodificador escalou para a tela, `largura = pixels / escala`), o
+/// tamanho fica exato. Assim o quadro sai pixel a pixel, sem o borrão da interpolação, com
+/// qualquer escala (1,25, 1,5, a fracionária do Wayland). Supõe o deslocamento da janela em
+/// pixels inteiros, como a pintura do núcleo faz.
+fn pixel_aligned(dest: RectF, scale: f32, image: SizeF) -> RectF {
+    if !(scale.is_finite() && scale > 0.0) {
+        return dest;
+    }
+    let snap = |v: f32| (v * scale).round() / scale;
+    let (x, y) = (snap(dest.x), snap(dest.y));
+    // O tamanho em pixels a menos de meio pixel do da imagem: é 1:1.
+    let side = |start: f32, len: f32, pixels: f32| {
+        if pixels > 0.0 && (len * scale - pixels).abs() < 0.5 { pixels / scale } else { snap(start + len) - snap(start) }
+    };
+    RectF::new(x, y, side(dest.x, dest.width, image.width), side(dest.y, dest.height, image.height))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Com a escala 1,5, o quadro de 1920 × 1080 num retângulo de 1280 × 720 fica com o canto
+    /// num pixel inteiro e exatamente 1920 × 1080 pixels; um retângulo de outro tamanho só tem
+    /// as bordas alinhadas.
+    #[test]
+    fn the_frame_lands_on_whole_device_pixels() {
+        let image = SizeF::new(1920.0, 1080.0);
+        let r = pixel_aligned(RectF::new(10.3, 5.1, 1280.2, 719.9), 1.5, image);
+        assert_eq!(((r.x * 1.5).round(), (r.y * 1.5).round()), (15.0, 8.0));
+        assert!((r.x * 1.5 - 15.0).abs() < 1e-3 && (r.y * 1.5 - 8.0).abs() < 1e-3);
+        assert!((r.width * 1.5 - 1920.0).abs() < 1e-3 && (r.height * 1.5 - 1080.0).abs() < 1e-3);
+        let r = pixel_aligned(RectF::new(0.0, 0.0, 333.3, 100.0), 1.25, image);
+        assert!((r.width * 1.25 - (333.3f32 * 1.25).round()).abs() < 1e-3);
+        assert_eq!(pixel_aligned(RectF::new(1.0, 2.0, 3.0, 4.0), 0.0, image), RectF::new(1.0, 2.0, 3.0, 4.0));
     }
 }

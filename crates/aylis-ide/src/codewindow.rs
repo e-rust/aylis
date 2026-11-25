@@ -1519,7 +1519,7 @@ fn send_ctrl_key(ui: &mut Ui, key: char) {
     ui.set_focus(memo);
     let modifiers = aylis_core::Modifiers { ctrl: true, ..Default::default() };
     let root = ui.root_of(memo);
-    ui.key_down(root, aylis_core::KeyEvent { key: aylis_core::Key::Char(key), modifiers, repeat: false, form: None });
+    ui.key_down(root, aylis_core::KeyEvent { key: aylis_core::Key::Char(key), modifiers, ..Default::default() });
     SENDING_KEY.with(|s| s.set(false));
     ui.request_repaint();
 }
@@ -2149,6 +2149,13 @@ pub fn open_files(ui: &Ui) -> Vec<(PathBuf, String)> {
 }
 
 /// O editor da aba do arquivo.
+/// Põe o foco no editor do arquivo aberto (a volta da visão formatada de um Markdown).
+pub fn focus_file(ui: &mut Ui, file: &Path) {
+    if let Some(memo) = memo_of(ui, file) {
+        ui.set_focus(memo);
+    }
+}
+
 fn memo_of(ui: &Ui, file: &Path) -> Option<ComponentId> {
     let key = crate::debugger::norm(file);
     with_editors(ui, |list| list.iter().find_map(|ed| ed.tabs.iter().find(|t| t.file == key).map(|t| t.memo))).flatten()

@@ -133,6 +133,13 @@ impl WebView {
         }
     }
 
+    /// O endereço a abrir: vazio quando o `url` é só o marcador `https://` com que o controle
+    /// nasce (o form com `html` e sem `url`). Navegar para ele falhava no WebView2
+    /// (`0x80070057`) e a página não abria.
+    fn page_url(&self) -> &str {
+        if self.url == "https://" { "" } else { &self.url }
+    }
+
     /// A URL de quem mandou a última mensagem (leia dentro do `on_message`).
     pub fn message_url(&self) -> String {
         self.message_url.clone()
@@ -146,7 +153,7 @@ impl WebView {
         let allowed = list(&self.allowed_origins);
         let origin = url_origin(url);
         if allowed.is_empty() {
-            let page = if self.url.is_empty() || self.url == "https://" { String::new() } else { url_origin(&self.url) };
+            let page = if self.page_url().is_empty() { String::new() } else { url_origin(self.page_url()) };
             return if page.is_empty() { url.is_empty() || url.starts_with("about:") || url.starts_with("data:") || origin == "null" } else { origin == page };
         }
         allowed.iter().any(|a| url_origin(a) == origin)
@@ -154,7 +161,7 @@ impl WebView {
 
     /// O que aparece por baixo (designer, plataforma sem navegador, página carregando).
     fn caption(&self) -> String {
-        if !self.url.is_empty() && self.url != "https://" {
+        if !self.page_url().is_empty() {
             self.url.clone()
         } else if !self.html.is_empty() {
             "(HTML)".into()
@@ -290,6 +297,25 @@ mod tests {
         assert!(ui.native_views(form).is_empty(), "o designer não abre navegador");
     }
 
+    /// O form com `html` e sem `url`: o controle nasce com o marcador `https://`, e a vista
+    /// nativa recebe o endereço vazio (abre o `html`), não o marcador.
+    #[test]
+    fn the_html_page_does_not_navigate_to_the_url_placeholder() {
+        let mut ui = Ui::new();
+        aylis_controls::register(&mut ui);
+        register(&mut ui);
+        let form = ui.add_root(Form::new("f", 400.0, 300.0));
+        let w = ui.create("WebView", Some(form)).unwrap();
+        assert_eq!(ui.get_prop(w, "url").unwrap().to_str().unwrap(), "https://", "o marcador do designer");
+        ui.set_prop(w, "html", "<h1>oi</h1>").unwrap();
+        let slots = ui.native_views(form);
+        let NativeView::Web { url, html, .. } = &slots[0].view;
+        assert_eq!((url.as_str(), html.as_str()), ("", "<h1>oi</h1>"));
+        ui.set_prop(w, "url", "https://exemplo.com").unwrap();
+        let NativeView::Web { url, .. } = &ui.native_views(form)[0].view;
+        assert_eq!(url, "https://exemplo.com");
+    }
+
     #[test]
     fn only_allowed_origins_reach_on_message() {
         use std::cell::RefCell;
@@ -333,7 +359,7 @@ mod tests {
 impl aylis_core::PlatformHooks for WebView {
     fn native_view(&self) -> Option<NativeView> {
         Some(NativeView::Web {
-            url: self.url.clone(),
+            url: self.page_url().to_string(),
             html: self.html.clone(),
             generation: self.generation,
             navigation: list(&self.allowed_navigation),

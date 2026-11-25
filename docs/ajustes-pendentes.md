@@ -13,6 +13,313 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Ajustes de 24/11/2026: a janela de vídeo igual no Windows e no Linux**
+
+As decisões, item a item, estão no histórico (seção 19). Cada sessão acrescenta o seu bloco.
+
+*O `on_key_down` tipado e os defeitos do caminho.* Feito:
+- **O `on_key_down` gerado recebe o `KeyEvent` tipado**, como o `on_key_up`, e continua
+  pergunta: o núcleo declara o tipo (`event_arg(Key)`, também no `ApplicationEvents`), e o
+  catálogo marca pergunta com tipo como `"question:key;event:key"`. Em Rust o esqueleto é
+  `fn h(&mut self, ui: &mut Ui, sender: Form, value: KeyEvent) -> Result<(), String>` (o `Err`
+  recusa; `ui.suppress_key()` engole). Nas outras linguagens o handler tipado recebe o registro
+  `KeyEvent` e responde pelo `reply` novo dos clientes (`aylis.reply("key", "")` em Python,
+  TypeScript e Java; `Reply` em C# e Go; `app.reply` em C++; o Pascal já tinha o
+  `Aylis.Reply`). O handler de antes (o `args: &EventArgs`, o evento inteiro) continua sendo
+  chamado como antes. `GENERATOR_VERSION` 35; a Calculadora passou para a assinatura nova nas 8
+  linguagens; `docs/threads.md` explica.
+  **Para as notas da versão:** "o `on_key_down` gerado recebe o `KeyEvent` tipado: troque
+  `args: &EventArgs` por `sender: Form, value: KeyEvent` (a tecla em `value.key`, sem o
+  `let EventArgs::Key(k) = args`); o handler continua devolvendo `Result<(), String>`. O de antes
+  ainda compila e é chamado. Nas outras linguagens, o handler novo recebe o registro `KeyEvent`
+  e responde com `aylis.reply("key", "")`."
+- **O clippy nos gerados:** o `#![allow]` do código gerado tem o `clippy::too_many_arguments`
+  (o `place` do Form tem 8 parâmetros).
+- **As aspas no `set_property` do MCP:** o evento aceita o nome em JSON (`"\"btn_click\""`) e o
+  texto puro; vazio e `null` desligam. Teste: `the_event_handler_comes_as_json_or_as_plain_text`.
+- **A roda documentada:** o `WheelEvent` diz o sinal (positivo = para cima/esquerda) e as
+  unidades (com `lines`, o `wheel_step` já multiplicado; sem, os pixels lógicos do touchpad),
+  também em `docs/funcionamento.md`.
+- **O clipboard no Wayland:** o `arboard` com o `wayland-data-control`. `cargo deny` passa; 8
+  pacotes novos, só no Linux (`wl-clipboard-rs`, `tree_magic_mini`, `petgraph`, `nom` 8, um
+  segundo `hashbrown`...). Tamanho, medido num programa só com o arboard no WSL (release,
+  sem símbolos): 1,85 MB → 2,47 MB (+~600 KB no Linux). No WSLg o compositor não tem o
+  protocolo e o arboard cai no X11, lendo certo; o caminho Wayland fica para o Linux real
+  (testes-em-dispositivos).
+
+Conferência: roteiro, item 192. O catálogo regravado (`resources/components.json`) também
+levou as classes novas das outras sessões que já estavam no registro (os métodos da janela, o
+cursor, o `LockKeys`).
+
+*O teclado, o cursor e as travas.* Feito:
+- **O `KeyboardCapture`** (componente não visual novo, família `aylis-controls-device`, categoria
+  System): com `active` (desligado por padrão), as teclas do sistema (Windows/Super, Alt+Tab,
+  Alt+Esc, Ctrl+Esc, Ctrl+Shift+Esc, Alt+Espaço, PrintScreen e, com `alt_f4`, o Alt+F4) vão
+  para a janela do form dele enquanto ela está em primeiro plano, pelos `on_key_down`/`on_key_up`
+  de sempre; ao perder o foco, desligar ou liberar, solta. `on_capture_change` (preso/solto) e
+  `is_capturing()`; no designer nunca prende. O núcleo guarda os pedidos
+  (`ui.set_keyboard_capture`, `ui.keyboard_capture(form)`) e a plataforma prende na janela em
+  foco a cada `about_to_wait` (`crates/aylis-platform-winit/src/keyboard_capture.rs`):
+  Windows, o gancho `WH_KEYBOARD_LL` só com a janela em foco, entregando como `WM_KEYDOWN` comum
+  (o Ctrl+Alt+Del e o Win+L ficam com o sistema; com a tecla Windows presa, o
+  `Modifiers.meta` das outras teclas não marca, porque o sistema não a viu: a tecla Windows
+  chega como tecla própria); X11, o `XGrabKeyboard` na conexão do winit; Wayland, o
+  `zwp_keyboard_shortcuts_inhibit_manager_v1` (o `wayland-protocols` ganhou o `unstable`).
+  macOS, celular e web: `available` falso (`CLASS_PLATFORMS`: Windows e Linux). Registros, o
+  catálogo, o rótulo `alt_f4`, o exemplo em `samples.json` e as páginas da documentação.
+- **O cursor a partir de uma imagem:** `ui.set_cursor_image(id, &Image, hot_x, hot_y)` (RGBA ou
+  BGRA, em pixels de tela, até 1024 por lado), `ui.clear_cursor_image(id)`,
+  `ui.cursor_image(form)` (o do controle sob o ponteiro ou do pai, parando no primeiro com
+  `cursor` próprio). Por nome: `Screen.set_cursor_image(component, rgba_base64, width, height,
+  hot_x, hot_y)` e `Screen.clear_cursor_image(component)`. A mesma imagem reaproveita o id, e a
+  plataforma cria o `CustomCursor` uma vez por id no `about_to_wait` (guarda até 64;
+  `cursor_images.rs`).
+- **O Scroll Lock e as travas fora de um evento:** `Modifiers.scroll_lock` (também no protocolo,
+  `"scroll_lock"`, e no registro `KeyEvent` das linguagens), `ui.lock_keys()` → `LockKeys` e o
+  `Screen.lock_keys()`. Windows, `GetKeyState`; X11, a máscara do ponteiro e a luz 3 do
+  `XGetKeyboardControl`; navegador, o `getModifierState` da última tecla; Wayland, o do
+  XWayland quando há `DISPLAY` (o winit não dá as travas do `wl_keyboard`), sem ele desligadas;
+  macOS, só o Caps Lock.
+
+Testes: `crates/aylis-controls/tests/keyboard_capture.rs` (7) e os do gancho
+(`keyboard_capture::win::tests`); `cargo check` do `aylis-platform-winit` no WSL (X11 e Wayland).
+Conferência: roteiro, item 193, e o exemplo `desktop_checks grab`; o Linux real em
+testes-em-dispositivos. **Para as notas da versão:** "`Modifiers` ganhou o campo `scroll_lock`:
+quem monta um `Modifiers { .. }` inteiro precisa dele (ou do `..Default::default()`)."
+
+*A escala, o fim do redimensionamento, o trazer para a frente e o mouse sobre a janela.* Feito
+(`aylis-core/src/form_window.rs`, `aylis-platform-winit/src/window_reports.rs`):
+- **A escala da janela:** `ui.form_scale(form)` (o `Window::scale_factor()` da janela, que no
+  Wayland fracionário pode não ser a do monitor; 1.0 antes de a janela existir, então no
+  `on_show` ainda pode ser 1: leia no `on_window_created`), o evento `on_scale_change` do form
+  (com a escala nova, `f64`) e, por nome, o método `window_scale()` do Form. Os traits
+  `WindowService::scale_factor`/`ScreenService::scale_factor` continuam sem implementação (o `Ui`
+  responde pelo que a plataforma informa).
+- **O `FrameView` nítido com escala ≠ 1:** o quadro vai para pixels inteiros do dispositivo
+  (`Canvas::device_scale`), e com o retângulo do tamanho da imagem em pixels (`largura =
+  pixels / escala`) o tamanho fica exato: 1:1, sem o borrão da interpolação. Supõe o
+  deslocamento da janela em pixels inteiros, como a pintura do núcleo faz. Teste:
+  `frame_view::tests::the_frame_lands_on_whole_device_pixels`.
+- **O `on_resize_end` do form:** no Windows, ao soltar a borda (o `WM_EXITSIZEMOVE` que o docking
+  já capturava); fora dele, e no Windows fora do arrasto (maximizar, encaixar, a largura mudada
+  pelo código), 300 ms sem tamanho novo (`form_window::RESIZE_END_DELAY_MS`), por um
+  `set_timeout` que só existe enquanto o tamanho muda. O tamanho de abrir, o mesmo tamanho e o
+  minimizar não contam. `ui.is_resizing(form)` diz se está no meio.
+- **Trazer para a frente:** `WindowCommand::BringToFront` (por nome, `bring_to_front()` no Form):
+  minimizada, volta; no Windows, o caminho do `force_foreground` (sem precisar da propriedade); no
+  X11, o `focus_window` do winit (`_NET_ACTIVE_WINDOW`); no Wayland, o `xdg_activation_v1.activate`
+  com o token (o `XDG_ACTIVATION_TOKEN` com que o app abriu, uma vez, ou o que o app passa por
+  `ui.set_activation_token`/`set_activation_token(token)`; o winit só usa token ao criar a
+  janela, então a ativação é feita direto no `wl_display` dele) e, sem token ou sem o protocolo,
+  o `request_user_attention` (o compositor marca a janela). O limite está na doc do comando: no
+  Wayland, sem token, nenhum programa toma o foco sozinho. Os crates `wayland-client`,
+  `wayland-backend` e `wayland-protocols` (com `staging`) deixaram de ser só da feature `gpu` no
+  Linux; o winit já os trazia, sem peso a mais.
+- **O mouse sobre a janela:** o `form_at_screen` no X11 (desce da raiz pelo
+  `XTranslateCoordinates`, que dá a filha mapeada de cima, até a janela X do winit de um form) e
+  `ui.pointer_over(form)` (por nome, `pointer_over()`): no Wayland, `None`/`false`, documentado
+  (lá os `on_pointer_enter`/`on_pointer_leave` do form dizem).
+- **O defeito do Wayland com XWayland:** o `cursor_position` (e o `form_at_screen`) devolve `None`
+  quando a sessão é Wayland (`WAYLAND_DISPLAY` ou `XDG_SESSION_TYPE=wayland`), em vez da posição
+  parada que o XWayland conhece.
+
+Conferido: no Windows, o exemplo `window_reports auto` (escala 1,5 neste monitor, o
+`on_resize_end` 300 ms depois da largura mudada pelo código, o `form_at_screen` no centro da
+janela, a janela minimizada que volta pelo `bring_to_front`); no WSL (Ubuntu 22.04, WSLg), pelo
+X11: o form sob o mouse e o `pointer_over` certos e o `on_resize_end`; pelo Wayland: o mouse
+`None`, o `pointer_over` falso e o `bring_to_front` sem erro (o compositor do WSLg não tem o
+`xdg-activation`: caiu no pedido de atenção). Testes: `crates/aylis-controls/tests/form_window.rs`
+(5). Checks de wasm e de Android passam. Falta (testes-em-dispositivos): a ativação pelo token
+num GNOME ou KDE, a escala fracionária do Wayland e a troca de escala entre monitores no Linux.
+
+**Para depois (não feito):** a segunda abertura (`single_instance`) poderia mandar o
+`XDG_ACTIVATION_TOKEN` dela junto com os argumentos, e o `fire_second_instance` usar o
+`BringToFront` com ele: no Wayland, a primeira viria para a frente de verdade. Mexe no canal da
+instância única (outra sessão), por isso ficou de fora.
+
+Conferência: roteiro, item 194.
+
+*O que sobrou da conferência num Ubuntu 26.04 (GNOME 50, só Wayland).* Feito:
+- **Defeito: o tamanho pelo código não mudava a janela no Wayland.** O `request_inner_size` do
+  winit 0.30 no Wayland aplica na hora (o tamanho é do cliente: `set_window_geometry`) e devolve
+  `Some(tamanho)` sem mandar `Resized`; o Aylis descartava o valor e esperava o `Resized`, então
+  a superfície ficava do tamanho de antes. Não era o `configure` voltando a largura. Agora o
+  `window_commands::request_size` diz quando o tamanho foi aplicado, e o `ApplySize`, o `Place`
+  (fora do Windows) e o `auto_size` do form fazem o que o `Resized` faria (`App::window_resized`,
+  o corpo que estava no `lib.rs`, e o `on_resize_end`). Vale também para o macOS, onde o winit
+  faz igual. Reproduzido e conferido no WSLg pelo Wayland (`window_reports -- size`: antes, o
+  form em 900 × 560 e a janela em 640 × 400; depois, os dois em 900 × 560 e em 520 × 560); no
+  X11, igual a antes. Maior que a área livre do monitor, o compositor limita (o form fica com o
+  que coube).
+- **Defeito: o `ui.form_monitor(form)` dava `None` no Wayland.** O Aylis já anotava o
+  `current_monitor()` do winit, mas no Wayland ele só vale depois do `wl_surface.enter`, que
+  vem depois do primeiro quadro: ao criar a janela dava `None`, e só a varredura de 2 s
+  corrigia. Agora, enquanto alguma janela está sem monitor, o `refresh_monitors` confere a cada
+  volta (o `remember_placement` e o `store_placement` usam o mesmo `current_monitor`). No WSLg,
+  o monitor certo já na primeira linha (1 s). No `on_window_created` pode ainda ser `None`
+  (documentado). O `on_monitor_change` citado no relato não existe no Aylis: quem quer saber da
+  troca hoje lê o `form_monitor` (fica como pergunta ao autor, se for o caso de um evento).
+- **A permissão do `KeyboardCapture` no GNOME:** conferido que o GNOME só guarda a resposta de
+  um app que ele liga a um `.desktop` (o `inhibitShortcutsDialog` do gnome-shell não usa o
+  armazém de permissões para janela sem app). Os `.desktop` da publicação para Linux (`.deb`,
+  `.rpm`, AppImage, `menu_shortcut`) já se chamam `<linux_package_id>.desktop`, o mesmo
+  `app_id` que o `aylis::Application` põe na janela; no Flatpak o GNOME usa o id do sandbox.
+  Nada a corrigir ali: a pergunta voltava porque o app rodou sem instalar. Agora o inibidor
+  avisa uma vez no stderr quando não acha o `<app_id>.desktop` nas pastas do XDG (fora do
+  Flatpak). O `app_id` foi para `keyboard_capture::linux_app_id` (a janela usa o mesmo).
+  Documentado no componente e em `docs/funcionamento.md` ("A janela no Linux: Wayland e GNOME").
+- **A área de transferência no GNOME:** documentado (o Mutter não tem o `ext-data-control` nem o
+  `wlr-data-control`; o Wayland direto vale no KDE e no wlroots; o GNOME usa o X11 pelo
+  XWayland). O aviso sai uma vez por execução (o serviço é criado uma vez), pelo crate `log`,
+  e só aparece em app que liga um logger. Não deu para tentar o Wayland só com o protocolo
+  anunciado: o `arboard` 3.7 escolhe pelo `WAYLAND_DISPLAY`, sem construtor só do X11, e tirar
+  a variável do ambiente em execução é `unsafe` (`remove_var`, edição 2024) fora de FFI. O app
+  cala filtrando o alvo `arboard` (escrito em `docs/funcionamento.md`). Se o autor quiser o
+  silêncio pelo Aylis, o caminho é um provedor próprio (o `wl-clipboard-rs` direto, que já vem
+  com o arboard, e o X11 do arboard só sem o protocolo).
+
+Testes: `keyboard_capture::wayland::tests::the_desktop_file_is_found_by_the_app_id` (Linux); o
+`window_reports -- size` no WSLg pelo Wayland e pelo X11. Conferência: roteiro, item 196; o GNOME
+real em testes-em-dispositivos.
+
+**Exemplo de 24/11/2026: vídeos com marca d'água (`examples/MarcaDagua`) e o limite do `VideoPlayer`**
+
+O autor: "um app que reproduza um vídeo e tenha uma marca d'água em cima do vídeo [...] o texto
+deve aparecer as cores invertidas com o fundo", depois "uma grade de players todos eles com um
+vídeo e uma marca d'água própria [...] o limite da máquina" e "prepare a grade para suportar até
+1000 vídeos". Feito só como app, sem mexer no framework: a célula do form (`VideoPlayer` + uma
+`Layout` em `blend_mode: difference` + um `Label` branco, girado, com o texto repetido) é copiada
+com `ui.clone_component`, de 1 a 1000 células (colunas ⌈√n⌉), cada uma com a marca "CÂMERA nn".
+`--grid N` e `--mark TEXTO` abrem direto para medir. Testes: `examples/MarcaDagua/rust/tests/marca.rs`.
+
+Medido em release (Direct2D, RX 9070 XT, 1920 × 1200, `AYLIS_BENCH=150`, o `sample.mp4` de
+41 KB em todas as células):
+
+| Vídeos | Média | p95 | Memória privada |
+|---|---|---|---|
+| 1 | 5,8 ms | 6,4 ms | 202 MB |
+| 16 | 25,9 ms | 48,9 ms | 561 MB |
+| 100 | 228,6 ms | 582,8 ms | 2724 MB |
+| 256 | 2314 ms | 3107 ms | 6162 MB |
+
+O custo é do `VideoPlayer`, não da marca: 100 vídeos sem a marca (`--mark ""`) deram o mesmo ou
+pior, e `frames_ahead: 1` não mudou a memória. Cada player abre o próprio decodificador (thread +
+Media Foundation), ~22 MB e alguns ms de quadro cada; 400, 625 e 1000 não foram rodados (≈9 GB,
+14 GB e 22 GB, com 9 GB livres na máquina). **Pergunta ao autor:** vale atacar no `aylis-media`
+(um decodificador por arquivo dividido entre os players que tocam o mesmo vídeo, e/ou a placa e
+o decodificador compartilhados entre players), para a grade de 1000 caber?
+
+Depois, o autor: "eu queria forçar o 3D da placa para ver o consumo do texto invertido". O app
+ganhou "Vídeo" (desmarcado: uma imagem fixa em cada célula, sem decodificador) e "Mover" (a
+marca desliza por uma `FloatAnimation`, refazendo a camada `difference` de todas as células a
+cada quadro); `--still`, `--move` e `--blend normal` na linha de comando. Medido em release, sem
+vídeo, 1920 × 1200, com o uso do 3D da placa pelos contadores "GPU Engine" do processo:
+
+| Células | Inverter (`difference`) | Marca `normal` | Sem marca (parada) | 3D da placa |
+|---|---|---|---|---|
+| 1 | 6,4 ms | 5,6 ms | 1,4 ms | ~0% |
+| 16 | 14,6 ms | 5,9 ms | 9,2 ms | 0–4% |
+| 100 | 55,9 ms | 15,8 ms | 16,0 ms | 5–19% |
+| 256 | 115,6 ms | 16,7 ms | 39,2 ms | 7–21% |
+| 1000 | 1544 ms | 1106 ms | 1011 ms | 1–4% |
+
+A placa não chega perto do limite: o gargalo é a CPU (o processo fica em ~100% de um núcleo).
+Dois custos do framework apareceram: (1) no Direct2D, cada camada com `blend_mode` cria um alvo
+fora da tela novo por quadro (`open_offscreen` → `CreateCompatibleRenderTarget`), ~0,4 ms por
+célula (100 células: 56 ms contra 16 ms em `normal`); um conjunto de alvos reaproveitados por
+tamanho deve cortar isso; (2) com 1000 células, ~1 ms de CPU por célula por quadro mesmo sem a
+marca (layout e pintura numa thread só). **Pergunta ao autor:** atacar os dois?
+
+O autor escolheu primeiro o ajuste do Direct2D e depois um compositor em Direct3D, podendo
+escolher qual usar. **Feito o ajuste do Direct2D** (`crates/aylis-d2d`, `BlendPool` no
+`DeviceCache`): os alvos fora da tela e os bitmaps do fundo são reaproveitados por tamanho, e
+os efeitos Blend e Opacity, pelo contexto. O alvo devolvido só volta a servir depois de um
+`Flush` do alvo principal (o desenho que lê o bitmap dele ainda está na fila da placa). Medido
+por fase (256 células): abrir a camada caiu de 53 para 5 µs; criar o fundo, de 20 para 0;
+efeitos, de 6 para 1. Sobram fechar a camada (~42 µs, com o próprio texto) e o `Flush` antes
+de copiar o fundo (~30 µs), que qualquer mistura com o fundo exige, inclusive pelo Direct3D.
+Quadro, sem vídeo, com a marca deslizando:
+
+| Células | Inverter antes | Inverter agora | Marca `normal` |
+|---|---|---|---|
+| 16 | 14,6 ms | 7,0 ms | 6,0 ms |
+| 100 | 55,9 ms | 23,2 ms | 15,8 ms |
+| 256 | 115,6 ms | 39,2 ms | 20,1 ms |
+| 1000 | 1544 ms | 1189 ms | 1101 ms |
+
+Teste novo: `many_blended_layers_in_a_row_keep_each_its_own_background`
+(`crates/aylis/tests/blend.rs`, 48 camadas seguidas, Skia × Direct2D). Sem janela o Direct2D
+desenha num bitmap da CPU, então a fila da placa foi conferida na janela de verdade (captura
+da tela com 16 e 64 células: cada uma com o negativo do próprio fundo). Com 1000 células, o
+custo agora é a CPU por célula, igual com ou sem inversão.
+
+**Feito o compositor em Direct3D e a chave para escolher.** O autor: "pode seguir com o
+Direct3D e a chave de escolha, pois no futuro em apps que precisarem de controle total, deve ter
+disponível". O que entrou:
+- `crates/aylis-d2d/src/compositor.rs` e `blend.hlsl`: a camada continua desenhada pelo
+  Direct2D; a cópia do fundo (`CopySubresourceRegion`) e a mistura passam a ser do Aylis, num
+  shader com as fórmulas do W3C nos 16 modos (as do Skia e do navegador), compilado uma vez pelo
+  `D3DCompile` do Windows. O recorte retangular vira o *scissor*; recorte arredondado, camada de
+  opacidade aberta e alvo na CPU ficam com o efeito do Direct2D.
+- A chave `blend_compositor` (`direct2d`, o padrão, ou `direct3d`) em três níveis, como o
+  `frame_reuse_kb`: no `.aylisproj`, a propriedade do `Form` (`project`, `direct2d`,
+  `direct3d`) e o `RenderSettings` em execução; `AYLIS_BLEND_COMPOSITOR` para medir. Os enums
+  `BlendCompositor` e `FormBlendCompositor` ficam em `aylis_core::gpu` (no prelude); catálogo
+  regravado, rótulo traduzido, `docs/video-e-pintura.md` atualizado.
+- `D2dRenderer::render_rgba_on_gpu`: a captura sem janela desenhando na placa (o caminho da
+  janela), para testar o que só existe lá; `aylis_d2d::shader_blends()` conta as camadas que o
+  shader juntou.
+- Testes: `crates/aylis-d2d/tests/blend_compositor.rs` (os dois compositores na placa contra o
+  Skia, nos 16 modos, 6 fundos, com cor cheia, cor do meio e meia opacidade; o recorte
+  retangular pelo shader e o arredondado pelo efeito),
+  `the_blend_compositor_is_the_form_one_or_the_project_one` (`aylis-controls`, render_settings) e
+  `the_project_chooses_the_blend_compositor` (`aylis-project`).
+
+Medido (release, sem vídeo, a marca deslizando, média por quadro):
+
+| Células | Sem inversão | Direct2D | Direct3D |
+|---|---|---|---|
+| 16 | 9,1 ms | 9,9 ms | 8,8 ms |
+| 100 | 22,3 ms | 28,3 ms | 26,4 ms |
+| 256 | 23,2 ms | 43,1 ms | 38,5 ms |
+
+O Direct3D sai ~10% mais rápido; o que resta nos dois é o envio à placa antes de copiar o
+fundo. Conferido na janela de verdade (captura da tela, 16 células, `AYLIS_BLEND_COMPOSITOR=direct3d`,
+126 fps). Notas: a proteção do alvo reaproveitado (só depois do `Flush`) não fez falta na
+prática (o teste na placa passa sem ela), mas ficou, porque o Direct2D não documenta essa
+ordem. A chave ainda não aparece nas Opções do projeto da IDE (só no `.aylisproj` e no Object
+Inspector do form). Conferência: roteiro, item 195.
+
+**Recurso de 24/11/2026: a tecla física no `KeyEvent`**
+
+A pergunta: um app que repassa o teclado a outra máquina traduzia a tecla lógica em scancode e
+errava a pontuação do ABNT2, porque o Aylis só entregava o caractere (o `physical_key` do winit
+era descartado). O autor: "pode implementar a tecla física no KeyEvent". Feito: o `KeyEvent`
+ganhou `code` (`aylis_core::KeyCode`, com os nomes do `code` do DOM: `KeyA`, `IntlRo`) e
+`scancode` (o código nativo: o scancode no Windows, o evdev no Linux, o `kVK_` no macOS; `0` na
+web, no Android e no iOS). No protocolo, a tecla leva `"code"` e `"scancode"`. O registro
+`KeyEvent` das outras linguagens também tem os dois campos, com o `code` no enum `KeyCode`
+(gerado com os nomes do núcleo, `KeyCode::all`; no Rust, o do framework; `GENERATOR_VERSION` 34). Os eventos
+sintéticos (o `key` do protocolo, os roteiros, o MCP) vão com `Unidentified` e `0`. A gravação de
+uso (`.aylisrec`) não grava a tecla física: num campo de senha, ela diria a senha. Testes:
+`the_names_go_and_come_back` (`aylis-core`), `the_key_carries_the_physical_key`
+(`aylis-remote/tests/change_events.rs`) e `the_key_event_has_the_fields_of_the_protocol`
+(`aylis-project`, que confere o enum nas 7 linguagens). Conferência: roteiro, item 191. Não
+rodado: `cargo test -p aylis-host --test languages` (os projetos compilados em cada linguagem).
+
+**Recurso de 24/11/2026: o Markdown formatado no Design**
+
+O autor: "ao abrir um arquivo markdown na IDE deveria ter a opção de ver no design ele
+renderizado e no código o texto original". Feito (`crates/aylis-ide/src/mdview.rs`): com um `.md`
+na aba do editor embutido, o Design (e o F12) mostra o componente `Markdown` no lugar do editor,
+com o texto do editor (o não salvo também), as imagens relativas à pasta do arquivo (só imagens
+saem do disco por ali) e os links (`#título` rola, outro `.md` abre formatado, `https://` vai ao
+navegador); a visão fica por arquivo. Teste:
+`a_markdown_file_shows_formatted_in_design_and_as_text_in_code` (`tests/ide.rs`). Conferência:
+roteiro, item 190. O painel do projeto lista os `.md` no grupo "Documentos", nas pastas deles
+(lidos junto com os fontes, em segundo plano; fora `forms`, `generated`, as de compilação e as
+escondidas).
+
 **Ajustes de 24/11/2026: a IDE aberta por um agente**
 
 O autor, com a IDE aberta pelo MCP: apertou F12 num fonte enquanto o agente editava o mesmo
@@ -112,10 +419,11 @@ As decisões no [histórico](historico-decisoes.md), seção 18; a documentaçã
     feito pelo Aylis, como o `skia-android-armv7`, resolveria;
   - no **Windows 10**, o runtime fixo a partir da 120 pede o `icacls` das contas de contêiner na
     pasta (está na documentação; os instaladores não fazem);
-  - achado à parte: o `WebView` com `html` e sem `url` no form não abre (o `url` nasce
-    `"https://"`, e a vista nativa navega para ele: `0x80070057` do WebView2). O
-    `aylis-webview` já trata o `"https://"` como vazio no `caption` e nas mensagens, mas não no
-    `native_view`.
+- [ ] Corrigido, esperando a conferência (item 187 do roteiro): o `WebView` com `html` e sem
+  `url` no form não abria (o `url` nasce com o marcador `"https://"`, e a vista nativa navegava
+  para ele: `0x80070057` do WebView2). O `native_view` agora manda o endereço vazio no lugar do
+  marcador (`WebView::page_url`, o mesmo do `caption` e das mensagens). Teste:
+  `the_html_page_does_not_navigate_to_the_url_placeholder`; conferido num app publicado.
 
 **Ajustes de 23/11/2026: as notas da versão e as medições**
 

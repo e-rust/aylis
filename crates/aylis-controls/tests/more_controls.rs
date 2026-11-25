@@ -681,7 +681,7 @@ fn menu_reports_the_clicked_item_and_auto_checks() {
     let item_clicks = Rc::new(RefCell::new(0));
     let ic = item_clicks.clone();
     ui.on_click(bold, move |_, _| *ic.borrow_mut() += 1);
-    let key = KeyEvent { key: Key::Char('b'), modifiers: Modifiers { ctrl: true, ..Default::default() }, repeat: false, form: None };
+    let key = KeyEvent { key: Key::Char('b'), modifiers: Modifiers { ctrl: true, ..Default::default() }, ..Default::default() };
     ui.key_down(f, key);
     ui.process_events();
     assert_eq!(*item_clicks.borrow(), 1, "o on_click do item");

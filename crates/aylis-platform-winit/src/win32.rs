@@ -1700,11 +1700,12 @@ pub(crate) fn transparency_effects() -> Option<bool> {
     read.is_ok().then_some(value != 0)
 }
 
-/// O Caps Lock e o Num Lock ligados (o bit de baixo do `GetKeyState`).
-pub(crate) fn lock_keys() -> (bool, bool) {
-    use windows::Win32::UI::Input::KeyboardAndMouse::{GetKeyState, VK_CAPITAL, VK_NUMLOCK};
-    // SAFETY: só lê o estado das duas teclas nesta thread.
-    unsafe { (GetKeyState(VK_CAPITAL.0 as i32) & 1 != 0, GetKeyState(VK_NUMLOCK.0 as i32) & 1 != 0) }
+/// O Caps Lock, o Num Lock e o Scroll Lock ligados (o bit de baixo do `GetKeyState`).
+pub(crate) fn lock_keys() -> aylis_core::LockKeys {
+    use windows::Win32::UI::Input::KeyboardAndMouse::{GetKeyState, VK_CAPITAL, VK_NUMLOCK, VK_SCROLL};
+    // SAFETY: só lê o estado das três teclas nesta thread.
+    let on = |vk: u16| unsafe { GetKeyState(vk as i32) & 1 != 0 };
+    aylis_core::LockKeys { caps_lock: on(VK_CAPITAL.0), num_lock: on(VK_NUMLOCK.0), scroll_lock: on(VK_SCROLL.0) }
 }
 
 /// A imagem de uma área da tela (pixels físicos `x, y, largura, altura`), reduzida para no

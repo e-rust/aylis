@@ -2,7 +2,7 @@
 //! componentes resolvidos ao abrir (`self.edtNome.set_text(ui, ...)`).
 //! Gerado pela IDE do Aylis a cada "Gerar código": não edite.
 
-#![allow(non_snake_case, dead_code, unused_imports)]
+#![allow(non_snake_case, dead_code, unused_imports, clippy::too_many_arguments)]
 
 use aylis::prelude::handles::{self, Handle};
 use aylis::prelude::{ComponentId, PropValue, Ui};
@@ -48,30 +48,6 @@ impl aylis::prelude::PropEnum for ButtonStyle {
     const NAMES: &'static [&'static str] = &["", "accent", "danger", "elevated", "fab", "fab_extended", "flat", "ghost", "glass", "glass_prominent", "glossy", "icon", "icon_filled", "icon_outlined", "icon_tonal", "info", "link", "negative", "outline", "pill", "positive", "push", "reveal", "round", "rounded", "secondary", "success", "text", "tonal", "unelevated", "warning"];
     fn from_index(index: usize) -> Option<Self> {
         [Self::Default, Self::Accent, Self::Danger, Self::Elevated, Self::Fab, Self::FabExtended, Self::Flat, Self::Ghost, Self::Glass, Self::GlassProminent, Self::Glossy, Self::Icon, Self::IconFilled, Self::IconOutlined, Self::IconTonal, Self::Info, Self::Link, Self::Negative, Self::Outline, Self::Pill, Self::Positive, Self::Push, Self::Reveal, Self::Round, Self::Rounded, Self::Secondary, Self::Success, Self::Text, Self::Tonal, Self::Unelevated, Self::Warning].get(index).copied()
-    }
-    fn index(self) -> usize {
-        self as usize
-    }
-}
-
-/// Os valores de um enum do acesso tipado.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
-pub enum FontWeight {
-    #[default]
-    Default,
-    Thin,
-    Light,
-    Normal,
-    Medium,
-    Semibold,
-    Bold,
-    Black,
-}
-
-impl aylis::prelude::PropEnum for FontWeight {
-    const NAMES: &'static [&'static str] = &["default", "thin", "light", "normal", "medium", "semibold", "bold", "black"];
-    fn from_index(index: usize) -> Option<Self> {
-        [Self::Default, Self::Thin, Self::Light, Self::Normal, Self::Medium, Self::Semibold, Self::Bold, Self::Black].get(index).copied()
     }
     fn index(self) -> usize {
         self as usize

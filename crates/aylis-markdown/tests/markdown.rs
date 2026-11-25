@@ -182,7 +182,7 @@ fn the_text_is_selectable_and_copyable() {
     let paint = |ui: &mut Ui| renderer.render_png(560, 520, 1.0, ui.theme().color("background"), |c| ui.paint(form, c)).unwrap();
     let before = paint(&mut ui);
     let at = |x: f32, y: f32| PointerEvent { position: PointF::new(x, y), ..Default::default() };
-    let ctrl = |c: char| aylis_core::KeyEvent { key: aylis_core::Key::Char(c), modifiers: aylis_core::Modifiers { ctrl: true, ..Default::default() }, repeat: false, form: None };
+    let ctrl = |c: char| aylis_core::KeyEvent { key: aylis_core::Key::Char(c), modifiers: aylis_core::Modifiers { ctrl: true, ..Default::default() }, ..Default::default() };
     // Os trechos do layout (coordenadas do conteúdo; o padding é 8).
     let items = {
         let doc = aylis_markdown::parse(SAMPLE);

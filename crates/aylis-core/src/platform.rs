@@ -902,6 +902,11 @@ pub trait DesktopService {
     }
     /// Solta a trava da instância única (veja [`Ui::release_single_instance`](crate::Ui::release_single_instance)).
     fn release_single_instance(&mut self) {}
+    /// O Caps Lock, o Num Lock e o Scroll Lock agora, fora de um evento de tecla (veja
+    /// [`Ui::lock_keys`](crate::Ui::lock_keys)); `None`: o sistema não informa.
+    fn lock_keys(&self) -> Option<crate::LockKeys> {
+        None
+    }
 }
 
 /// Quantas instâncias do app podem rodar (o `single_instance` do projeto).

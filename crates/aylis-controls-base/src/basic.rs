@@ -287,6 +287,10 @@ pub struct Form {
     /// ou `composed`, sempre composta pelo DWM, fora do plano de overlay (o form em tela cheia
     /// por cima do resto, onde o cursor congelava em placas com MPO).
     pub present: FormPresent,
+    /// Quem junta as camadas com `blend_mode` ao fundo no Direct2D (`project`: o do projeto):
+    /// `direct2d`, o efeito do Direct2D, ou `direct3d`, o shader do Aylis em Direct3D 11 (a base
+    /// para o app que precisa de controle total da placa). O resultado é o mesmo.
+    pub blend_compositor: aylis_core::gpu::FormBlendCompositor,
     /// O form maior que um monitor vira uma janela por monitor, cada uma na placa de vídeo do
     /// seu (Windows; nas outras, sem efeito). Sem isso, com monitores em placas diferentes, o
     /// sistema copia cada quadro de uma placa para a outra. Com `window_state = full_screen`,
@@ -492,6 +496,7 @@ impl Form {
             remember_placement: false,
             gpu: String::new(),
             present: FormPresent::Project,
+            blend_compositor: aylis_core::gpu::FormBlendCompositor::Project,
             span_monitors: false,
             physical_pixels: false,
             activate_on_show: true,
@@ -577,6 +582,7 @@ impl Component for Form {
         remember_placement: bool => "Behavior",
         gpu: String => "Behavior",
         present: FormPresent => "Behavior",
+        blend_compositor: aylis_core::gpu::FormBlendCompositor => "Behavior",
         span_monitors: bool => "Layout",
         physical_pixels: bool => "Layout",
         activate_on_show: bool => "Behavior",
@@ -586,7 +592,7 @@ impl Component for Form {
         orientation: aylis_core::FormOrientation => "Layout",
         host: Option<ComponentId> => "Behavior",
         dockable: bool => "Behavior";
-        events: on_show: (), on_window_created: (), on_close: (), on_close_query, on_back, on_activate: (), on_deactivate: (), on_minimize: (), on_restore: (), on_navigate: String, on_gpu_change: String, on_dock: Option<ComponentId>, on_undock: (), on_files_drop: Vec<String>, on_view_change: String, on_topmost_lost: ();
+        events: on_show: (), on_window_created: (), on_close: (), on_close_query, on_back, on_activate: (), on_deactivate: (), on_minimize: (), on_restore: (), on_navigate: String, on_gpu_change: String, on_dock: Option<ComponentId>, on_undock: (), on_files_drop: Vec<String>, on_view_change: String, on_topmost_lost: (), on_scale_change: f64, on_resize_end: ();
         computed: client_width: f32 => client_width / set_client_width, client_height: f32 => client_height / set_client_height
     }
 
@@ -595,6 +601,10 @@ impl Component for Form {
         const METHODS: &[MethodInfo] = &[
             MethodInfo::new("move_to_monitor", &[PropKind::Int], None).params(&["monitor"]),
             MethodInfo::new("request_attention", &[PropKind::Bool], None).params(&["critical"]),
+            MethodInfo::new("bring_to_front", &[], None),
+            MethodInfo::new("set_activation_token", &[PropKind::String], None).params(&["token"]),
+            MethodInfo::new("window_scale", &[], Some(PropKind::Float)),
+            MethodInfo::new("pointer_over", &[], Some(PropKind::Bool)),
             MethodInfo::new("place", &[PropKind::Int, PropKind::Int, PropKind::Int, PropKind::Int, PropKind::Int, PropKind::Bool], None)
                 .params(&["monitor", "x", "y", "width", "height", "activate"]),
             MethodInfo::new("gpu_adapter", &[], Some(PropKind::String)),
@@ -637,6 +647,22 @@ impl Component for Form {
                 ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::Place { monitor: monitor as usize, x, y, width, height, activate });
                 Ok(aylis_core::PropValue::Null)
             }
+            // Para a frente com o foco, mesmo sem a última entrada (no Wayland, com o token).
+            "bring_to_front" => {
+                ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::BringToFront);
+                Ok(aylis_core::PropValue::Null)
+            }
+            // O token de ativação do Wayland que o próximo `bring_to_front` usa (o
+            // `XDG_ACTIVATION_TOKEN` da outra abertura, entregue pelo app).
+            "set_activation_token" => {
+                let token = args.first().and_then(|v| v.to_str().ok()).unwrap_or_default();
+                ctx.ui.set_activation_token(token);
+                Ok(aylis_core::PropValue::Null)
+            }
+            // A escala real da janela (`Ui::form_scale`).
+            "window_scale" => Ok(aylis_core::PropValue::Float(f64::from(ctx.ui.form_scale(ctx.id)))),
+            // O mouse sobre a janela à vista (`Ui::pointer_over`; no Wayland, sempre `false`).
+            "pointer_over" => Ok(aylis_core::PropValue::Bool(ctx.ui.pointer_over(ctx.id))),
             "request_attention" => {
                 let critical = args.first().and_then(|v| v.to_bool().ok()).unwrap_or(false);
                 ctx.ui.window_command(ctx.id, aylis_core::WindowCommand::RequestAttention(critical));

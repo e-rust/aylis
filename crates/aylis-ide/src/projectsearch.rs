@@ -22,7 +22,7 @@ use crate::state::Shared;
 use crate::widgets::muted;
 
 /// Pastas que nunca entram (compilação, dependências, ferramentas).
-const SKIP: [&str; 12] = ["target", "node_modules", "bin", "obj", "build", "dist", "out", ".aylis", "__pycache__", ".git", ".vs", ".idea"];
+pub(crate) const SKIP: [&str; 12] = ["target", "node_modules", "bin", "obj", "build", "dist", "out", ".aylis", "__pycache__", ".git", ".vs", ".idea"];
 /// Maior arquivo lido (os maiores são dados, não código).
 const MAX_FILE: u64 = 2 * 1024 * 1024;
 

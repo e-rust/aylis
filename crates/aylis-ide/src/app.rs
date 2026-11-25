@@ -45,6 +45,8 @@ pub struct Ids {
     pub view_bar: ComponentId,
     pub view_design: ComponentId,
     pub view_code: ComponentId,
+    /// O Markdown à vista formatado (o "Design" de um `.md`; [`crate::mdview`]).
+    pub md_view: ComponentId,
     /// O relógio da barra de status (só liga durante um trabalho).
     pub clock: ComponentId,
     pub doc_title: ComponentId,
@@ -282,6 +284,18 @@ pub fn build(state: Shared) -> Ide {
     let code_host = ui.add(Layout::default(), center);
     ui.control_mut(code_host).unwrap().set_align(Align::Client).set_visible(false);
     crate::codewindow::set_host(Some(code_host));
+    // O Markdown formatado (o "Design" de um `.md`), também no lugar do designer. Os ids
+    // ficam prontos no fim da montagem (veja os menus).
+    let final_ids: Rc<std::cell::OnceCell<Ids>> = Rc::default();
+    let md_view = {
+        let (state, final_ids) = (state.clone(), final_ids.clone());
+        crate::mdview::create(&mut ui, center, move |ui| {
+            if let Some(ids) = final_ids.get().copied() {
+                state.borrow_mut().code_view = true;
+                refresh(ui, &state, &ids);
+            }
+        })
+    };
 
     // Menu de contexto do designer (os itens chamam os mesmos comandos do menu Editar).
     let design_menu = ui.add(PopupMenu::default(), form);
@@ -308,6 +322,7 @@ pub fn build(state: Shared) -> Ide {
         view_bar,
         view_design,
         view_code,
+        md_view,
         clock: form,
         doc_title,
         tabs,
@@ -329,7 +344,6 @@ pub fn build(state: Shared) -> Ide {
     // são criados depois dos primeiros itens). Cada item lê os ids finais no clique: com a
     // cópia de quando foi criado, o "Novo projeto" (Ctrl+Shift+N) via `mi_recent` ainda
     // apontando para o form, e o refresh apagava a IDE inteira para pôr os recentes.
-    let final_ids: Rc<std::cell::OnceCell<Ids>> = Rc::default();
     // O painel ESTRUTURA pelo teclado (as setas, com o foco nele; pedido do autor em 08/11).
     let _ = ui.set_prop(structure, "can_focus", true);
     {
@@ -506,7 +520,14 @@ pub fn build(state: Shared) -> Ide {
     }), &ids));
     separator(&mut ui, project_menu);
     add_item(&mut ui, project_menu, "Gerar código", "", Some(|_, s, _| actions::generate_code_command(s)), &ids);
-    add_item(&mut ui, project_menu, "Abrir código do form", "F12", Some(|ui, s, _| actions::open_code(ui, s, None)), &ids);
+    // Com um Markdown formatado à vista, o F12 volta ao texto dele.
+    add_item(&mut ui, project_menu, "Abrir código do form", "F12", Some(|ui, s, _| match crate::mdview::formatted_active(ui).filter(|_| s.borrow().code_view) {
+        Some(file) => {
+            crate::mdview::set_formatted(&file, false);
+            crate::codewindow::focus_file(ui, &file);
+        }
+        None => actions::open_code(ui, s, None),
+    }), &ids);
     // Os fontes do projeto pelo nome.
     add_item(&mut ui, project_menu, "Abrir fonte…", "Ctrl+F12", Some(|ui, _, _| crate::codewindow::open_source_dialog(ui)), &ids);
     needs_project.push(add_item(&mut ui, project_menu, "Novo fonte…", "", Some(actions::new_source_dialog), &ids));
@@ -887,6 +908,17 @@ pub fn build(state: Shared) -> Ide {
             lsp: Box::new(move |ui, event| crate::intel::handle(ui, &s9, event)),
             // O código embutido no centro (ou de volta ao designer).
             view: Box::new(move |ui, code| {
+                // Um Markdown: o Design é ele formatado (o F12 no texto).
+                if !code {
+                    if let Some(file) = crate::mdview::active_markdown(ui) {
+                        crate::mdview::set_formatted(&file, true);
+                        if let Some(ids) = view_ids.get().copied() {
+                            refresh(ui, &s10, &ids);
+                            ui.set_focus(ids.md_view);
+                        }
+                        return;
+                    }
+                }
                 // De volta ao Design (F12 no código): o form do código que estava à vista.
                 let form = if code { None } else { actions::form_of_active_code(ui, &s10) };
                 // Um fonte sem form (um módulo comum): não há Design para onde ir, e o F12 fica no
@@ -973,6 +1005,18 @@ pub fn build(state: Shared) -> Ide {
     for (button, code) in [(ids.view_design, false), (ids.view_code, true)] {
         let (state, ids) = (state.clone(), *ids);
         ui.on_click(button, move |ui, _| {
+            // Um Markdown à vista: o Design é ele formatado, e o Código, o texto.
+            let markdown = if state.borrow().code_view { crate::mdview::active_markdown(ui) } else { None };
+            if let Some(file) = markdown {
+                crate::mdview::set_formatted(&file, !code);
+                refresh(ui, &state, &ids);
+                if code {
+                    crate::codewindow::focus_file(ui, &file);
+                } else {
+                    ui.set_focus(ids.md_view);
+                }
+                return;
+            }
             if code {
                 if !state.borrow().code_view {
                     actions::open_code(ui, &state, None);

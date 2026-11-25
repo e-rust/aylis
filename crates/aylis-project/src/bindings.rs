@@ -74,8 +74,9 @@ pub(crate) struct HandlerSig {
 }
 
 /// A assinatura tipada do handler ligado a `events` (a classe e o evento de cada ligação):
-/// só quando todos os eventos declaram o que levam e levam o mesmo. Os eventos que perguntam
-/// e os não declarados ficam com a assinatura de sempre (`None`).
+/// só quando todos os eventos declaram o que levam e levam o mesmo. Os não declarados (e os
+/// eventos que perguntam sem tipo, como o `on_close_query`) ficam com a assinatura de sempre
+/// (`None`); o `on_key_down`, pergunta com o `KeyEvent`, é tipado e ainda responde.
 pub(crate) fn handler_signature(events: &[(String, String)]) -> Option<HandlerSig> {
     if events.is_empty() {
         return None;
@@ -369,6 +370,10 @@ impl Catalog {
             }).collect();
             catalog.records.insert(name, kinds);
         }
+        // A tecla física do `KeyEvent` (`event_record`): não é propriedade de classe, então não
+        // vem do catálogo. O Rust usa o `KeyCode` do framework.
+        let values = aylis_core::KeyCode::all().into_iter().map(|k| k.name()).collect();
+        catalog.enums.entry(KEY_CODE.into()).or_insert(EnumDef { values, rust: Some(KEY_CODE.into()), rust_set: None, names: None });
         catalog
     }
 
@@ -402,9 +407,10 @@ impl Catalog {
         }
     }
 
-    /// O que o evento `event` da classe leva, quando o componente declara (`"event:float"`).
+    /// O que o evento `event` da classe leva, quando o componente declara (`"event:float"`;
+    /// num evento-pergunta, depois dos campos: `"question:key;event:key"`).
     fn event_kind(&self, class: &str, event: &str) -> Option<EventKind> {
-        let text = self.map.get(class)?.get(event)?.as_str()?.strip_prefix("event:")?;
+        let text = declared_event(self.map.get(class)?.get(event)?.as_str()?)?;
         Some(match text {
             "none" => EventKind::None,
             "pointer" => EventKind::Pointer,
@@ -1209,7 +1215,11 @@ fn generator(language: Language, m: &Model) -> Out {
 /// 27: o import do form em Python traz também as classes das anotações dos handlers (21/11).
 /// 30: no Rust, a cor e a medida dos registros com `Option` (sem valor fica fora do JSON), o
 /// `to_json` sem `.clone()` nos `Copy` e o `font_weight` com o `FontWeight` do núcleo (23/11).
-const GENERATOR_VERSION: u32 = 32;
+/// 34: o `KeyEvent` das outras linguagens com a tecla física (`code`, o enum `KeyCode`) e o
+/// `scancode` (24/11).
+/// 35: o `on_key_down` tipado (o `KeyEvent`, como o `on_key_up`), ainda respondendo: o `Result`
+/// em Rust e o `reply` dos clientes; o `clippy::too_many_arguments` nos gerados (24/11).
+const GENERATOR_VERSION: u32 = 35;
 
 /// Entre os pedaços de um arquivo (os laços do gerador), nos arquivos das linguagens que juntam.
 const SEP: &str = "\u{1e}\n";
@@ -1477,6 +1487,14 @@ pub fn generate_in(project: &Project, only: Option<&str>) -> Result<Vec<PathBuf>
         project_names(project, &mut used.enums);
         if language != Language::Rust {
             used.records.extend(event_records(&catalog, &classes));
+            // Os enums dos registros de evento (o `KeyCode` do `KeyEvent`).
+            for k in used.records.values().flatten().map(|(_, k)| k) {
+                if let Kind::Enum(n) = k {
+                    if let Some(d) = catalog.enums.get(n) {
+                        used.enums.entry(n.clone()).or_insert_with(|| d.clone());
+                    }
+                }
+            }
         }
         let (mut class_loop, mut form_loop) = (0, 0);
         let types_text = types(language, &used.enums, &used.records);
@@ -1653,7 +1671,7 @@ fn rust(m: &Model) -> Out {
         "//! Os componentes dos forms com as propriedades tipadas e a struct de cada form, com os\n\
          //! componentes resolvidos ao abrir (`self.edtNome.set_text(ui, ...)`).\n\
          //! Gerado pela IDE do Aylis a cada \"Gerar código\": não edite.\n\n\
-         #![allow(non_snake_case, dead_code, unused_imports)]\n\n\
+         #![allow(non_snake_case, dead_code, unused_imports, clippy::too_many_arguments)]\n\n\
          use aylis::prelude::handles::{self, Handle};\n\
          use aylis::prelude::{ComponentId, PropValue, Ui};\n",
     );
@@ -4042,9 +4060,18 @@ pub(crate) fn signature_for(language: Language, events: &[(String, String)]) -> 
     (language == Language::Rust || !other).then_some(sig)
 }
 
+/// O tipo que o evento declara no catálogo: `"event:key"` → `key`, e também o de um
+/// evento-pergunta tipado (`"question:key;event:key"`, o `on_key_down`).
+fn declared_event(text: &str) -> Option<&str> {
+    text.strip_prefix("event:").or_else(|| text.strip_prefix("question:")?.split_once(";event:").map(|(_, t)| t))
+}
+
 /// O intervalo de datas de um evento (`DateRangePicker.on_change`): no fio, `início;fim`; nas
 /// linguagens, o `DateRange` dos auxiliares de cada uma.
 const DATE_RANGE: &str = "DateRange";
+
+/// O enum da tecla física no `KeyEvent` das outras linguagens.
+const KEY_CODE: &str = "KeyCode";
 
 /// O registro de um evento que o protocolo manda como objeto (`args_to_json` do
 /// `aylis-remote`): o nome e os campos. O Rust usa o tipo do framework (`PointerEvent`...).
@@ -4059,8 +4086,8 @@ fn event_record(arg: &EventKind) -> Option<(&'static str, Vec<(String, Kind)>)> 
             fields(&[("phase", Text), ("x", Float), ("y", Float), ("scale", Float), ("delta_scale", Float), ("rotation", Float), ("delta_rotation", Float), ("pan_x", Float), ("pan_y", Float)]),
         ),
         EventKind::Swipe => ("SwipeEvent", fields(&[("direction", Text), ("x", Float), ("y", Float), ("dx", Float), ("dy", Float), ("vx", Float), ("vy", Float)])),
-        // A janela em que a tecla chegou (`form`, `form_id`) e o Caps Lock e o Num Lock, como o
-        // `args_to_json` do `aylis-remote` manda.
+        // A janela em que a tecla chegou (`form`, `form_id`), o Caps Lock e o Num Lock e a tecla
+        // física (`code`, `scancode`), como o `args_to_json` do `aylis-remote` manda.
         EventKind::Key => (
             "KeyEvent",
             fields(&[
@@ -4071,6 +4098,9 @@ fn event_record(arg: &EventKind) -> Option<(&'static str, Vec<(String, Kind)>)> 
                 ("meta", Bool),
                 ("caps_lock", Bool),
                 ("num_lock", Bool),
+                ("scroll_lock", Bool),
+                ("code", Kind::Enum(KEY_CODE.into())),
+                ("scancode", Int),
                 ("form", Text),
                 ("form_id", Int),
             ]),
@@ -4085,7 +4115,7 @@ fn event_records(catalog: &Catalog, classes: &[String]) -> BTreeMap<String, Vec<
     let mut out = BTreeMap::new();
     for class in classes {
         let Some(map) = catalog.map.get(class).and_then(Value::as_object) else { continue };
-        for event in map.iter().filter(|(_, v)| v.as_str().is_some_and(|t| t.starts_with("event:"))).map(|(k, _)| k) {
+        for event in map.iter().filter(|(_, v)| v.as_str().and_then(declared_event).is_some()).map(|(k, _)| k) {
             match catalog.event_kind(class, event) {
                 Some(EventKind::Value(Kind::Record(name))) => {
                     // O registro do evento, com os de dentro dele.
@@ -5121,12 +5151,25 @@ mod tests {
         let (name, fields) = event_record(&EventKind::Key).unwrap();
         assert_eq!(name, "KeyEvent");
         let names: Vec<&str> = fields.iter().map(|(n, _)| n.as_str()).collect();
-        assert_eq!(names, ["key", "ctrl", "shift", "alt", "meta", "caps_lock", "num_lock", "form", "form_id"]);
+        assert_eq!(names, ["key", "ctrl", "shift", "alt", "meta", "caps_lock", "num_lock", "scroll_lock", "code", "scancode", "form", "form_id"]);
         let records: Records = [(name.to_string(), fields)].into_iter().collect();
         let python = python_records(&records, &["KeyEvent".to_string()]);
-        for field in ["caps_lock", "num_lock", "form_id", "meta"] {
+        for field in ["caps_lock", "num_lock", "scroll_lock", "code", "scancode", "form_id", "meta"] {
             assert!(python.contains(field), "{field}: {python}");
         }
+        // A tecla física é o enum `KeyCode` em todas as linguagens, com os nomes do núcleo.
+        assert!(matches!(&records["KeyEvent"][8], (n, Kind::Enum(e)) if n == "code" && e == KEY_CODE));
+        let catalog = Catalog::load();
+        let def = &catalog.enums[KEY_CODE];
+        assert_eq!(def.values.first().map(String::as_str), Some("Unidentified"));
+        assert!(def.values.iter().any(|v| v == "IntlRo") && def.values.len() == aylis_core::KeyCode::all().len());
+        let enums: BTreeMap<String, EnumDef> = [(KEY_CODE.to_string(), def.clone())].into_iter().collect();
+        for language in Language::ALL.into_iter().filter(|l| *l != Language::Rust) {
+            let text = types(language, &enums, &records);
+            assert!(text.contains("KeyCode") && text.contains("IntlRo"), "{language:?}: {text}");
+        }
+        // O Rust usa o `KeyCode` do framework, sem gerar outro.
+        assert!(!types(Language::Rust, &enums, &records).contains("enum KeyCode"));
     }
 
     /// O `font_weight` usa o `FontWeight` do núcleo (`SemiBold`, com o `default` como `None`), e

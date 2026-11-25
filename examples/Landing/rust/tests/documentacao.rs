@@ -97,7 +97,7 @@ fn os_botoes_extras_do_mouse_voltam_e_avancam_pelas_paginas() {
     ui.pointer_down(form, mouse(PointerButton::Back));
     ui.pointer_up(form, mouse(PointerButton::Back));
     assert_eq!(pagina(ui), "assets/docs/guias/threads.md");
-    let alt = |key| KeyEvent { key, modifiers: Modifiers { alt: true, ..Default::default() }, repeat: false, form: None };
+    let alt = |key| KeyEvent { key, modifiers: Modifiers { alt: true, ..Default::default() }, ..Default::default() };
     ui.key_down(form, alt(Key::Left));
     assert_eq!(pagina(ui), "assets/docs/guias/README.md");
     ui.pointer_down(form, mouse(PointerButton::Forward));

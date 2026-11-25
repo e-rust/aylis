@@ -10,7 +10,7 @@ public static class AllForms
     public static void Register(Aylis aylis)
     {
         Components.RegisterClasses();
-        aylis.On("frmCalculadora.form_key_down", ev => FrmCalculadora.form_key_down(aylis, ev));
+        aylis.On("frmCalculadora.form_key_down", ev => FrmCalculadora.form_key_down(aylis, Components.frmCalculadora, global::App.Forms.KeyEvent.FromJson(ev.Args)));
         aylis.On("frmCalculadora.limpar_historico_click", ev => FrmCalculadora.limpar_historico_click(aylis, Components.frmCalculadora.SenderAsButton(ev)!));
         aylis.On("frmCalculadora.historico_item_click", ev => FrmCalculadora.historico_item_click(aylis, Components.frmCalculadora.SenderAsListView(ev)!, (long)Components.Number(ev.Args)));
         aylis.On("frmCalculadora.memoria_item_click", ev => FrmCalculadora.memoria_item_click(aylis, Components.frmCalculadora.SenderAsListView(ev)!, (long)Components.Number(ev.Args)));

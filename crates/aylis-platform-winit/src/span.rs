@@ -168,7 +168,7 @@ impl App {
                 return false;
             }
             // Os da janela principal (o app, o mouse, a opacidade, o piscar): o caminho de sempre.
-            WindowCommand::RequestAttention(_) | WindowCommand::UpdateOpacity | WindowCommand::UpdateKeepAwake | WindowCommand::UpdateCursorConfine => return false,
+            WindowCommand::RequestAttention(_) | WindowCommand::BringToFront | WindowCommand::UpdateOpacity | WindowCommand::UpdateKeepAwake | WindowCommand::UpdateCursorConfine => return false,
             // Minimizar a principal leva as extras junto (são dela).
             WindowCommand::Minimize | WindowCommand::Restore | WindowCommand::Close | WindowCommand::UpdateGpu => return false,
             // Maximizar, arrastar e redimensionar pela borda não valem para um form em vários
@@ -465,6 +465,7 @@ impl App {
             form,
             pointer: PointF::ZERO,
             cursor: aylis_core::CursorShape::Default,
+            cursor_image: 0,
             enabled: true,
             edge: None,
             title: self.title(form),
@@ -553,6 +554,7 @@ impl App {
                 #[cfg(native_d2d)]
                 Backend::D2d(d2d) => {
                     d2d.set_frame_reuse_kb(ui.form_frame_reuse_kb(form));
+                    d2d.set_blend_compositor(ui.form_blend_compositor(form));
                     d2d.draw(&self.renderer.d2d, (width, height), scale, background, parts, |c, area| ui.paint_piece(form, c, rect, area, first), capture)?
                 }
                 #[cfg(web)]

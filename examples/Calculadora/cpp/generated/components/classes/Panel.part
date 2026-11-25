@@ -15,6 +15,14 @@ struct Panel : aylis::Component {
     void set_char_map(const std::string& v) const { set_prop_("char_map", v); }
     double gap() const { return get_prop_("gap").number(); }
     void set_gap(double v) const { set_prop_("gap", v); }
+    aylis::Color hover_fill() const { return aylis::Color::from_json(get_prop_("hover_fill")); }
+    void set_hover_fill(const aylis::Color& v) const { set_prop_("hover_fill", v.to_json()); }
+    aylis::Color pressed_fill() const { return aylis::Color::from_json(get_prop_("pressed_fill")); }
+    void set_pressed_fill(const aylis::Color& v) const { set_prop_("pressed_fill", v.to_json()); }
+    bool interactive() const { return get_prop_("interactive").boolean(); }
+    void set_interactive(bool v) const { set_prop_("interactive", v); }
+    aylis::Color selected_fill() const { return aylis::Color::from_json(get_prop_("selected_fill")); }
+    void set_selected_fill(const aylis::Color& v) const { set_prop_("selected_fill", v.to_json()); }
     aylis::Color fill() const { return aylis::Color::from_json(get_prop_("fill")); }
     void set_fill(const aylis::Color& v) const { set_prop_("fill", v.to_json()); }
     aylis::Color fill2() const { return aylis::Color::from_json(get_prop_("fill2")); }
@@ -31,6 +39,8 @@ struct Panel : aylis::Component {
     void set_stroke(const aylis::Color& v) const { set_prop_("stroke", v.to_json()); }
     double stroke_width() const { return get_prop_("stroke_width").number(); }
     void set_stroke_width(double v) const { set_prop_("stroke_width", v); }
+    std::vector<double> stroke_dash() const { return numbers_of_(get_prop_("stroke_dash")); }
+    void set_stroke_dash(const std::vector<double>& v) const { set_prop_("stroke_dash", numbers_text_(v)); }
     aylis::Bounds radius() const { return aylis::Bounds::from_json(get_prop_("radius")); }
     void set_radius(const aylis::Bounds& v) const { set_prop_("radius", v.to_json()); }
     double left() const { return get_prop_("left").number(); }

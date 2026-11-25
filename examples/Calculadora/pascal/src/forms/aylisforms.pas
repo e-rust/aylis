@@ -19,6 +19,9 @@ uses
 function DispatchFrmCalculadora(Instance: TAylisForm; const Handler: string; Sender: TAylisComponent; Msg: TJSONObject): Boolean;
 begin
   Result := True;
+  if Handler = 'form_key_down' then
+    TFrmCalculadora(Instance).form_key_down(TForm(Sender), KeyEventFromJSON(Msg.Find('args')))
+  else
   if Handler = 'limpar_historico_click' then
     TFrmCalculadora(Instance).limpar_historico_click(TButton(Sender))
   else

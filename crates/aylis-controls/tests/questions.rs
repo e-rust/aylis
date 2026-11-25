@@ -9,7 +9,7 @@ use aylis_controls::{ApplicationEvents, Edit, Form};
 use aylis_core::*;
 
 fn key(c: char) -> KeyEvent {
-    KeyEvent { key: Key::Char(c), modifiers: Modifiers::default(), repeat: false, form: None }
+    KeyEvent { key: Key::Char(c), modifiers: Modifiers::default(), ..Default::default() }
 }
 
 /// Um "backend" que adia toda pergunta e guarda o número dela (como o `aylis-remote`).

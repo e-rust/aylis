@@ -33,6 +33,7 @@ pub mod canvas;
 pub mod clipboard;
 pub mod color;
 pub mod component;
+pub mod cursor_image;
 pub mod devices;
 pub mod error;
 pub mod files;
@@ -41,6 +42,8 @@ pub mod event_value;
 pub mod exception;
 pub mod fonts;
 pub mod forms;
+/// A escala, o fim do redimensionamento e o mouse sobre a janela de um form.
+pub mod form_window;
 /// Os monitores (lista, área útil, taxa) e a posição guardada de cada form.
 pub mod monitors;
 pub mod ndef;
@@ -58,6 +61,7 @@ pub mod i18n;
 pub mod icons;
 pub mod image;
 pub mod image_cache;
+pub mod keycode;
 pub mod keys;
 pub mod memory_panel;
 pub mod messages;
@@ -69,6 +73,7 @@ pub use layout::is_right_to_left_language;
 pub mod overscroll;
 pub mod orientation;
 pub mod system_bars;
+pub mod system_keys;
 /// Um form em vários monitores (uma janela por monitor).
 pub mod span;
 pub mod pages;
@@ -121,6 +126,9 @@ pub use event::{
     ClickPointer, EventArgs, EventCtx, GestureEvent, GesturePhase, Intercepted, Key, KeyEvent, Modifiers, PointerButton, PointerEvent, PointerKind,
     PopupRequest, ScrollOptions, SwipeDirection, SwipeEvent, WHEEL_LINE, WheelEvent,
 };
+pub use keycode::KeyCode;
+pub use cursor_image::CursorImage;
+pub use system_keys::{KeyboardCaptureRequest, LockKeys};
 pub use forms::{ModalResult, WindowPlacement};
 pub use bindings::Binding;
 pub use timing::TimerPrecision;
@@ -141,7 +149,7 @@ pub use path::{Path, PathCmd};
 pub use date::{Date, DateTime, Time};
 pub use prop::RecordInfo;
 pub use event_value::{DateRange, EventArg, EventValue, FromSender};
-pub use gpu::FormPresent;
+pub use gpu::{BlendCompositor, FormBlendCompositor, FormPresent};
 pub use platform::{Biometry, CursorShape, DesktopService, NotificationPriority, Permission, PermissionState, SecondInstance, SingleInstance};
 pub use providers::ErrorCorrection;
 pub use post::Poster;

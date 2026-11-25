@@ -336,6 +336,36 @@ public final class Components {
     }
 
     /** Os valores de um enum do acesso tipado. */
+    public enum CursorConfine {
+        NONE("none"),
+        WINDOW("window"),
+        MONITOR("monitor");
+
+        public final String value;
+
+        CursorConfine(String value) {
+            this.value = value;
+        }
+
+        public static CursorConfine of(Object v) {
+            for (CursorConfine e : values()) if (e.value.equals(v)) return e;
+            return values()[0];
+        }
+
+        public static java.util.List<CursorConfine> listOf(Object v) {
+            java.util.List<CursorConfine> out = new java.util.ArrayList<>();
+            if (v instanceof java.util.List<?> l) for (Object x : l) for (CursorConfine e : values()) if (e.value.equals(x)) out.add(e);
+            return out;
+        }
+
+        public static java.util.List<String> names(java.util.Collection<CursorConfine> values) {
+            java.util.List<String> out = new java.util.ArrayList<>();
+            for (CursorConfine e : values) out.add(e.value);
+            return out;
+        }
+    }
+
+    /** Os valores de um enum do acesso tipado. */
     public enum CursorShape {
         DEFAULT("default"),
         POINTER("pointer"),
@@ -407,6 +437,36 @@ public final class Components {
         public static java.util.List<String> names(java.util.Collection<FontWeight> values) {
             java.util.List<String> out = new java.util.ArrayList<>();
             for (FontWeight e : values) out.add(e.value);
+            return out;
+        }
+    }
+
+    /** Os valores de um enum do acesso tipado. */
+    public enum FormBlendCompositor {
+        PROJECT("project"),
+        DIRECT2D("direct2d"),
+        DIRECT3D("direct3d");
+
+        public final String value;
+
+        FormBlendCompositor(String value) {
+            this.value = value;
+        }
+
+        public static FormBlendCompositor of(Object v) {
+            for (FormBlendCompositor e : values()) if (e.value.equals(v)) return e;
+            return values()[0];
+        }
+
+        public static java.util.List<FormBlendCompositor> listOf(Object v) {
+            java.util.List<FormBlendCompositor> out = new java.util.ArrayList<>();
+            if (v instanceof java.util.List<?> l) for (Object x : l) for (FormBlendCompositor e : values()) if (e.value.equals(x)) out.add(e);
+            return out;
+        }
+
+        public static java.util.List<String> names(java.util.Collection<FormBlendCompositor> values) {
+            java.util.List<String> out = new java.util.ArrayList<>();
+            for (FormBlendCompositor e : values) out.add(e.value);
             return out;
         }
     }
@@ -539,6 +599,35 @@ public final class Components {
     }
 
     /** Os valores de um enum do acesso tipado. */
+    public enum FullScreenMode {
+        BORDERLESS("borderless"),
+        EXCLUSIVE("exclusive");
+
+        public final String value;
+
+        FullScreenMode(String value) {
+            this.value = value;
+        }
+
+        public static FullScreenMode of(Object v) {
+            for (FullScreenMode e : values()) if (e.value.equals(v)) return e;
+            return values()[0];
+        }
+
+        public static java.util.List<FullScreenMode> listOf(Object v) {
+            java.util.List<FullScreenMode> out = new java.util.ArrayList<>();
+            if (v instanceof java.util.List<?> l) for (Object x : l) for (FullScreenMode e : values()) if (e.value.equals(x)) out.add(e);
+            return out;
+        }
+
+        public static java.util.List<String> names(java.util.Collection<FullScreenMode> values) {
+            java.util.List<String> out = new java.util.ArrayList<>();
+            for (FullScreenMode e : values) out.add(e.value);
+            return out;
+        }
+    }
+
+    /** Os valores de um enum do acesso tipado. */
     public enum GridLayoutStyle {
         DEFAULT("");
 
@@ -592,6 +681,253 @@ public final class Components {
         public static java.util.List<String> names(java.util.Collection<IconPosition> values) {
             java.util.List<String> out = new java.util.ArrayList<>();
             for (IconPosition e : values) out.add(e.value);
+            return out;
+        }
+    }
+
+    /** Os valores de um enum do acesso tipado. */
+    public enum KeepAwake {
+        OFF("off"),
+        SYSTEM("system"),
+        DISPLAY("display");
+
+        public final String value;
+
+        KeepAwake(String value) {
+            this.value = value;
+        }
+
+        public static KeepAwake of(Object v) {
+            for (KeepAwake e : values()) if (e.value.equals(v)) return e;
+            return values()[0];
+        }
+
+        public static java.util.List<KeepAwake> listOf(Object v) {
+            java.util.List<KeepAwake> out = new java.util.ArrayList<>();
+            if (v instanceof java.util.List<?> l) for (Object x : l) for (KeepAwake e : values()) if (e.value.equals(x)) out.add(e);
+            return out;
+        }
+
+        public static java.util.List<String> names(java.util.Collection<KeepAwake> values) {
+            java.util.List<String> out = new java.util.ArrayList<>();
+            for (KeepAwake e : values) out.add(e.value);
+            return out;
+        }
+    }
+
+    /** Os valores de um enum do acesso tipado. */
+    public enum KeyCode {
+        UNIDENTIFIED("Unidentified"),
+        KEY_A("KeyA"),
+        KEY_B("KeyB"),
+        KEY_C("KeyC"),
+        KEY_D("KeyD"),
+        KEY_E("KeyE"),
+        KEY_F("KeyF"),
+        KEY_G("KeyG"),
+        KEY_H("KeyH"),
+        KEY_I("KeyI"),
+        KEY_J("KeyJ"),
+        KEY_K("KeyK"),
+        KEY_L("KeyL"),
+        KEY_M("KeyM"),
+        KEY_N("KeyN"),
+        KEY_O("KeyO"),
+        KEY_P("KeyP"),
+        KEY_Q("KeyQ"),
+        KEY_R("KeyR"),
+        KEY_S("KeyS"),
+        KEY_T("KeyT"),
+        KEY_U("KeyU"),
+        KEY_V("KeyV"),
+        KEY_W("KeyW"),
+        KEY_X("KeyX"),
+        KEY_Y("KeyY"),
+        KEY_Z("KeyZ"),
+        DIGIT0("Digit0"),
+        DIGIT1("Digit1"),
+        DIGIT2("Digit2"),
+        DIGIT3("Digit3"),
+        DIGIT4("Digit4"),
+        DIGIT5("Digit5"),
+        DIGIT6("Digit6"),
+        DIGIT7("Digit7"),
+        DIGIT8("Digit8"),
+        DIGIT9("Digit9"),
+        NUMPAD0("Numpad0"),
+        NUMPAD1("Numpad1"),
+        NUMPAD2("Numpad2"),
+        NUMPAD3("Numpad3"),
+        NUMPAD4("Numpad4"),
+        NUMPAD5("Numpad5"),
+        NUMPAD6("Numpad6"),
+        NUMPAD7("Numpad7"),
+        NUMPAD8("Numpad8"),
+        NUMPAD9("Numpad9"),
+        F1("F1"),
+        F2("F2"),
+        F3("F3"),
+        F4("F4"),
+        F5("F5"),
+        F6("F6"),
+        F7("F7"),
+        F8("F8"),
+        F9("F9"),
+        F10("F10"),
+        F11("F11"),
+        F12("F12"),
+        F13("F13"),
+        F14("F14"),
+        F15("F15"),
+        F16("F16"),
+        F17("F17"),
+        F18("F18"),
+        F19("F19"),
+        F20("F20"),
+        F21("F21"),
+        F22("F22"),
+        F23("F23"),
+        F24("F24"),
+        F25("F25"),
+        F26("F26"),
+        F27("F27"),
+        F28("F28"),
+        F29("F29"),
+        F30("F30"),
+        F31("F31"),
+        F32("F32"),
+        F33("F33"),
+        F34("F34"),
+        F35("F35"),
+        LANG1("Lang1"),
+        LANG2("Lang2"),
+        LANG3("Lang3"),
+        LANG4("Lang4"),
+        LANG5("Lang5"),
+        BACKQUOTE("Backquote"),
+        BACKSLASH("Backslash"),
+        BRACKET_LEFT("BracketLeft"),
+        BRACKET_RIGHT("BracketRight"),
+        COMMA("Comma"),
+        EQUAL("Equal"),
+        INTL_BACKSLASH("IntlBackslash"),
+        INTL_RO("IntlRo"),
+        INTL_YEN("IntlYen"),
+        MINUS("Minus"),
+        PERIOD("Period"),
+        QUOTE("Quote"),
+        SEMICOLON("Semicolon"),
+        SLASH("Slash"),
+        ALT_LEFT("AltLeft"),
+        ALT_RIGHT("AltRight"),
+        BACKSPACE("Backspace"),
+        CAPS_LOCK("CapsLock"),
+        CONTEXT_MENU("ContextMenu"),
+        CONTROL_LEFT("ControlLeft"),
+        CONTROL_RIGHT("ControlRight"),
+        ENTER("Enter"),
+        META_LEFT("MetaLeft"),
+        META_RIGHT("MetaRight"),
+        SHIFT_LEFT("ShiftLeft"),
+        SHIFT_RIGHT("ShiftRight"),
+        SPACE("Space"),
+        TAB("Tab"),
+        CONVERT("Convert"),
+        KANA_MODE("KanaMode"),
+        NON_CONVERT("NonConvert"),
+        DELETE("Delete"),
+        END("End"),
+        HELP("Help"),
+        HOME("Home"),
+        INSERT("Insert"),
+        PAGE_DOWN("PageDown"),
+        PAGE_UP("PageUp"),
+        ARROW_DOWN("ArrowDown"),
+        ARROW_LEFT("ArrowLeft"),
+        ARROW_RIGHT("ArrowRight"),
+        ARROW_UP("ArrowUp"),
+        NUM_LOCK("NumLock"),
+        NUMPAD_ADD("NumpadAdd"),
+        NUMPAD_COMMA("NumpadComma"),
+        NUMPAD_DECIMAL("NumpadDecimal"),
+        NUMPAD_DIVIDE("NumpadDivide"),
+        NUMPAD_ENTER("NumpadEnter"),
+        NUMPAD_EQUAL("NumpadEqual"),
+        NUMPAD_MULTIPLY("NumpadMultiply"),
+        NUMPAD_SUBTRACT("NumpadSubtract"),
+        ESCAPE("Escape"),
+        FN("Fn"),
+        PRINT_SCREEN("PrintScreen"),
+        SCROLL_LOCK("ScrollLock"),
+        PAUSE("Pause"),
+        AUDIO_VOLUME_DOWN("AudioVolumeDown"),
+        AUDIO_VOLUME_MUTE("AudioVolumeMute"),
+        AUDIO_VOLUME_UP("AudioVolumeUp"),
+        MEDIA_PLAY_PAUSE("MediaPlayPause"),
+        MEDIA_SELECT("MediaSelect"),
+        MEDIA_STOP("MediaStop"),
+        MEDIA_TRACK_NEXT("MediaTrackNext"),
+        MEDIA_TRACK_PREVIOUS("MediaTrackPrevious"),
+        BROWSER_BACK("BrowserBack"),
+        BROWSER_FAVORITES("BrowserFavorites"),
+        BROWSER_FORWARD("BrowserForward"),
+        BROWSER_HOME("BrowserHome"),
+        BROWSER_REFRESH("BrowserRefresh"),
+        BROWSER_SEARCH("BrowserSearch"),
+        BROWSER_STOP("BrowserStop"),
+        LAUNCH_APP1("LaunchApp1"),
+        LAUNCH_APP2("LaunchApp2"),
+        LAUNCH_MAIL("LaunchMail"),
+        POWER("Power"),
+        SLEEP("Sleep"),
+        WAKE_UP("WakeUp"),
+        NUMPAD_BACKSPACE("NumpadBackspace"),
+        NUMPAD_CLEAR("NumpadClear"),
+        NUMPAD_CLEAR_ENTRY("NumpadClearEntry"),
+        NUMPAD_HASH("NumpadHash"),
+        NUMPAD_MEMORY_ADD("NumpadMemoryAdd"),
+        NUMPAD_MEMORY_CLEAR("NumpadMemoryClear"),
+        NUMPAD_MEMORY_RECALL("NumpadMemoryRecall"),
+        NUMPAD_MEMORY_STORE("NumpadMemoryStore"),
+        NUMPAD_MEMORY_SUBTRACT("NumpadMemorySubtract"),
+        NUMPAD_PAREN_LEFT("NumpadParenLeft"),
+        NUMPAD_PAREN_RIGHT("NumpadParenRight"),
+        NUMPAD_STAR("NumpadStar"),
+        FN_LOCK("FnLock"),
+        HIRAGANA("Hiragana"),
+        KATAKANA("Katakana"),
+        AGAIN("Again"),
+        COPY("Copy"),
+        CUT("Cut"),
+        FIND("Find"),
+        OPEN("Open"),
+        PASTE("Paste"),
+        PROPS("Props"),
+        SELECT("Select"),
+        UNDO("Undo"),
+        RESUME("Resume"),
+        SUSPEND("Suspend");
+
+        public final String value;
+
+        KeyCode(String value) {
+            this.value = value;
+        }
+
+        public static KeyCode of(Object v) {
+            for (KeyCode e : values()) if (e.value.equals(v)) return e;
+            return values()[0];
+        }
+
+        public static java.util.List<KeyCode> listOf(Object v) {
+            java.util.List<KeyCode> out = new java.util.ArrayList<>();
+            if (v instanceof java.util.List<?> l) for (Object x : l) for (KeyCode e : values()) if (e.value.equals(x)) out.add(e);
+            return out;
+        }
+
+        public static java.util.List<String> names(java.util.Collection<KeyCode> values) {
+            java.util.List<String> out = new java.util.ArrayList<>();
+            for (KeyCode e : values) out.add(e.value);
             return out;
         }
     }
@@ -1279,10 +1615,10 @@ public final class Components {
     }
 
     /** Um registro do acesso tipado (no fio, um objeto JSON com os mesmos campos). */
-    public record KeyEvent(String key, boolean ctrl, boolean shift, boolean alt) {
+    public record KeyEvent(String key, boolean ctrl, boolean shift, boolean alt, boolean meta, boolean capsLock, boolean numLock, boolean scrollLock, KeyCode code, long scancode, String form, long formId) {
         static KeyEvent fromJson(Object v) {
             java.util.Map<?, ?> m = v instanceof java.util.Map<?, ?> map ? map : java.util.Map.of();
-            return new KeyEvent(asText(m.get("key")), asBool(m.get("ctrl")), asBool(m.get("shift")), asBool(m.get("alt")));
+            return new KeyEvent(asText(m.get("key")), asBool(m.get("ctrl")), asBool(m.get("shift")), asBool(m.get("alt")), asBool(m.get("meta")), asBool(m.get("caps_lock")), asBool(m.get("num_lock")), asBool(m.get("scroll_lock")), KeyCode.of(m.get("code")), (long) asNumber(m.get("scancode")), asText(m.get("form")), (long) asNumber(m.get("form_id")));
         }
 
         java.util.Map<String, Object> toJson() {
@@ -1291,6 +1627,14 @@ public final class Components {
             m.put("ctrl", ctrl);
             m.put("shift", shift);
             m.put("alt", alt);
+            m.put("meta", meta);
+            m.put("caps_lock", capsLock);
+            m.put("num_lock", numLock);
+            m.put("scroll_lock", scrollLock);
+            m.put("code", code == null ? "" : code.value);
+            m.put("scancode", scancode);
+            m.put("form", form);
+            m.put("form_id", formId);
             return m;
         }
 
@@ -1325,19 +1669,51 @@ public final class Components {
         }
 
         public KeyEvent withKey(String v) {
-            return new KeyEvent(v, ctrl, shift, alt);
+            return new KeyEvent(v, ctrl, shift, alt, meta, capsLock, numLock, scrollLock, code, scancode, form, formId);
         }
 
         public KeyEvent withCtrl(boolean v) {
-            return new KeyEvent(key, v, shift, alt);
+            return new KeyEvent(key, v, shift, alt, meta, capsLock, numLock, scrollLock, code, scancode, form, formId);
         }
 
         public KeyEvent withShift(boolean v) {
-            return new KeyEvent(key, ctrl, v, alt);
+            return new KeyEvent(key, ctrl, v, alt, meta, capsLock, numLock, scrollLock, code, scancode, form, formId);
         }
 
         public KeyEvent withAlt(boolean v) {
-            return new KeyEvent(key, ctrl, shift, v);
+            return new KeyEvent(key, ctrl, shift, v, meta, capsLock, numLock, scrollLock, code, scancode, form, formId);
+        }
+
+        public KeyEvent withMeta(boolean v) {
+            return new KeyEvent(key, ctrl, shift, alt, v, capsLock, numLock, scrollLock, code, scancode, form, formId);
+        }
+
+        public KeyEvent withCapsLock(boolean v) {
+            return new KeyEvent(key, ctrl, shift, alt, meta, v, numLock, scrollLock, code, scancode, form, formId);
+        }
+
+        public KeyEvent withNumLock(boolean v) {
+            return new KeyEvent(key, ctrl, shift, alt, meta, capsLock, v, scrollLock, code, scancode, form, formId);
+        }
+
+        public KeyEvent withScrollLock(boolean v) {
+            return new KeyEvent(key, ctrl, shift, alt, meta, capsLock, numLock, v, code, scancode, form, formId);
+        }
+
+        public KeyEvent withCode(KeyCode v) {
+            return new KeyEvent(key, ctrl, shift, alt, meta, capsLock, numLock, scrollLock, v, scancode, form, formId);
+        }
+
+        public KeyEvent withScancode(long v) {
+            return new KeyEvent(key, ctrl, shift, alt, meta, capsLock, numLock, scrollLock, code, v, form, formId);
+        }
+
+        public KeyEvent withForm(String v) {
+            return new KeyEvent(key, ctrl, shift, alt, meta, capsLock, numLock, scrollLock, code, scancode, v, formId);
+        }
+
+        public KeyEvent withFormId(long v) {
+            return new KeyEvent(key, ctrl, shift, alt, meta, capsLock, numLock, scrollLock, code, scancode, form, v);
         }
     }
 
@@ -2522,6 +2898,70 @@ public final class Components {
             setProp("topmost", value);
         }
 
+        public boolean isBottommost() {
+            return asBool(getProp("bottommost"));
+        }
+
+        public void setBottommost(boolean value) {
+            setProp("bottommost", value);
+        }
+
+        public KeepAwake getKeepAwake() {
+            return KeepAwake.of(getProp("keep_awake"));
+        }
+
+        public void setKeepAwake(KeepAwake value) {
+            setProp("keep_awake", value.value);
+        }
+
+        public CursorConfine getConfineCursor() {
+            return CursorConfine.of(getProp("confine_cursor"));
+        }
+
+        public void setConfineCursor(CursorConfine value) {
+            setProp("confine_cursor", value.value);
+        }
+
+        public double getWindowOpacity() {
+            return asNumber(getProp("window_opacity"));
+        }
+
+        public void setWindowOpacity(double value) {
+            setProp("window_opacity", value);
+        }
+
+        public FullScreenMode getFullScreenMode() {
+            return FullScreenMode.of(getProp("full_screen_mode"));
+        }
+
+        public void setFullScreenMode(FullScreenMode value) {
+            setProp("full_screen_mode", value.value);
+        }
+
+        public long getVideoWidth() {
+            return (long) asNumber(getProp("video_width"));
+        }
+
+        public void setVideoWidth(long value) {
+            setProp("video_width", value);
+        }
+
+        public long getVideoHeight() {
+            return (long) asNumber(getProp("video_height"));
+        }
+
+        public void setVideoHeight(long value) {
+            setProp("video_height", value);
+        }
+
+        public double getVideoRefresh() {
+            return asNumber(getProp("video_refresh"));
+        }
+
+        public void setVideoRefresh(double value) {
+            setProp("video_refresh", value);
+        }
+
         public boolean isShowInTaskbar() {
             return asBool(getProp("show_in_taskbar"));
         }
@@ -2650,6 +3090,14 @@ public final class Components {
             setProp("present", value.value);
         }
 
+        public FormBlendCompositor getBlendCompositor() {
+            return FormBlendCompositor.of(getProp("blend_compositor"));
+        }
+
+        public void setBlendCompositor(FormBlendCompositor value) {
+            setProp("blend_compositor", value.value);
+        }
+
         public boolean isSpanMonitors() {
             return asBool(getProp("span_monitors"));
         }
@@ -2704,6 +3152,22 @@ public final class Components {
 
         public void setOrientation(FormOrientation value) {
             setProp("orientation", value.value);
+        }
+
+        public Aylis.AylisComponent getHost() {
+            return getRef("host");
+        }
+
+        public void setHost(Aylis.AylisComponent value) {
+            setRef("host", value);
+        }
+
+        public boolean isDockable() {
+            return asBool(getProp("dockable"));
+        }
+
+        public void setDockable(boolean value) {
+            setProp("dockable", value);
         }
 
         public String getOnShow() {
@@ -2776,6 +3240,62 @@ public final class Components {
 
         public void setOnGpuChange(String value) {
             setProp("on_gpu_change", value);
+        }
+
+        public String getOnDock() {
+            return asText(getProp("on_dock"));
+        }
+
+        public void setOnDock(String value) {
+            setProp("on_dock", value);
+        }
+
+        public String getOnUndock() {
+            return asText(getProp("on_undock"));
+        }
+
+        public void setOnUndock(String value) {
+            setProp("on_undock", value);
+        }
+
+        public String getOnFilesDrop() {
+            return asText(getProp("on_files_drop"));
+        }
+
+        public void setOnFilesDrop(String value) {
+            setProp("on_files_drop", value);
+        }
+
+        public String getOnViewChange() {
+            return asText(getProp("on_view_change"));
+        }
+
+        public void setOnViewChange(String value) {
+            setProp("on_view_change", value);
+        }
+
+        public String getOnTopmostLost() {
+            return asText(getProp("on_topmost_lost"));
+        }
+
+        public void setOnTopmostLost(String value) {
+            setProp("on_topmost_lost", value);
+        }
+
+        public String getOnScaleChange() {
+            return asText(getProp("on_scale_change"));
+        }
+
+        public void setOnScaleChange(String value) {
+            setProp("on_scale_change", value);
+        }
+
+        public String getOnResizeEnd() {
+            return asText(getProp("on_resize_end"));
+        }
+
+        public void setOnResizeEnd(String value) {
+            setProp("on_resize_end", value);
         }
 
         public double getClientWidth() {
@@ -3470,12 +3990,44 @@ public final class Components {
             aylis.send("invoke", Aylis.obj("target", id, "method", "move_to_monitor", "args", java.util.List.of(monitor)));
         }
 
+        public void requestAttention(boolean critical) {
+            aylis.send("invoke", Aylis.obj("target", id, "method", "request_attention", "args", java.util.List.of(critical)));
+        }
+
+        public void bringToFront() {
+            aylis.send("invoke", Aylis.obj("target", id, "method", "bring_to_front", "args", java.util.List.of()));
+        }
+
+        public void setActivationToken(String token) {
+            aylis.send("invoke", Aylis.obj("target", id, "method", "set_activation_token", "args", java.util.List.of(token)));
+        }
+
+        public double windowScale() {
+            return asNumber(aylis.call("invoke", Aylis.obj("target", id, "method", "window_scale", "args", java.util.List.of())));
+        }
+
+        public boolean pointerOver() {
+            return asBool(aylis.call("invoke", Aylis.obj("target", id, "method", "pointer_over", "args", java.util.List.of())));
+        }
+
+        public void place(long monitor, long x, long y, long width, long height, boolean activate) {
+            aylis.send("invoke", Aylis.obj("target", id, "method", "place", "args", java.util.List.of(monitor, x, y, width, height, activate)));
+        }
+
         public String gpuAdapter() {
             return asText(aylis.call("invoke", Aylis.obj("target", id, "method", "gpu_adapter", "args", java.util.List.of())));
         }
 
         public java.util.List<String> gpuAdapters() {
             return asList(aylis.call("invoke", Aylis.obj("target", id, "method", "gpu_adapters", "args", java.util.List.of())));
+        }
+
+        public double dropX() {
+            return asNumber(aylis.call("invoke", Aylis.obj("target", id, "method", "drop_x", "args", java.util.List.of())));
+        }
+
+        public double dropY() {
+            return asNumber(aylis.call("invoke", Aylis.obj("target", id, "method", "drop_y", "args", java.util.List.of())));
         }
 
         public String renderRgba(double x, double y, double width, double height, double scale) {
@@ -4330,6 +4882,14 @@ public final class Components {
 
         public void setTextShadow(Aylis.Shadow value) {
             setProp("text_shadow", (value == null ? "" : value.toJson()));
+        }
+
+        public long getMaxLines() {
+            return (long) asNumber(getProp("max_lines"));
+        }
+
+        public void setMaxLines(long value) {
+            setProp("max_lines", value);
         }
 
         public Aylis.AylisComponent getFocusControl() {
@@ -6529,6 +7089,38 @@ public final class Components {
             setProp("gap", value);
         }
 
+        public Aylis.Color getHoverFill() {
+            return Aylis.Color.fromJson(getProp("hover_fill"));
+        }
+
+        public void setHoverFill(Aylis.Color value) {
+            setProp("hover_fill", value.toJson());
+        }
+
+        public Aylis.Color getPressedFill() {
+            return Aylis.Color.fromJson(getProp("pressed_fill"));
+        }
+
+        public void setPressedFill(Aylis.Color value) {
+            setProp("pressed_fill", value.toJson());
+        }
+
+        public boolean isInteractive() {
+            return asBool(getProp("interactive"));
+        }
+
+        public void setInteractive(boolean value) {
+            setProp("interactive", value);
+        }
+
+        public Aylis.Color getSelectedFill() {
+            return Aylis.Color.fromJson(getProp("selected_fill"));
+        }
+
+        public void setSelectedFill(Aylis.Color value) {
+            setProp("selected_fill", value.toJson());
+        }
+
         public Aylis.Color getFill() {
             return Aylis.Color.fromJson(getProp("fill"));
         }
@@ -6591,6 +7183,14 @@ public final class Components {
 
         public void setStrokeWidth(double value) {
             setProp("stroke_width", value);
+        }
+
+        public java.util.List<Double> getStrokeDash() {
+            return asNumbers(getProp("stroke_dash"));
+        }
+
+        public void setStrokeDash(java.util.List<Double> value) {
+            setProp("stroke_dash", listText(value));
         }
 
         public Aylis.Bounds getRadius() {

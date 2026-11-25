@@ -98,3 +98,54 @@ fn a_blended_watermark_passes_the_partial_paint_check() {
     })
     .expect("a pintura por parte com a marca por cima");
 }
+
+/// Muitas marcas seguidas, cada uma sobre um fundo de outra cor (a grade de vídeos com marca
+/// d'água): o Direct2D reaproveita os alvos e o fundo de uma camada para a outra, e cada célula
+/// tem de sair com o negativo do próprio fundo, não o da célula anterior. Sem janela o
+/// Direct2D desenha num bitmap da CPU, então isto confere a mistura e a ordem; a fila da placa
+/// (o alvo reaproveitado só depois do `Flush`) só aparece na janela.
+#[test]
+#[cfg(all(windows, feature = "d2d"))]
+fn many_blended_layers_in_a_row_keep_each_its_own_background() {
+    let palette = ["#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF", "#000000", "#808080"];
+    let (columns, rows, cell) = (8usize, 6usize, 40usize);
+    let mut children = Vec::new();
+    for i in 0..columns * rows {
+        let (x, y) = ((i % columns) * cell, (i / columns) * cell);
+        let fill = palette[(i * 5 + i / columns) % palette.len()];
+        children.push(format!(
+            r##"{{"class": "Layout", "name": "layCelula{i}", "left": {x}, "top": {y}, "width": {cell}, "height": {cell}, "clip_children": true, "children": [
+                {{"class": "Rectangle", "name": "recFundo{i}", "align": "client", "fill": "{fill}", "stroke_width": 0, "radius": 0}},
+                {{"class": "Layout", "name": "layMarca{i}", "align": "client", "blend_mode": "difference", "children": [
+                    {{"class": "Rectangle", "name": "recMarca{i}", "left": 10, "top": 10, "width": 20, "height": 20, "fill": "#FFFFFF", "stroke_width": 0, "radius": 0}}
+                ]}}
+            ]}}"##
+        ));
+    }
+    let form = format!(
+        r##"{{"aylis": 1, "root": {{"class": "Form", "name": "frmGrade", "width": {}, "height": {}, "fill": "#808080", "children": [{}]}}}}"##,
+        columns * cell,
+        rows * cell,
+        children.join(",")
+    );
+    let render = |renderer: Renderer| {
+        let mut ui = aylis::core::Ui::new();
+        aylis::register_all(&mut ui);
+        let mut h = Headless::from_ui(ui, renderer);
+        h.load_form(&form).expect("o form carrega");
+        // Duas pinturas: a segunda já reaproveita o que a primeira guardou.
+        let _ = h.render_rgba();
+        h.render_rgba().expect("o renderizador fora da tela")
+    };
+    let (skia, w, _) = render(Renderer::Cpu);
+    let (d2d, _, _) = render(Renderer::D2d);
+    for i in 0..columns * rows {
+        // O meio da marca e um canto fora dela, em cada célula.
+        for (dx, dy) in [(20, 20), (4, 4)] {
+            let (x, y) = ((i % columns) * cell + dx, (i / columns) * cell + dy);
+            let at = (y * w as usize + x) * 4;
+            let (s, d) = (&skia[at..at + 3], &d2d[at..at + 3]);
+            assert!(s.iter().zip(d).all(|(a, b)| a.abs_diff(*b) <= 8), "célula {i} em ({x}, {y}): Skia {s:?} × Direct2D {d:?}");
+        }
+    }
+}

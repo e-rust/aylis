@@ -300,7 +300,7 @@ fn a_menu_shortcut_does_not_wipe_the_ide() {
     let mut ide = app::build(shared(Document::new()));
     ide.ui.show(ide.form).unwrap();
     let before = ide.ui.children(ide.form).to_vec();
-    let key = KeyEvent { key: Key::Char('n'), modifiers: Modifiers { ctrl: true, shift: true, ..Default::default() }, repeat: false, form: None };
+    let key = KeyEvent { key: Key::Char('n'), modifiers: Modifiers { ctrl: true, shift: true, ..Default::default() }, ..Default::default() };
     ide.ui.key_down(ide.form, key);
     let dialog = ide.ui.roots().iter().copied().find(|&r| ide.ui.is_modal(r)).expect("abriu o Novo projeto");
     assert_eq!(ide.ui.children(ide.form), before.as_slice(), "os painéis continuam com o diálogo aberto");
@@ -323,7 +323,7 @@ fn closing_the_shadow_editor_by_the_x_keeps_the_ide() {
     let dialog = ide.ui.roots().iter().copied().find(|&r| ide.ui.is_modal(r)).expect("abriu a Sombra");
     assert!(ide.ui.close(dialog), "o X fecha");
     assert_eq!(ide.ui.children(ide.form), before.as_slice(), "depois do X");
-    ide.ui.key_down(ide.form, KeyEvent { key: Key::Unknown, modifiers: Modifiers::default(), repeat: false, form: None });
+    ide.ui.key_down(ide.form, KeyEvent { key: Key::Unknown, modifiers: Modifiers::default(), ..Default::default() });
     let press = PointerEvent { position: PointF::new(650.0, 407.0), ..Default::default() };
     ide.ui.pointer_down(ide.form, press);
     ide.ui.pointer_up(ide.form, press);
@@ -1183,7 +1183,7 @@ fn code_opens_inside_the_ide_and_tabs_move_to_another_window() {
     assert_eq!(aylis_ide::codewindow::code_form(&ide.ui), Some(ide.form), "embutido na janela da IDE");
     // F12 no código volta ao Design; de novo no designer, volta ao código.
     let (modifiers, key) = aylis_core::parse_shortcut("F12").unwrap();
-    ide.ui.key_down(ide.form, KeyEvent { key, modifiers, repeat: false, form: None });
+    ide.ui.key_down(ide.form, KeyEvent { key, modifiers, ..Default::default() });
     app::refresh(&mut ide.ui, &state, &ide.ids);
     assert!(visible(&ide.ui, ide.ids.surface) && !visible(&ide.ui, ide.ids.code_host), "F12: Design");
     actions::open_code(&mut ide.ui, &state, None);
@@ -2020,4 +2020,46 @@ fn the_about_dialog_shows_the_logo_and_the_version() {
         let png = renderer.render_png(w as u32, h as u32, 1.0, background, |c| ide.ui.paint(dialog, c)).unwrap();
         std::fs::write(PathBuf::from(dir).join("sobre.png"), png).unwrap();
     }
+}
+
+/// Um Markdown aberto: o Design mostra o texto formatado (o do editor, não o do disco), o Código
+/// volta ao texto, e um link para outro `.md` abre ele já formatado.
+#[test]
+fn a_markdown_file_shows_formatted_in_design_and_as_text_in_code() {
+    let base = temp("markdown_design");
+    let mut project = aylis_project::create(&base, "Notas", aylis_project::Language::Rust).unwrap();
+    project.save().unwrap();
+    aylis_project::codegen::generate(&project).unwrap();
+    let readme = base.join("README.md");
+    std::fs::write(&readme, "# Notas\n\nVeja o [guia](docs/guia.md#uso).\n").unwrap();
+    std::fs::create_dir_all(base.join("docs")).unwrap();
+    std::fs::write(base.join("docs").join("guia.md"), "# Guia\n\n## Uso\n\nTexto.\n").unwrap();
+    let state = shared(Document::new());
+    let mut ide = app::build(state.clone());
+    actions::open_recent(&mut ide.ui, &state, &ide.ids, &project.path);
+    aylis_ide::codewindow::open(&mut ide.ui, &readme, 1).unwrap();
+    state.borrow_mut().code_view = true;
+    app::refresh(&mut ide.ui, &state, &ide.ids);
+    let visible = |ide: &app::Ide, id: ComponentId| ide.ui.control(id).is_some_and(|c| c.visible());
+    assert!(visible(&ide, ide.ids.code_host) && !visible(&ide, ide.ids.md_view), "abre como texto");
+    assert!(ide.ui.control(ide.ids.view_design).is_some_and(|c| c.enabled()), "o Design vale para o Markdown");
+
+    // O disco muda depois de aberto: a visão mostra o texto do editor.
+    std::fs::write(&readme, "# Outro texto\n").unwrap();
+    ide.ui.click(ide.ids.view_design);
+    assert!(state.borrow().code_view, "continua na aba do arquivo");
+    assert!(visible(&ide, ide.ids.md_view) && !visible(&ide, ide.ids.code_host), "o Design mostra o formatado");
+    assert!(text_of(&ide.ui, ide.ids.md_view).starts_with("# Notas"), "o texto do editor");
+
+    ide.ui.click(ide.ids.view_code);
+    assert!(visible(&ide, ide.ids.code_host) && !visible(&ide, ide.ids.md_view), "o Código volta ao texto");
+
+    // O link relativo abre o outro arquivo, formatado.
+    ide.ui.click(ide.ids.view_design);
+    ide.ui.fire(ide.ids.md_view, "on_link", &aylis_core::EventArgs::Text("docs/guia.md#uso".into()));
+    let guide = aylis_ide::debugger::norm(&base.join("docs").join("guia.md"));
+    assert_eq!(aylis_ide::codewindow::embedded_active(&ide.ui), Some(guide));
+    assert!(visible(&ide, ide.ids.md_view), "o link abre formatado");
+    assert!(text_of(&ide.ui, ide.ids.md_view).starts_with("# Guia"));
+    let _ = std::fs::remove_dir_all(base);
 }

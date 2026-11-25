@@ -187,7 +187,7 @@ impl Headless {
                 ' ' => (Key::Space, false),
                 c => (Key::Char(c.to_lowercase().next().unwrap_or(c)), c.is_uppercase()),
             };
-            let event = KeyEvent { key, modifiers: Modifiers { shift, ..Default::default() }, repeat: false, form: None };
+            let event = KeyEvent { key, modifiers: Modifiers { shift, ..Default::default() }, ..Default::default() };
             self.ui.key_down(root, event);
             if c != '\n' {
                 self.ui.text_input(root, &c.to_string());

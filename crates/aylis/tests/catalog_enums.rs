@@ -13,6 +13,7 @@ fn the_catalog_enums_are_in_the_prelude() {
     let _: Option<aylis::prelude::BandKind> = None;
     let _: Option<aylis::prelude::BarIcons> = None;
     let _: Option<aylis::prelude::Biometry> = None;
+    let _: Option<aylis::prelude::BlendCompositor> = None;
     let _: Option<aylis::prelude::BlendMode> = None;
     let _: Option<aylis::prelude::BorderStyle> = None;
     let _: Option<aylis::prelude::BusyAction> = None;
@@ -32,6 +33,7 @@ fn the_catalog_enums_are_in_the_prelude() {
     let _: Option<aylis::prelude::ErrorCorrection> = None;
     let _: Option<aylis::prelude::FieldKind> = None;
     let _: Option<aylis::prelude::FieldType> = None;
+    let _: Option<aylis::prelude::FormBlendCompositor> = None;
     let _: Option<aylis::prelude::FormOrientation> = None;
     let _: Option<aylis::prelude::FormPosition> = None;
     let _: Option<aylis::prelude::FormPresent> = None;

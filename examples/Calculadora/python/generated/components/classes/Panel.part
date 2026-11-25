@@ -52,6 +52,38 @@ class Panel(AylisComponent):
         self._set("gap", value)
 
     @property
+    def hover_fill(self) -> Color:
+        return Color.from_json(self._get("hover_fill"))
+
+    @hover_fill.setter
+    def hover_fill(self, value: Color) -> None:
+        self._set("hover_fill", value.to_json())
+
+    @property
+    def pressed_fill(self) -> Color:
+        return Color.from_json(self._get("pressed_fill"))
+
+    @pressed_fill.setter
+    def pressed_fill(self, value: Color) -> None:
+        self._set("pressed_fill", value.to_json())
+
+    @property
+    def interactive(self) -> bool:
+        return self._get("interactive")
+
+    @interactive.setter
+    def interactive(self, value: bool) -> None:
+        self._set("interactive", value)
+
+    @property
+    def selected_fill(self) -> Color:
+        return Color.from_json(self._get("selected_fill"))
+
+    @selected_fill.setter
+    def selected_fill(self, value: Color) -> None:
+        self._set("selected_fill", value.to_json())
+
+    @property
     def fill(self) -> Color:
         return Color.from_json(self._get("fill"))
 
@@ -114,6 +146,14 @@ class Panel(AylisComponent):
     @stroke_width.setter
     def stroke_width(self, value: float) -> None:
         self._set("stroke_width", value)
+
+    @property
+    def stroke_dash(self) -> list[float]:
+        return _numbers(self._get("stroke_dash"))
+
+    @stroke_dash.setter
+    def stroke_dash(self, value: list[float]) -> None:
+        self._set("stroke_dash", ";".join(repr(float(x)) for x in value))
 
     @property
     def radius(self) -> Bounds:

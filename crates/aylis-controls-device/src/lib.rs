@@ -1,12 +1,13 @@
 //! # aylis-controls-device
 //!
 //! Os componentes do aparelho: sensores, bateria, rede, permissões, biometria, [`AppLink`], [`UrlScheme`],
-//! [`Nfc`], [`Bluetooth`], [`PushNotifications`] e [`SystemBars`]. Os apps usam pelo `aylis-controls`, que
+//! [`Nfc`], [`Bluetooth`], [`PushNotifications`], [`SystemBars`] e [`KeyboardCapture`]. Os apps usam pelo `aylis-controls`, que
 //! registra as classes.
 
 mod actions;
 mod bluetooth;
 mod device;
+mod keyboard_capture;
 mod nfc;
 mod push;
 mod records;
@@ -22,6 +23,7 @@ pub use bluetooth::{
 pub use device::{
     AppLink, Biometrics, PERMISSION_ANSWER, PERMISSION_REASON, PERMISSION_RESULT, PermissionAnswer, PermissionReason, PermissionResult, Permissions, SHARED_CONTENT, SharedContent,
 };
+pub use keyboard_capture::KeyboardCapture;
 pub use nfc::{NFC_RECORD, Nfc, NfcRecord, NfcRecordList};
 pub use aylis_core::platform::json_field;
 pub use push::PushNotifications;

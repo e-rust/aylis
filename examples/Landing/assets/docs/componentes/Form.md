@@ -38,6 +38,7 @@ Janela. Pinta o fundo com o estilo `Form` do tema.
 | `remember_placement` | Lembrar a posição | lógico | Lembra onde a janela estava (o monitor, a posição, o tamanho e se estava maximizada) e reabre igual, num arquivo do app; se aquele monitor sumiu, abre como se não houvesse. |
 | `gpu` | Placa de vídeo | texto | A placa de vídeo da janela (vazio: a do projeto): `monitor` troca para a placa do monitor em que ela está (Windows e Linux com Wayland); `alto-desempenho`, `economia` ou parte do nome fixam uma. |
 | `present` | Apresentação na tela | um de: `project`, `window`, `composition`, `composed` | Como o quadro chega à janela no Windows (`project`: o do projeto): `window`, `composition` ou `composed`, sempre composta pelo DWM, fora do plano de overlay (o form em tela cheia por cima do resto, onde o cursor congelava em placas com MPO). |
+| `blend_compositor` | Compositor da mistura | um de: `project`, `direct2d`, `direct3d` | Quem junta as camadas com `blend_mode` ao fundo no Direct2D (`project`: o do projeto): `direct2d`, o efeito do Direct2D, ou `direct3d`, o shader do Aylis em Direct3D 11 (a base para o app que precisa de controle total da placa). O resultado é o mesmo. |
 | `activate_on_show` | Ativar ao mostrar | lógico | Mostrar a janela dá o foco a ela (desligado: aparece sem tirar o foco de quem tem, como uma projeção que não deve roubar o teclado do console). |
 | `force_foreground` | Forçar a frente ao mostrar | lógico | Mostrar ou trazer para a frente toma o foco mesmo quando o app não recebeu a última entrada (Windows): o form aberto por um atalho global, de um timer ou da bandeja. O Windows só deixa ir para a frente quem recebeu o último clique ou tecla; sem isto, a janela aparece atrás, com o botão piscando, e o teclado (o Esc) vai para o app de trás. Nas outras plataformas, sem efeito (o pedido normal de foco). |
 | `close_action` | Ao fechar | um de: `hide`, `free` | O que fechar faz com o form: esconde (pode abrir de novo) ou libera (some da memória, depois de fechar). |
@@ -93,6 +94,8 @@ Janela. Pinta o fundo com o estilo `Form` do tema.
 | `on_files_drop` | — | — |  |
 | `on_view_change` | — | — |  |
 | `on_topmost_lost` | — | — |  |
+| `on_scale_change` | a escala da janela mudou (outro monitor, outra escala no sistema), com a escala nova | — |  |
+| `on_resize_end` | o usuário parou de redimensionar a janela (no Windows, ao soltar a borda; fora dele, 300 ms sem tamanho novo) | — |  |
 
 ## Em código
 

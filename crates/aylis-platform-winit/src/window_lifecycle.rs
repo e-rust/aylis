@@ -165,7 +165,7 @@ impl App {
         // tem o nome do app (com espaços), e o `.desktop` não batia (o relatório do player de
         // música, 21/11).
         #[cfg(all(target_os = "linux", not(target_os = "android")))]
-        if let Some(id) = Some(self.options.app_id.clone()).filter(|id| !id.is_empty()).or_else(|| std::env::current_exe().ok().and_then(|p| p.file_stem().map(|s| s.to_string_lossy().to_string()))) {
+        if let Some(id) = crate::keyboard_capture::linux_app_id(&self.options.app_id) {
             use winit::platform::x11::WindowAttributesExtX11;
             attributes = attributes.with_name(id.clone(), id);
         }
@@ -254,6 +254,8 @@ impl App {
         // tarefas.
         #[cfg(windows)]
         win32::attach(&window, form, &self.win_proxy);
+        // A escala de agora (o `form_scale`) e, no X11, a janela para o `form_at_screen`.
+        self.report_new_window(&window, form);
         // Sempre por cima: o aviso de quando outra janela sempre por cima passa à frente.
         #[cfg(windows)]
         win32::watch_topmost(form, self.window_level(form) == winit::window::WindowLevel::AlwaysOnTop);
@@ -325,6 +327,7 @@ impl App {
             form,
             pointer: PointF::ZERO,
             cursor: CursorShape::Default,
+            cursor_image: 0,
             enabled: true,
             edge: None,
             title: self.title(form),
@@ -432,6 +435,7 @@ impl App {
             self.update_keep_awake();
             for form in closing {
                 self.ui.set_form_gpu(form, None);
+                self.ui.forget_form_window(form);
                 #[cfg(windows)]
                 win32::watch_topmost(form, false);
                 let name = self.ui.name(form).unwrap_or_default().to_string();
@@ -480,6 +484,7 @@ impl App {
             // Form com `auto_size`: a janela fica da altura do conteúdo (L07 do Tabernáculo). Só
             // quando a diferença passa de meio ponto (cada pedido vira outro Resized).
             if !SINGLE_SURFACE {
+                let mut applied = Vec::new();
                 for w in self.windows.iter().filter(|w| w.span.is_none()) {
                     let Some(want) = self.ui.auto_form_height(w.form) else { continue };
                     let system = if self.ui.physical_pixels(w.form) { 1.0 } else { w.window.scale_factor() };
@@ -487,9 +492,13 @@ impl App {
                     let size = w.window.inner_size().to_logical::<f64>(zoom);
                     if (size.height - want as f64).abs() > 0.5 {
                         let wanted = LogicalSize::new(size.width * self.ui.form_zoom(w.form) as f64, want as f64 * self.ui.form_zoom(w.form) as f64);
-                        let _ = w.window.request_inner_size(wanted.to_physical::<u32>(system));
+                        // No Wayland o winit aplica na hora, sem `Resized` (`request_size`).
+                        if crate::window_commands::request_size(&w.window, wanted.to_physical::<u32>(system)) {
+                            applied.push(w.form);
+                        }
                     }
                 }
+                self.sizes_applied(&applied);
             }
             // Um diálogo do sistema com dona reabilita a dona ao fechar, mesmo debaixo de um modal
             // do Aylis: a conferência abaixo aplica de novo (o relatório do Tabernáculo, J02).

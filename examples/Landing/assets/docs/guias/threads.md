@@ -116,14 +116,22 @@ mensagem é sempre exceção; responder um valor é do jeito de cada linguagem:
 
 | Linguagem | Recusar | Responder |
 |---|---|---|
-| Free Pascal | `raise EAylis.Create('Informe o CPF')` | parâmetros `var`: `(Sender; var CanClose: Boolean)`, `(Sender; var Key: string; Event)`, `(Sender; var Key: string)`, `(Sender; var Data, Caption: string)`, `(Sender; const Data: string; var Accept: Boolean)` |
+| Free Pascal | `raise EAylis.Create('Informe o CPF')` | parâmetros `var`: `(Sender; var CanClose: Boolean)`, `(Sender; var Key: string)`, `(Sender; var Data, Caption: string)`, `(Sender; const Data: string; var Accept: Boolean)`; no handler tipado, `Aylis.Reply('key', '')` |
 | Rust | `Err("Informe o CPF".into())` (o handler devolve `Result<(), String>`) | `ui.reply("can_close", false)`, `ui.suppress_key()`, `ui.replace_key_char('.')`, `ui.begin_drag(..)`, `ui.reject_drop()` |
-| C# | `throw new Exception(...)` | `ev.Reply["can_close"] = false` |
-| Java | `throw new AylisException(...)` | `ev.reply().put("can_close", false)` |
-| Go | `panic("...")` | `ev.Reply["can_close"] = false` |
-| C++ | `throw std::runtime_error(...)` | `ev.reply.set("can_close", false)` |
-| Python | `raise ValueError(...)` | `event["reply"]["can_close"] = False` |
-| TypeScript | `throw new Error(...)` | `ev.reply.can_close = false` |
+| C# | `throw new Exception(...)` | `ev.Reply["can_close"] = false`; no handler tipado, `aylis.Reply("key", "")` |
+| Java | `throw new AylisException(...)` | `ev.reply().put("can_close", false)`; no tipado, `aylis.reply("key", "")` |
+| Go | `panic("...")` | `ev.Reply["can_close"] = false`; no tipado, `app.Reply("key", "")` |
+| C++ | `throw std::runtime_error(...)` | `ev.reply.set("can_close", false)`; no tipado, `app.reply("key", "")` |
+| Python | `raise ValueError(...)` | `event["reply"]["can_close"] = False`; no tipado, `aylis.reply("key", "")` |
+| TypeScript | `throw new Error(...)` | `ev.reply.can_close = false`; no tipado, `aylis.reply("key", "")` (antes do primeiro `await`) |
+
+**O `on_key_down` é tipado**, como o `on_key_up`: o handler gerado recebe quem disparou e o
+`KeyEvent` (a tecla, os modificadores, a tecla física `code`/`scancode`), e não o evento
+inteiro. Como não recebe o evento, responde pelo `reply` do cliente (o `ui.suppress_key()` em
+Rust) e recusa do mesmo jeito, com exceção (o `Err` em Rust). Em Rust:
+`fn tecla(&mut self, ui: &mut Ui, sender: Form, value: KeyEvent) -> Result<(), String>`. O
+handler de antes (`args: &EventArgs`, ou o evento inteiro nas outras linguagens) continua
+sendo chamado como antes.
 
 Os campos: `can_close` (fechar), `key` (`""` engole a tecla; outro caractere troca, no
 `on_key_press`), `data` e `label` (o que vai no arrasto), `accept` (o destino aceita). A IDE

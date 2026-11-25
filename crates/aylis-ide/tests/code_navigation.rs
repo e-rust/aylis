@@ -32,7 +32,7 @@ fn the_extra_mouse_buttons_go_back_and_forward_through_the_places_visited() {
     assert_eq!(ui.focused(form), Some(first.memo), "voltou para a.rs");
     assert_eq!(caret(&ui, first.memo), at_line_3, "na mesma linha");
 
-    let alt = |key| KeyEvent { key, modifiers: Modifiers { alt: true, ..Default::default() }, repeat: false, form: None };
+    let alt = |key| KeyEvent { key, modifiers: Modifiers { alt: true, ..Default::default() }, ..Default::default() };
     ui.key_down(form, alt(Key::Right));
     assert_eq!(ui.focused(form), Some(second.memo), "avançou para b.rs");
     ui.key_down(form, alt(Key::Left));

@@ -8,6 +8,10 @@
         public bool CharsOverride { get => Bool(GetProp("chars_override")); set => SetProp("chars_override", value); }
         public string CharMap { get => Text(GetProp("char_map")); set => SetProp("char_map", value); }
         public double Gap { get => Number(GetProp("gap")); set => SetProp("gap", value); }
+        public Color HoverFill { get => Color.FromJson(GetProp("hover_fill")); set => SetProp("hover_fill", value.ToJson()); }
+        public Color PressedFill { get => Color.FromJson(GetProp("pressed_fill")); set => SetProp("pressed_fill", value.ToJson()); }
+        public bool Interactive { get => Bool(GetProp("interactive")); set => SetProp("interactive", value); }
+        public Color SelectedFill { get => Color.FromJson(GetProp("selected_fill")); set => SetProp("selected_fill", value.ToJson()); }
         public Color Fill { get => Color.FromJson(GetProp("fill")); set => SetProp("fill", value.ToJson()); }
         public Color Fill2 { get => Color.FromJson(GetProp("fill2")); set => SetProp("fill2", value.ToJson()); }
         public Color FillMid { get => Color.FromJson(GetProp("fill_mid")); set => SetProp("fill_mid", value.ToJson()); }
@@ -16,6 +20,7 @@
         public bool GradientRadial { get => Bool(GetProp("gradient_radial")); set => SetProp("gradient_radial", value); }
         public Color Stroke { get => Color.FromJson(GetProp("stroke")); set => SetProp("stroke", value.ToJson()); }
         public double StrokeWidth { get => Number(GetProp("stroke_width")); set => SetProp("stroke_width", value); }
+        public double[] StrokeDash { get => NumbersOf(GetProp("stroke_dash")); set => SetProp("stroke_dash", NumbersText(value)); }
         public Bounds Radius { get => Bounds.FromJson(GetProp("radius")); set => SetProp("radius", value.ToJson()); }
         public double Left { get => Number(GetProp("left")); set => SetProp("left", value); }
         public double Top { get => Number(GetProp("top")); set => SetProp("top", value); }

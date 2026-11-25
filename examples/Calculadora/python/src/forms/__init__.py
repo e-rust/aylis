@@ -7,7 +7,7 @@ from .components import _enum, _date, _time, _datetime, _list, _numbers, _colors
 
 
 def register(aylis):
-    aylis.on("frmCalculadora.form_key_down")(lambda event: calculadora.form_key_down(aylis, event))
+    aylis.on("frmCalculadora.form_key_down")(lambda event: calculadora.form_key_down(aylis, components.frmCalculadora, KeyEvent.from_json(event.get("args") or {})))
     aylis.on("frmCalculadora.limpar_historico_click")(lambda event: calculadora.limpar_historico_click(aylis, components.frmCalculadora.sender_as_button(event)))
     aylis.on("frmCalculadora.historico_item_click")(lambda event: calculadora.historico_item_click(aylis, components.frmCalculadora.sender_as_list_view(event), event.get("args")))
     aylis.on("frmCalculadora.memoria_item_click")(lambda event: calculadora.memoria_item_click(aylis, components.frmCalculadora.sender_as_list_view(event), event.get("args")))

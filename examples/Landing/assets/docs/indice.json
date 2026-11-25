@@ -627,6 +627,10 @@
           "arquivo": "componentes/HttpClient.md"
         },
         {
+          "titulo": "KeyboardCapture",
+          "arquivo": "componentes/KeyboardCapture.md"
+        },
+        {
           "titulo": "McpPrompt",
           "arquivo": "componentes/McpPrompt.md"
         },

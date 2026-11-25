@@ -1311,7 +1311,9 @@ impl ControlBase {
         PropInfo::new("on_wheel", PropKind::Event, "Events").event_arg(crate::EventArg::Wheel),
         PropInfo::new("on_gesture", PropKind::Event, "Events").event_arg(crate::EventArg::Gesture),
         PropInfo::new("on_swipe", PropKind::Event, "Events").event_arg(crate::EventArg::Swipe),
-        PropInfo::new("on_key_down", PropKind::Event, "Events"),
+        // Pergunta e tipado ao mesmo tempo: o handler gerado recebe o `KeyEvent`, como o do
+        // `on_key_up`, e ainda pode engolir a tecla (`Err`, ou a resposta `key` vazia).
+        PropInfo::new("on_key_down", PropKind::Event, "Events").event_arg(crate::EventArg::Key),
         PropInfo::new("on_key_press", PropKind::Event, "Events"),
         PropInfo::new("on_key_up", PropKind::Event, "Events").event_arg(crate::EventArg::Key),
         PropInfo::new("on_enter", PropKind::Event, "Events").event_arg(crate::EventArg::None),

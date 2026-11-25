@@ -7,7 +7,6 @@ import dev.aylis.Aylis;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import static forms.Components.frmCalculadora;
 import forms.Components.*;
 
@@ -54,12 +53,9 @@ public final class FrmCalculadora {
         if (calc.tecla(texto)) atualizar(aylis);
     }
 
-    public static void form_key_down(Aylis aylis, Aylis.Event ev) {
-        if (!(ev.args() instanceof Map<?, ?> args)) return;
-        String tecla = String.valueOf(args.get("key"));
-        boolean ctrl = Boolean.TRUE.equals(args.get("ctrl"));
-        boolean shift = Boolean.TRUE.equals(args.get("shift"));
-        String botao = Calculadora.botaoDoTeclado(tecla, ctrl, shift);
+    public static void form_key_down(Aylis aylis, Components.Form sender, Components.KeyEvent value) {
+        // aylis.reply("key", "") engoliria a tecla.
+        String botao = Calculadora.botaoDoTeclado(value.key(), value.ctrl(), value.shift());
         if ("historico".equals(botao)) historico_click(aylis, frmCalculadora.btnHistorico);
         else if (botao != null) apertar(aylis, botao);
     }

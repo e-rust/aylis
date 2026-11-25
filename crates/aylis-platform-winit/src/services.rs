@@ -86,6 +86,10 @@ pub(crate) fn install_services(ui: &mut Ui, renderer: &Painters, chosen: Rendere
     aylis_core::system_bars::set_available(true);
     #[cfg(target_os = "ios")]
     ui.set_paints_status_strip(true);
+    // A captura das teclas do sistema (o `KeyboardCapture`): o gancho do Windows, o
+    // `XGrabKeyboard` do X11 e o inibidor de atalhos do Wayland.
+    #[cfg(any(windows, all(target_os = "linux", not(target_os = "android"))))]
+    aylis_core::system_keys::set_capture_available(true);
     // A orientação para testar no desenvolvimento (`AYLIS_ORIENTATION`, ou `adb shell setprop
     // debug.aylis.orientation landscape`), por cima do projeto e dos forms; só em debug.
     #[cfg(mobile)]

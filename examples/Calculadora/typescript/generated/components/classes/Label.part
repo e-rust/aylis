@@ -91,6 +91,12 @@ export class Label extends AylisComponent {
     set textShadow(value: Shadow | null) {
         this.setProp("text_shadow", (value ? value.toJson() : ""));
     }
+    get maxLines(): Promise<number> {
+        return this.getProp("max_lines") as Promise<any>;
+    }
+    set maxLines(value: number) {
+        this.setProp("max_lines", value);
+    }
     get focusControl(): Promise<AylisComponent | null> {
         return this.getRef("focus_control");
     }

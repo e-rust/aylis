@@ -55,6 +55,30 @@ impl Panel {
     pub fn set_gap(self, ui: &mut Ui, value: f64) {
         handles::write(ui, self.id, "gap", value)
     }
+    pub fn hover_fill(self, ui: &Ui) -> aylis::prelude::Color {
+        handles::read(ui, self.id, "hover_fill").and_then(|v| v.to_color().ok()).unwrap_or_default()
+    }
+    pub fn set_hover_fill(self, ui: &mut Ui, value: impl Into<handles::ColorRef>) {
+        handles::write(ui, self.id, "hover_fill", Into::<handles::ColorRef>::into(value))
+    }
+    pub fn pressed_fill(self, ui: &Ui) -> aylis::prelude::Color {
+        handles::read(ui, self.id, "pressed_fill").and_then(|v| v.to_color().ok()).unwrap_or_default()
+    }
+    pub fn set_pressed_fill(self, ui: &mut Ui, value: impl Into<handles::ColorRef>) {
+        handles::write(ui, self.id, "pressed_fill", Into::<handles::ColorRef>::into(value))
+    }
+    pub fn interactive(self, ui: &Ui) -> bool {
+        handles::read(ui, self.id, "interactive").and_then(|v| v.to_bool().ok()).unwrap_or_default()
+    }
+    pub fn set_interactive(self, ui: &mut Ui, value: bool) {
+        handles::write(ui, self.id, "interactive", value)
+    }
+    pub fn selected_fill(self, ui: &Ui) -> aylis::prelude::Color {
+        handles::read(ui, self.id, "selected_fill").and_then(|v| v.to_color().ok()).unwrap_or_default()
+    }
+    pub fn set_selected_fill(self, ui: &mut Ui, value: impl Into<handles::ColorRef>) {
+        handles::write(ui, self.id, "selected_fill", Into::<handles::ColorRef>::into(value))
+    }
     pub fn fill(self, ui: &Ui) -> aylis::prelude::Color {
         handles::read(ui, self.id, "fill").and_then(|v| v.to_color().ok()).unwrap_or_default()
     }
@@ -102,6 +126,12 @@ impl Panel {
     }
     pub fn set_stroke_width(self, ui: &mut Ui, value: f64) {
         handles::write(ui, self.id, "stroke_width", value)
+    }
+    pub fn stroke_dash(self, ui: &Ui) -> Vec<f64> {
+        handles::read_numbers(ui, self.id, "stroke_dash")
+    }
+    pub fn set_stroke_dash(self, ui: &mut Ui, value: &[f64]) {
+        handles::write(ui, self.id, "stroke_dash", handles::numbers_value(value))
     }
     pub fn radius(self, ui: &Ui) -> aylis::prelude::Bounds {
         handles::read(ui, self.id, "radius").and_then(|v| v.to_bounds().ok()).unwrap_or_default()
@@ -439,10 +469,10 @@ impl Panel {
     pub fn set_font_size(self, ui: &mut Ui, value: f64) {
         handles::write(ui, self.id, "font_size", value)
     }
-    pub fn font_weight(self, ui: &Ui) -> FontWeight {
-        handles::read_enum::<FontWeight>(ui, self.id, "font_weight")
+    pub fn font_weight(self, ui: &Ui) -> Option<aylis::prelude::FontWeight> {
+        handles::read_enum::<Option<aylis::prelude::FontWeight>>(ui, self.id, "font_weight")
     }
-    pub fn set_font_weight(self, ui: &mut Ui, value: FontWeight) {
+    pub fn set_font_weight(self, ui: &mut Ui, value: Option<aylis::prelude::FontWeight>) {
         handles::write(ui, self.id, "font_weight", PropValue::enum_value(value))
     }
     pub fn font_italic(self, ui: &Ui) -> bool {

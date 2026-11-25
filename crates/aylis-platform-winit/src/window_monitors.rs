@@ -15,6 +15,13 @@ impl App {
     /// quando a lista muda) e diz a cada form em que monitor está a janela dele.
     pub(crate) fn refresh_monitors(&mut self, event_loop: &ActiveEventLoop, force: bool) {
         if !force && self.monitors_checked.is_some_and(|t| t.elapsed() < Duration::from_secs(2)) {
+            // No Wayland o monitor da janela só se sabe pelo `wl_surface.enter`, que o compositor
+            // manda depois do primeiro quadro: ao criar a janela, o `current_monitor` ainda é
+            // `None`. Enquanto alguma não tem monitor, confere a cada volta (barato: o winit
+            // guarda as saídas da superfície), em vez de esperar a varredura de 2 s.
+            if self.windows.iter().any(|w| !w.is_extra() && self.ui.form_monitor(w.form).is_none()) {
+                self.sync_form_monitors();
+            }
             return;
         }
         self.monitors_checked = Some(Instant::now());

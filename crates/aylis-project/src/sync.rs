@@ -233,6 +233,11 @@ fn stub(language: Language, module: &str, form: &str, handler: &str) -> (String,
     let sig = crate::codegen::handler_sig_for(language, form, handler);
     match language {
         Language::Rust => match sig {
+            // A pergunta tipada (o `on_key_down`): o `Result` recusa.
+            Some(sig) if crate::codegen::question_event(form, handler).is_some() => (
+                format!("fn {handler}("),
+                format!("pub fn {handler}(&mut self, {}) -> Result<(), String> {{\n        let _ = (ui, sender, value);\n        Ok(())\n    }}\n", crate::bindings::rust_handler_params(&sig)),
+            ),
             Some(sig) => {
                 let values = if sig.arg == crate::bindings::EventKind::None { "ui, sender" } else { "ui, sender, value" };
                 (format!("fn {handler}("), format!("pub fn {handler}(&mut self, {}) {{\n        let _ = ({values});\n    }}\n", crate::bindings::rust_handler_params(&sig)))

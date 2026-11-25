@@ -18,6 +18,8 @@
 
 #![cfg(windows)]
 
+mod compositor;
+
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -515,6 +517,14 @@ pub fn pixel_bitmaps_created() -> u64 {
     PIXEL_BITMAPS.load(std::sync::atomic::Ordering::Relaxed)
 }
 
+static SHADER_BLENDS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// Quantas camadas com mistura o compositor em Direct3D já juntou ao fundo no processo (os
+/// testes conferem que o shader rodou, e não o efeito do Direct2D no lugar dele).
+pub fn shader_blends() -> u64 {
+    SHADER_BLENDS.load(std::sync::atomic::Ordering::Relaxed)
+}
+
 pub fn adapters() -> Vec<String> {
     // SAFETY: chamadas COM do DXGI, sem ponteiros guardados.
     unsafe {
@@ -881,6 +891,39 @@ impl D2dRenderer {
     /// Desenha fora da tela (na CPU, num bitmap do WIC) e devolve os pixels RGBA.
     pub fn render_rgba(&self, width: u32, height: u32, scale: f32, background: Color, paint: impl FnOnce(&mut D2dCanvas<'_>)) -> Option<Vec<u8>> {
         self.render_area_rgba(width, height, scale, background, None, paint)
+    }
+
+    /// Como [`render_rgba`](Self::render_rgba), desenhando na placa de vídeo (um contexto do
+    /// Direct2D sobre uma textura do Direct3D 11, como a janela) e lendo os pixels de volta: o
+    /// caminho da janela sem janela, para os testes do que só existe na placa (o compositor da
+    /// mistura em Direct3D, a fila de envios). `None` sem placa.
+    pub fn render_rgba_on_gpu(&self, width: u32, height: u32, scale: f32, background: Color, paint: impl FnOnce(&mut D2dCanvas<'_>)) -> Option<Vec<u8>> {
+        let (_, _, d2d) = self.shared_device(None).ok()?;
+        // SAFETY: chamadas COM do Direct2D com propriedades locais; o mapa da cópia para a CPU
+        // é lido pelo passo que ele informa e solto antes da volta.
+        unsafe {
+            let dc = d2d.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE).ok()?;
+            let size = D2D_SIZE_U { width: width.max(1), height: height.max(1) };
+            let format = D2D1_PIXEL_FORMAT { format: DXGI_FORMAT_B8G8R8A8_UNORM, alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED };
+            let props = |options| D2D1_BITMAP_PROPERTIES1 { pixelFormat: format, dpiX: 96.0, dpiY: 96.0, bitmapOptions: options, colorContext: std::mem::ManuallyDrop::new(None) };
+            let frame = dc.CreateBitmap(size, None, 0, &props(D2D1_BITMAP_OPTIONS_TARGET)).ok()?;
+            let readable = dc.CreateBitmap(size, None, 0, &props(D2D1_BITMAP_OPTIONS_CPU_READ | D2D1_BITMAP_OPTIONS_CANNOT_DRAW)).ok()?;
+            dc.SetTarget(&frame);
+            let target: ID2D1RenderTarget = dc.cast().ok()?;
+            let mut cache = DeviceCache::default();
+            self.draw_on(&target, &mut cache, None, scale, background, None, paint);
+            target.EndDraw(None, None).ok()?;
+            readable.CopyFromBitmap(None, &frame, None).ok()?;
+            let map = readable.Map(D2D1_MAP_OPTIONS_READ).ok()?;
+            let stride = map.pitch as usize;
+            let mut bgra = Vec::with_capacity((size.width * size.height * 4) as usize);
+            for y in 0..size.height as usize {
+                bgra.extend_from_slice(std::slice::from_raw_parts(map.bits.add(y * stride), size.width as usize * 4));
+            }
+            let _ = readable.Unmap();
+            dc.SetTarget(None);
+            Some(unpremultiply_bgra_to_rgba(&bgra))
+        }
     }
 
     /// Como [`render_rgba`](Self::render_rgba), só na área `area` (unidades lógicas) por cima
@@ -1295,6 +1338,93 @@ pub struct DeviceCache {
     /// O `frame_reuse_kb` próprio do form desta janela ([`HwndTarget::set_frame_reuse_kb`]);
     /// `None`: o do projeto.
     frame_reuse: Option<u32>,
+    /// As peças das camadas com mistura, reaproveitadas de uma camada para a outra e de um
+    /// quadro para o outro (criar a cada camada custava ~70 µs: 256 marcas d'água por quadro).
+    blend_pool: BlendPool,
+    /// O `blend_compositor` próprio do form desta janela ([`HwndTarget::set_blend_compositor`]);
+    /// `None`: o do projeto.
+    blend_compositor: Option<aylis_core::gpu::BlendCompositor>,
+}
+
+/// O compositor da mistura de uma janela, em três níveis: no diagnóstico,
+/// `AYLIS_BLEND_COMPOSITOR` (`direct2d` ou `direct3d`, para medir sem mexer no projeto); o do
+/// form (`form`); o do projeto, que o `RenderSettings` troca em execução.
+fn blend_compositor(form: Option<aylis_core::gpu::BlendCompositor>) -> aylis_core::gpu::BlendCompositor {
+    use aylis_core::PropEnum;
+    static FORCED: std::sync::OnceLock<Option<aylis_core::gpu::BlendCompositor>> = std::sync::OnceLock::new();
+    let forced = *FORCED.get_or_init(|| diagnostic("AYLIS_BLEND_COMPOSITOR").and_then(|v| aylis_core::gpu::BlendCompositor::from_name(v.trim())));
+    forced.or(form).unwrap_or_else(aylis_core::gpu::blend_compositor)
+}
+
+/// O que as camadas com mistura ([`Canvas::save_layer_blend`]) reaproveitam: os alvos fora
+/// da tela e os bitmaps do fundo, por tamanho, e os efeitos, pelo contexto que os criou.
+#[derive(Default)]
+struct BlendPool {
+    /// Os alvos devolvidos, com o [`BlendPool::flushes`] de quando voltaram: só servem de
+    /// novo depois de um envio à placa (o desenho que lê o bitmap deles ainda está na fila
+    /// do alvo principal, e o Direct2D mandaria o desenho novo antes).
+    targets: Vec<(u32, u32, u64, ID2D1BitmapRenderTarget)>,
+    /// Quantos envios do alvo principal à placa (`Flush`) a mistura já fez.
+    flushes: u64,
+    backdrops: Vec<(u32, u32, ID2D1Bitmap)>,
+    /// O efeito Blend e o Opacity, com o contexto que os criou (guardado junto: um contexto
+    /// solto e outro criado no mesmo endereço não pegam o efeito errado).
+    effects: Vec<(ID2D1DeviceContext, ID2D1Effect, ID2D1Effect)>,
+    /// O compositor em Direct3D (`blend_compositor = direct3d`), criado no primeiro uso.
+    /// `Some(None)`: não deu nesta placa (fica o efeito do Direct2D).
+    compositor: Option<Option<compositor::Compositor>>,
+}
+
+impl BlendPool {
+    /// Quantas peças de cada tipo ficam guardadas (as camadas abertas ao mesmo tempo, umas
+    /// dentro das outras, e tamanhos diferentes na mesma tela).
+    const KEEP: usize = 8;
+
+    fn take_target(&mut self, w: u32, h: u32) -> Option<ID2D1BitmapRenderTarget> {
+        let flushes = self.flushes;
+        let at = self.targets.iter().position(|(tw, th, at, _)| (*tw, *th) == (w, h) && *at < flushes)?;
+        Some(self.targets.remove(at).3)
+    }
+
+    fn give_target(&mut self, w: u32, h: u32, target: ID2D1BitmapRenderTarget) {
+        if self.targets.len() >= Self::KEEP {
+            self.targets.remove(0);
+        }
+        self.targets.push((w, h, self.flushes, target));
+    }
+
+    /// O bitmap do fundo de `w × h`: guardado para a próxima camada do mesmo tamanho (a placa
+    /// ordena a cópia nova depois da leitura da anterior).
+    fn backdrop(&mut self, target: &ID2D1RenderTarget, w: u32, h: u32) -> windows_core::Result<ID2D1Bitmap> {
+        if let Some((_, _, b)) = self.backdrops.iter().find(|(bw, bh, _)| (*bw, *bh) == (w, h)) {
+            return Ok(b.clone());
+        }
+        // SAFETY: chamada COM do Direct2D com as propriedades locais.
+        let bitmap = unsafe {
+            let props = D2D1_BITMAP_PROPERTIES { pixelFormat: target.GetPixelFormat(), dpiX: 96.0, dpiY: 96.0 };
+            target.CreateBitmap(D2D_SIZE_U { width: w, height: h }, None, 0, &props)?
+        };
+        if self.backdrops.len() >= Self::KEEP {
+            self.backdrops.remove(0);
+        }
+        self.backdrops.push((w, h, bitmap.clone()));
+        Ok(bitmap)
+    }
+
+    /// O Blend e o Opacity do contexto `dc` (criados uma vez).
+    fn effects(&mut self, dc: &ID2D1DeviceContext) -> windows_core::Result<(ID2D1Effect, ID2D1Effect)> {
+        let key = windows_core::Interface::as_raw(dc);
+        if let Some((_, blend, fade)) = self.effects.iter().find(|(k, ..)| windows_core::Interface::as_raw(k) == key) {
+            return Ok((blend.clone(), fade.clone()));
+        }
+        // SAFETY: chamadas COM do Direct2D no contexto válido.
+        let (blend, fade) = unsafe { (dc.CreateEffect(&CLSID_D2D1Blend)?, dc.CreateEffect(&CLSID_D2D1Opacity)?) };
+        if self.effects.len() >= Self::KEEP {
+            self.effects.remove(0);
+        }
+        self.effects.push((dc.clone(), blend.clone(), fade.clone()));
+        Ok((blend, fade))
+    }
 }
 
 impl Default for DeviceCache {
@@ -1308,6 +1438,8 @@ impl Default for DeviceCache {
             layers: aylis_core::LayerCache::named("Direct2D · camadas guardadas"),
             spare_frames: Vec::new(),
             frame_reuse: None,
+            blend_pool: BlendPool::default(),
+            blend_compositor: None,
         }
     }
 }
@@ -1449,6 +1581,12 @@ impl HwndTarget {
     /// passa a cada quadro; vale a partir do próximo quadro de vídeo.
     pub fn set_frame_reuse_kb(&mut self, kb: Option<u32>) {
         self.cache.frame_reuse = kb;
+    }
+
+    /// O `blend_compositor` próprio do form desta janela (`None`: o do projeto). A plataforma
+    /// passa a cada quadro; vale a partir da próxima camada com mistura.
+    pub fn set_blend_compositor(&mut self, compositor: Option<aylis_core::gpu::BlendCompositor>) {
+        self.cache.blend_compositor = compositor;
     }
 
     /// Troca a regra da placa (a propriedade `gpu` do form mudou) e recria o alvo se a placa
@@ -1650,6 +1788,8 @@ struct BlendState {
     pushes: Vec<Push>,
     content: ID2D1BitmapRenderTarget,
     mode: Option<D2D1_BLEND_MODE>,
+    /// O modo na ordem do `aylis_core::BlendMode` (o do shader do compositor em Direct3D).
+    index: u32,
     opacity: f32,
     area: D2D_RECT_U,
     /// O `frames.len()` do `save` que a abriu (o `restore` dele fecha a camada).
@@ -1801,31 +1941,40 @@ impl D2dCanvas<'_> {
     /// Abre uma camada num alvo fora da tela do tamanho de `area` (pixels do alvo de agora): a
     /// mistura `mode`, ou a camada de opacidade isolada (`None`). Ela fecha no `restore` que
     /// encontrar `frame` saves abertos. `false`: não deu (pedaço vazio, sem memória).
-    fn open_offscreen(&mut self, mode: Option<D2D1_BLEND_MODE>, opacity: f32, area: D2D_RECT_U, frame: usize) -> bool {
+    fn open_offscreen(&mut self, mode: Option<(D2D1_BLEND_MODE, u32)>, opacity: f32, area: D2D_RECT_U, frame: usize) -> bool {
         let (w, h) = (area.right.saturating_sub(area.left), area.bottom.saturating_sub(area.top));
         if w == 0 || h == 0 {
             return false;
         }
-        // SAFETY: chamadas COM do Direct2D; o alvo novo fica guardado no `BlendState` até o
-        // `end_blend_inner`.
-        let content = unsafe {
-            self.target.CreateCompatibleRenderTarget(
-                Some(&D2D_SIZE_F { width: w as f32, height: h as f32 }),
-                Some(&D2D_SIZE_U { width: w, height: h }),
-                None,
-                D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE,
-            )
+        // Um alvo do mesmo tamanho já usado (devolvido no `end_blend_inner`), ou um novo.
+        let content = match self.cache.blend_pool.take_target(w, h) {
+            Some(content) => content,
+            // SAFETY: chamadas COM do Direct2D; o alvo novo fica guardado no `BlendState` até o
+            // `end_blend_inner`.
+            None => match unsafe {
+                self.target.CreateCompatibleRenderTarget(
+                    Some(&D2D_SIZE_F { width: w as f32, height: h as f32 }),
+                    Some(&D2D_SIZE_U { width: w, height: h }),
+                    None,
+                    D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE,
+                )
+            } {
+                Ok(content) => content,
+                Err(_) => return false,
+            },
         };
-        let Ok(content) = content else { return false };
         let Ok(as_target) = content.cast::<ID2D1RenderTarget>() else { return false };
-        // SAFETY: o alvo acabou de ser criado; o `BeginDraw` fecha no `end_blend_inner`.
+        // SAFETY: o alvo está fora de um `BeginDraw` (novo ou devolvido depois do `EndDraw`); o
+        // `BeginDraw` fecha no `end_blend_inner`.
         unsafe {
             content.BeginDraw();
+            content.SetTransform(&Matrix3x2::identity());
             content.Clear(Some(&color(Color::TRANSPARENT)));
         }
         let main = std::mem::replace(&mut self.target, as_target);
         let pushes = std::mem::take(&mut self.pushes);
-        self.blends.push(BlendState { main, pushes, content, mode, opacity, area, frame });
+        let (mode, index) = (mode.map(|m| m.0), mode.map_or(0, |m| m.1));
+        self.blends.push(BlendState { main, pushes, content, mode, index, opacity, area, frame });
         // As mesmas coordenadas, com o canto do pedaço na origem do alvo novo.
         let m = mul(&self.transform, &Matrix3x2::translation(-(area.left as f32), -(area.top as f32)));
         self.set_transform(m);
@@ -1898,26 +2047,31 @@ impl D2dCanvas<'_> {
     /// Fecha a camada com mistura aberta: volta ao alvo de antes e junta o pedaço dela ao
     /// fundo pelo efeito Blend (o fundo copiado do alvo, como o desfoque do fundo faz).
     fn end_blend_inner(&mut self) {
-        let Some(state) = self.blends.pop() else { return };
+        let Some(BlendState { main, pushes, content, mode, index, opacity, area: a, frame: _ }) = self.blends.pop() else { return };
         self.pop_until(0);
         unsafe {
-            let _ = state.content.EndDraw(None, None);
+            let _ = content.EndDraw(None, None);
         }
-        self.target = state.main;
-        self.pushes = state.pushes;
-        let a = state.area;
-        if a.right <= a.left || a.bottom <= a.top {
-            return;
+        self.target = main;
+        self.pushes = pushes;
+        if a.right > a.left && a.bottom > a.top {
+            self.compose_blend(&content, mode.map(|m| (m, index)), opacity, a);
         }
+        // O alvo volta para uma próxima camada do mesmo tamanho.
+        self.cache.blend_pool.give_target(a.right - a.left, a.bottom - a.top, content);
+    }
+
+    /// Junta a camada `content` (já fechada), do pedaço `a` em pixels, ao fundo do alvo atual.
+    fn compose_blend(&mut self, content: &ID2D1BitmapRenderTarget, mode: Option<(D2D1_BLEND_MODE, u32)>, opacity: f32, a: D2D_RECT_U) {
         let piece = D2D_RECT_F { left: a.left as f32, top: a.top as f32, right: a.right as f32, bottom: a.bottom as f32 };
-        let Some(mode) = state.mode else {
+        let Some((mode, index)) = mode else {
             // A camada de opacidade isolada: o pedaço por cima, com a opacidade (os recortes e
             // as camadas de fora valem).
             // SAFETY: chamadas COM do Direct2D com o bitmap e o retângulo locais.
             unsafe {
-                if let Ok(layer) = state.content.GetBitmap() {
+                if let Ok(layer) = content.GetBitmap() {
                     self.target.SetTransform(&Matrix3x2::identity());
-                    self.target.DrawBitmap(&layer, Some(&piece), state.opacity, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, None);
+                    self.target.DrawBitmap(&layer, Some(&piece), opacity, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, None);
                 }
                 self.target.SetTransform(&self.transform);
             }
@@ -1925,19 +2079,27 @@ impl D2dCanvas<'_> {
         };
         let _ = (|| -> windows_core::Result<()> {
             unsafe {
+                // O envio à placa vem antes de mexer no fundo e nos efeitos: o desenho da camada
+                // anterior, ainda na fila, lê o mesmo bitmap e os mesmos efeitos.
+                self.cache.blend_pool.flushes += 1;
+                if blend_compositor(self.cache.blend_compositor) == aylis_core::gpu::BlendCompositor::Direct3d {
+                    // O shader do Aylis; se não der aqui (recorte arredondado, alvo na CPU), o
+                    // efeito do Direct2D logo abaixo.
+                    self.target.Flush(None, None)?;
+                    if self.compose_on_gpu(content, index, opacity, a) {
+                        return Ok(());
+                    }
+                }
                 let dc: ID2D1DeviceContext = self.target.cast()?;
-                let props = D2D1_BITMAP_PROPERTIES { pixelFormat: self.target.GetPixelFormat(), dpiX: 96.0, dpiY: 96.0 };
-                let size = D2D_SIZE_U { width: a.right - a.left, height: a.bottom - a.top };
-                let backdrop = self.target.CreateBitmap(size, None, 0, &props)?;
+                let backdrop = self.cache.blend_pool.backdrop(&self.target, a.right - a.left, a.bottom - a.top)?;
                 self.without_pushes(|c| c.target.Flush(None, None).and_then(|_| backdrop.CopyFromRenderTarget(None, &c.target, Some(&a))))?;
                 // A camada já é do tamanho do pedaço.
-                let layer = state.content.GetBitmap()?;
-                let effect = dc.CreateEffect(&CLSID_D2D1Blend)?;
+                let layer = content.GetBitmap()?;
+                let (effect, fade) = self.cache.blend_pool.effects(&dc)?;
                 effect.SetInput(0, &backdrop, true);
-                if state.opacity < 1.0 {
-                    let fade = dc.CreateEffect(&CLSID_D2D1Opacity)?;
+                if opacity < 1.0 {
                     fade.SetInput(0, &layer, true);
-                    fade.SetValue(D2D1_OPACITY_PROP_OPACITY.0 as u32, D2D1_PROPERTY_TYPE_FLOAT, &state.opacity.to_le_bytes())?;
+                    fade.SetValue(D2D1_OPACITY_PROP_OPACITY.0 as u32, D2D1_PROPERTY_TYPE_FLOAT, &opacity.to_le_bytes())?;
                     effect.SetInput(1, &fade.GetOutput()?, true);
                 } else {
                     effect.SetInput(1, &layer, true);
@@ -1954,6 +2116,53 @@ impl D2dCanvas<'_> {
             }
         })();
         unsafe { self.target.SetTransform(&self.transform) };
+    }
+
+    /// Junta a camada pelo compositor em Direct3D ([`compositor::Compositor`]), se o alvo de
+    /// agora é uma textura da placa e os recortes abertos são retângulos alinhados (viram o
+    /// *scissor*). `false`: não deu, e quem chama usa o efeito do Direct2D. O que o Direct2D
+    /// tinha na fila já foi mandado à placa.
+    fn compose_on_gpu(&mut self, content: &ID2D1BitmapRenderTarget, index: u32, opacity: f32, a: D2D_RECT_U) -> bool {
+        // Uma camada aberta (máscara, opacidade) junta o que vem depois a ela: o shader
+        // escreveria por fora dela.
+        if self.pushes.iter().any(|p| matches!(p, Push::Layer(..))) {
+            return false;
+        }
+        if self.pushes.iter().any(|p| matches!(p, Push::Clip(_, m) if m.M12 != 0.0 || m.M21 != 0.0)) {
+            return false;
+        }
+        let clip = self.clip_area();
+        let scissor = windows::Win32::Foundation::RECT {
+            left: a.left.max(clip.left) as i32,
+            top: a.top.max(clip.top) as i32,
+            right: a.right.min(clip.right) as i32,
+            bottom: a.bottom.min(clip.bottom) as i32,
+        };
+        if scissor.right <= scissor.left || scissor.bottom <= scissor.top {
+            // Nada à vista: nada a compor.
+            return true;
+        }
+        // SAFETY: chamadas COM do Direct2D e do DXGI que só perguntam as texturas por trás dos
+        // bitmaps (o alvo de agora e a camada).
+        let textures = unsafe {
+            let texture_of = |bitmap: ID2D1Bitmap1| -> Option<ID3D11Texture2D> { bitmap.GetSurface().ok()?.cast().ok() };
+            let dc: Option<ID2D1DeviceContext> = self.target.cast().ok();
+            let target = dc.and_then(|dc| dc.GetTarget().ok()).and_then(|t| t.cast::<ID2D1Bitmap1>().ok()).and_then(texture_of);
+            let layer = content.GetBitmap().ok().and_then(|b| b.cast::<ID2D1Bitmap1>().ok()).and_then(texture_of);
+            target.zip(layer)
+        };
+        let Some((target, layer)) = textures else { return false };
+        let pool = &mut self.cache.blend_pool;
+        if pool.compositor.as_ref().is_some_and(|c| c.as_ref().is_some_and(|c| !c.serves(&target))) {
+            pool.compositor = None;
+        }
+        let Some(compositor) = pool.compositor.get_or_insert_with(|| compositor::Compositor::new(&target)).as_mut() else { return false };
+        let area = windows::Win32::Foundation::RECT { left: a.left as i32, top: a.top as i32, right: a.right as i32, bottom: a.bottom as i32 };
+        let done = compositor.compose(&target, &layer, area, scissor, index, opacity).is_ok();
+        if done {
+            SHADER_BLENDS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        }
+        done
     }
 
     /// Fecha clips e camadas que a pintura deixou abertos (o EndDraw exige).
@@ -2473,6 +2682,8 @@ impl Canvas for D2dCanvas<'_> {
     /// junta ao fundo pelo efeito Blend. Sem o alvo fora da tela, a camada normal.
     fn save_layer_blend(&mut self, opacity: f32, mode: aylis_core::BlendMode, bounds: RectF) {
         use aylis_core::BlendMode as B;
+        // A ordem do `BlendMode` é a do shader do compositor em Direct3D.
+        let index = aylis_core::PropEnum::index(mode) as u32;
         let mode = match mode {
             B::Normal => return self.save_layer(opacity),
             B::Multiply => D2D1_BLEND_MODE_MULTIPLY,
@@ -2511,7 +2722,7 @@ impl Canvas for D2dCanvas<'_> {
         // A camada do tamanho do pedaço (antes, do alvo inteiro: 52 marcas d'água numa tela
         // cheia criavam 52 alvos do tamanho da tela por quadro).
         self.save();
-        if !self.open_offscreen(Some(mode), opacity, area, self.frames.len()) {
+        if !self.open_offscreen(Some((mode, index)), opacity, area, self.frames.len()) {
             self.frames.pop();
             self.save_layer(opacity);
         }

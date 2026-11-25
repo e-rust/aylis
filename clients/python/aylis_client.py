@@ -579,6 +579,9 @@ class Aylis:
         self._waiting = 0
         # Handlers rodando: um evento que pergunta roda já, mesmo com um deles num call.
         self._running = 0
+        # As respostas dos eventos que perguntam em andamento (a última é a do handler que roda),
+        # para o reply() do handler tipado, que não recebe o evento.
+        self._replies = []
         self._ws = WebSocket.accept(listen) if listen else None
         if self._ws is None:
             # O protocolo é UTF-8 nos dois sentidos (o padrão do Windows não é).
@@ -625,6 +628,14 @@ class Aylis:
                 function()
             except Exception as exc:  # uma função com erro não derruba o backend
                 log("erro numa função de post:", repr(exc))
+
+    def reply(self, name, value):
+        """Dentro de um evento que pergunta: grava um campo da resposta, como o
+        event["reply"][name] do handler que recebe o evento inteiro (o handler tipado não o
+        recebe). reply("key", "") no on_key_down engole a tecla; uma exceção recusa.
+        Fora de um evento que pergunta, não faz nada."""
+        if self._replies and self._replies[-1] is not None:
+            self._replies[-1][name] = value
 
     def send(self, cmd, **fields):
         """Envia um comando sem esperar resposta (erros chegam como evento "error")."""
@@ -875,6 +886,7 @@ class Aylis:
         if handler is None:
             handler = self._handlers.get(name)
         self._running += 1
+        self._replies.append(message["reply"] if ask is not None else None)
         try:
             if handler is None:
                 log("evento sem handler:", message.get("handler"))
@@ -894,6 +906,7 @@ class Aylis:
                 self.send("exception", message=str(exc), path=form or "", handler=name or "")
         finally:
             self._running -= 1
+            self._replies.pop()
             # O handler terminou: a tela deixa de mostrar o backend ocupado.
             if message.get("seq") is not None:
                 self.send("done", seq=message["seq"])
@@ -949,6 +962,8 @@ class Session(Aylis):
         self._freed = set()
         self._waiting = 0
         self._running = 0
+        # As respostas dos eventos que perguntam (o reply() do handler tipado), como no Aylis.
+        self._replies = []
         self._handlers = {}
         for attribute in dir(type(self)):
             function = getattr(self, attribute, None)

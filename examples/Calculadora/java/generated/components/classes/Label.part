@@ -125,6 +125,14 @@
             setProp("text_shadow", (value == null ? "" : value.toJson()));
         }
 
+        public long getMaxLines() {
+            return (long) asNumber(getProp("max_lines"));
+        }
+
+        public void setMaxLines(long value) {
+            setProp("max_lines", value);
+        }
+
         public Aylis.AylisComponent getFocusControl() {
             return getRef("focus_control");
         }

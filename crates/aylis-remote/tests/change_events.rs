@@ -100,3 +100,39 @@ fn two_windows_of_the_same_form_have_different_names() {
     assert_eq!(e["form"], "frmCliente");
     assert_eq!(e["handler"], "salvar");
 }
+
+/// O primeiro `on_key_down` que o backend recebe (a tecla é uma pergunta: o `Ui` espera a
+/// resposta, então cada caso usa um `Ui` novo).
+fn key_args(press: impl FnOnce(&mut Ui, ComponentId)) -> Value {
+    let mut ui = ui();
+    let events = capture(&mut ui);
+    run(&mut ui, json!({ "cmd": "load", "layout": {
+        "class": "Form", "name": "Frm", "children": [{ "class": "Edit", "name": "edtNome", "on_key_down": "tecla" }]
+    }}));
+    let form = ui.find("Frm").unwrap();
+    let edit = ui.find("edtNome").unwrap();
+    ui.set_focus(edit);
+    press(&mut ui, form);
+    let e = events.borrow().iter().find(|e| e["event"] == "on_key_down").cloned().expect("o on_key_down");
+    e["args"].clone()
+}
+
+/// A tecla chega ao backend com a tecla física (`code`) e o código nativo (`scancode`): o `/`
+/// do ABNT2 é a `IntlRo`, que o caractere sozinho não diz.
+#[test]
+fn the_key_carries_the_physical_key() {
+    let args = key_args(|ui, form| {
+        let slash = aylis_core::KeyEvent { key: aylis_core::Key::Char('/'), code: aylis_core::KeyCode::IntlRo, scancode: 0x73, ..Default::default() };
+        ui.key_down(form, slash);
+    });
+    assert_eq!(args["key"], "/");
+    assert_eq!(args["code"], "IntlRo");
+    assert_eq!(args["scancode"], 0x73);
+
+    // A tecla do protocolo (`key`) é sintética: sem tecla física.
+    let args = key_args(|ui, _| {
+        run(ui, json!({ "cmd": "key", "target": "Frm", "key": "A" }));
+    });
+    assert_eq!(args["code"], "Unidentified");
+    assert_eq!(args["scancode"], 0);
+}

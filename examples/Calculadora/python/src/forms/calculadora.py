@@ -1,7 +1,7 @@
 """Eventos do form frmCalculadora: o código é seu (o registro dos handlers fica no
 forms/__init__.py gerado). Dentro de um handler, o form é a janela do evento."""
 
-from .components import frmCalculadora, ListViewItem  # noqa: E402
+from .components import Button, Form, ListView, ListViewItem, frmCalculadora  # noqa: E402
 
 from motor import Calculadora, botao_do_teclado, formatar
 
@@ -55,9 +55,9 @@ def apertar(aylis, texto):
         atualizar(aylis)
 
 
-def form_key_down(aylis, event):
-    args = event.get("args") or {}
-    botao = botao_do_teclado(args.get("key", ""), args.get("ctrl", False), args.get("shift", False))
+def form_key_down(aylis, sender: "Form", value: "KeyEvent"):
+    # aylis.reply("key", "") engoliria a tecla.
+    botao = botao_do_teclado(value.key, value.ctrl, value.shift)
     if botao == "historico":
         historico_click(aylis, frmCalculadora.btnHistorico)
     elif botao is not None:

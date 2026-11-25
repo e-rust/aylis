@@ -134,21 +134,23 @@ pub fn sync(ui: &mut Ui, state: &Shared, ids: &Ids) {
     // "Design | Código" só onde há o editor de código (a lite do navegador não tem).
     let code_tab = crate::lite::can(crate::lite::Capability::Code);
     // As abas ficam em cima do designer e do código (forms e código juntos).
-    let views = [(ids.surface, !show && !code), (ids.tabs, !show), (ids.code_host, code), (ids.view_bar, !show && code_tab)];
+    // Um Markdown com a visão formatada: ela no lugar do editor (o "Design" dele).
+    let formatted = crate::mdview::sync(ui, code);
+    let views = [(ids.surface, !show && !code), (ids.tabs, !show), (ids.code_host, code && !formatted), (ids.view_bar, !show && code_tab)];
     for (id, on) in views {
         if ui.control(id).is_some_and(|c| c.visible() != on) {
             ui.control_mut(id).unwrap().set_visible(on);
         }
     }
     // O botão da vista atual em destaque.
-    for (id, on) in [(ids.view_design, !code), (ids.view_code, code)] {
+    for (id, on) in [(ids.view_design, !code || formatted), (ids.view_code, code && !formatted)] {
         let style = if on { "" } else { "flat" };
         if ui.control(id).is_some_and(|c| c.style() != style) {
             let _ = ui.set_prop(id, "style", style);
         }
     }
     // Um fonte sem form (um módulo do app): o Design não tem para onde ir, como o F12 (I05).
-    let design = !code || crate::actions::active_code_has_form(ui, state);
+    let design = !code || crate::mdview::active_markdown(ui).is_some() || crate::actions::active_code_has_form(ui, state);
     if ui.control(ids.view_design).is_some_and(|c| c.enabled() != design) {
         ui.control_mut(ids.view_design).unwrap().set_enabled(design);
     }

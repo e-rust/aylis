@@ -1016,6 +1016,12 @@ impl aylis_core::Timed for Gamepad {
 /// quando mudam, e `capture_monitor(i, max_width)`, que tira a imagem do monitor (só com o
 /// `allow_screen_capture` do projeto) e responde no `on_capture`.
 ///
+/// O teclado e o mouse: `lock_keys()` (o Caps Lock, o Num Lock e o Scroll Lock agora, fora de
+/// um evento de tecla), `set_cursor_image(component, rgba, width, height, hot_x, hot_y)` (o
+/// cursor sobre o controle ou o form vira a imagem: os pixels RGBA em base64, em pixels de tela,
+/// e o ponto de clique) e `clear_cursor_image(component)` (volta o `cursor` dele). Em Rust,
+/// `ui.lock_keys()`, `ui.set_cursor_image(..)` e `ui.clear_cursor_image(..)`.
+///
 /// A sessão do usuário: `session_locked()` (bloqueada: Win+L, a proteção de tela com senha) e
 /// `session_connected()` (`false` com a sessão remota desconectada ou deixada de lado pela troca
 /// de usuário), e o `on_session_change` quando um dos dois muda. Só o Windows informa; nos
@@ -1055,6 +1061,10 @@ impl Component for Screen {
             MethodInfo::new("session_locked", &[], Some(PropKind::Bool)),
             MethodInfo::new("session_connected", &[], Some(PropKind::Bool)),
             MethodInfo::new("capture_monitor", &[PropKind::Int, PropKind::Int], None).params(&["index", "max_width"]),
+            MethodInfo::new("lock_keys", &[], Some(PropKind::Record(&aylis_core::system_keys::LOCK_KEYS_RECORD))),
+            MethodInfo::new("set_cursor_image", &[PropKind::Component, PropKind::String, PropKind::Int, PropKind::Int, PropKind::Int, PropKind::Int], None)
+                .params(&["component", "rgba", "width", "height", "hot_x", "hot_y"]),
+            MethodInfo::new("clear_cursor_image", &[PropKind::Component], None).params(&["component"]),
             MethodInfo::new("count", &[], Some(PropKind::Int)),
             MethodInfo::new("primary", &[], Some(PropKind::Int)),
             MethodInfo::new("monitors", &[], Some(PropKind::RecordList(&aylis_core::monitors::MONITOR_RECORD))),
@@ -1095,6 +1105,27 @@ impl Component for Screen {
                     };
                     ui.fire(id, "on_capture", &EventArgs::Text(json));
                 });
+                PropValue::Null
+            }
+            "lock_keys" => PropValue::String(ctx.ui.lock_keys().to_json()),
+            // O cursor de imagem: o componente (o caminho, o nome ou o id), os pixels RGBA em
+            // base64, o tamanho e o ponto de clique.
+            "set_cursor_image" => {
+                let target = cursor_target(args)?;
+                let rgba = args.get(1).and_then(|v| v.to_str().ok()).and_then(aylis_core::image::decode_base64).ok_or("set_cursor_image pede os pixels RGBA em base64")?;
+                let int = |i: usize| args.get(i).and_then(|v| v.to_i64().ok()).filter(|v| (0..=i64::from(u32::MAX)).contains(v)).map(|v| v as u32);
+                let (Some(width), Some(height), Some(hot_x), Some(hot_y)) = (int(2), int(3), int(4), int(5)) else {
+                    return Err("set_cursor_image pede component, rgba, width, height, hot_x e hot_y".into());
+                };
+                if rgba.len() != width as usize * height as usize * 4 {
+                    return Err(format!("set_cursor_image: {width} × {height} pede {} bytes de RGBA (vieram {})", width as usize * height as usize * 4, rgba.len()));
+                }
+                ctx.ui.set_cursor_image(target, &aylis_core::Image::rgba(width, height, rgba), hot_x, hot_y)?;
+                PropValue::Null
+            }
+            "clear_cursor_image" => {
+                let target = cursor_target(args)?;
+                ctx.ui.clear_cursor_image(target);
                 PropValue::Null
             }
             "count" => PropValue::Int(monitors.len() as i64),
@@ -1146,6 +1177,14 @@ impl aylis_core::Timed for Screen {
             ctx.fire("on_session_change", EventArgs::None);
         }
         self.session = Some(now);
+    }
+}
+
+/// O componente do cursor de imagem (o `Ui::invoke` já trocou o caminho ou o id pelo componente).
+fn cursor_target(args: &[PropValue]) -> Result<aylis_core::ComponentId, String> {
+    match args.first() {
+        Some(PropValue::Component(Some(id))) => Ok(*id),
+        _ => Err("o cursor de imagem pede o componente (o caminho, o nome ou o id)".into()),
     }
 }
 

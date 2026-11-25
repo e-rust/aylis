@@ -940,6 +940,10 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     para `WebView2`, ao lado do `.exe` publicado de um app com `WebView`. *Esperado:* o app abre
     a página, e o Gerenciador de Tarefas mostra o `msedgewebview2.exe` rodando dessa pasta (não
     do `Program Files (x86)\Microsoft\EdgeWebView`). Sem a pasta, o do Windows.
+187. **O `WebView` só com `html`** (24/11). Num form, um `WebView` com a propriedade `html`
+    (`<h1>Olá</h1>`) e o `url` apagado no Inspetor (ou nunca preenchido). Execute.
+    *Esperado:* a página aparece; antes ficava vazia, e o console dizia `WebView2 error ...
+    0x80070057`.
 187. **A instância única configurável** (24/11). Na IDE recompilada, Projeto → Opções do projeto
     → Geral: *Esperado:* abaixo de "Instância única", "Segunda abertura" (entregar os argumentos
     ou sair calada) e "Nome da trava". Num projeto Rust com `user`, "Sair calada" e o nome
@@ -959,6 +963,65 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
     Tarefas → Aplicativos de inicialização mostra o `desktop_checks`; saia da conta e entre: o
     exemplo abre sozinho. `-- login off`: some da lista e não abre mais. Num app com um
     `CheckBox` "Abrir com o Windows" ligado ao `set_start_with_login`, o mesmo.
+190. **O Markdown formatado no Design** (pedido de 24/11). Na IDE, abra um `.md` do projeto (o
+    `AGENTS.md`, um README: no painel do projeto, grupo "Documentos", nas pastas deles) e clique em Design, ou F12. *Esperado:* o
+    texto formatado (títulos, listas, tabelas, código colorido, as imagens com caminho relativo
+    à pasta do arquivo) no lugar do editor, com o Design em destaque; Código (ou F12) volta ao
+    texto. Digite algo sem salvar e volte ao Design: já aparece. Um link para outro `.md` abre ele
+    numa aba, formatado (com `#título`, rola até ele); um `https://` abre no navegador. Cada
+    arquivo lembra a visão escolhida ao trocar de aba.
+191. **A tecla física no `KeyEvent`** (pedido de 24/11). `cargo run -p aylis-platform-winit
+    --example desktop_checks -- keys`, com o teclado ABNT2. Aperte `/` (a tecla ao lado do Shift
+    direito), `ç`, `´`, `~` e `\` (a tecla ao lado do Shift esquerdo). *Esperado:* `física IntlRo`
+    (scancode `0x73`), `Semicolon` (`0x27`), `BracketLeft` (`0x1A`), `Quote` (`0x28`) e
+    `IntlBackslash` (`0x56`), com o caractere certo no `Char`. O Ctrl direito mostra
+    `ControlRight` (`0xE01D`); o `1` da fila de cima, `Digit1`, e o do teclado numérico, `Numpad1`.
+    Troque o layout do Windows para US: a física e o scancode não mudam, só o `Char`.
+192. **O `on_key_down` tipado** (pedido de 24/11). Na IDE recompilada, num projeto em Rust, ligue
+    o `on_key_down` do form a um handler novo e gere o código. *Esperado:* o esqueleto é
+    `fn h(&mut self, ui: &mut Ui, sender: Form, value: KeyEvent) -> Result<(), String>`; com
+    `ui.suppress_key()` dentro, a tecla não chega ao `Edit` em foco (com `key_preview` ligado).
+    Faça o mesmo num projeto em Python: `def h(aylis, sender: "Form", value: "KeyEvent")`, e
+    `aylis.reply("key", "")` engole a tecla. Rode a Calculadora (Rust e outra linguagem) e use o
+    teclado: os números e as operações apertam os botões. Pelo MCP, `set_property` de um
+    evento com `"\"btn_click\""` liga o handler `btn_click` (antes, nome inválido).
+194. **A escala, o fim do redimensionamento, o trazer para a frente e o mouse sobre a janela**
+    (pedido de 24/11). `cargo run -p aylis-platform-winit --example window_reports`. *Esperado:*
+    a escala do monitor na primeira linha (1,5 com 150%); arraste a borda por um tempo e solte:
+    um `on_resize_end` só, ao soltar; maximize pelo botão: outro, logo depois; leve a janela a
+    um monitor de outra escala: `on_scale_change` com a escala nova. A cada segundo, o mouse:
+    sobre a janela, `form sob ele "frmReports"` e `pointer_over true`; fora, ou com outra
+    janela por cima dela, `None` e `false`. Com `-- auto`: a largura muda e sai o
+    `on_resize_end` 300 ms depois; a janela minimiza e volta pelo `bring_to_front` (com o foco,
+    mesmo com outro programa clicado no meio). Num app com `FrameView` e escala 125% ou 150%,
+    um quadro do tamanho da tela em pixels sai nítido, sem borrão nas letras.
+193. **O teclado preso, o cursor de imagem e o Scroll Lock** (pedido de 24/11). `cargo run -p
+    aylis-platform-winit --example desktop_checks -- grab`. *Esperado:* `available: Ok(Bool(true))`
+    e, com a janela em foco, `on_capture_change: Value(Bool(true))`. Aperte a tecla Windows: o
+    menu Iniciar não abre, e o console mostra `on_key_down Meta (física MetaLeft)` e o
+    `on_key_up`. Alt+Tab, Ctrl+Esc, Alt+Espaço e PrintScreen: nada do sistema acontece, e as
+    teclas aparecem no console; Alt+F4 não fecha (aparece `F4` com `alt true`). Clique noutra
+    janela: `on_capture_change: Value(Bool(false))`, e a tecla Windows volta a abrir o Iniciar.
+    O mouse sobre a janela vira a mira branca com contorno, com o clique no meio. Ligue o
+    Scroll Lock: a próxima tecla mostra `scroll true`, e a linha `lock_keys` seguinte também
+    (sem apertar nada). Ctrl+Alt+Del continua do sistema.
+195. **Vídeos com marca d'água e o compositor da mistura** (pedidos de 24/11). `cargo run -p
+    marca_dagua`. *Esperado:* o vídeo de exemplo tocando com "CÂMERA 01" repetido, inclinado,
+    cada letra na cor oposta à do vídeo por baixo (amarelo → azul, preto → branco). Escolha 16,
+    64 e 100 na barra: cada célula com o próprio número e o próprio vídeo; "Vídeo" desmarcado
+    troca por uma imagem fixa, "Mover" faz a marca deslizar cobrindo a célula inteira, "Inverter"
+    desmarcado deixa a marca branca. Abra outro vídeo: vai para todas. Depois, com
+    `"blend_compositor": "direct3d"` no `examples/MarcaDagua/MarcaDagua.aylisproj` (ou a
+    propriedade `blend_compositor` do form em `direct3d`), o mesmo desenho, sem diferença visível;
+    para medir os dois: `AYLIS_BLEND_COMPOSITOR=direct2d` ou `direct3d` com `AYLIS_BENCH=100` e
+    `--grid 256 --still --move`.
+196. **O tamanho pelo código e o monitor no Wayland** (pedido de 24/11). No Windows, `cargo run
+    -p aylis-platform-winit --example window_reports -- size`. *Esperado:* aos 1 s a janela
+    cresce para 900 × 560 (a linha "1 s depois" com o form e a janela iguais) e aos 2,5 s
+    estreita para 520, com um `on_resize_end` a cada mudança; o `form_monitor` com número desde
+    a primeira linha. No Linux, o mesmo no GNOME pelo Wayland (veja testes-em-dispositivos). Num
+    app com `KeyboardCapture` rodado sem instalar, no Linux pelo Wayland, o stderr avisa uma vez
+    que falta o `<app>.desktop`.
 
 ## Os ajustes de 08/11 que faltam conferir
 

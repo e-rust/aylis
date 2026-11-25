@@ -2,6 +2,7 @@
 //! 14/11: o projeto configura o app, a propriedade do form configura o form, e em execução
 //! as configurações podem ser trocadas).
 
+use aylis_core::gpu::BlendCompositor;
 use aylis_core::image_cache::{self, FRAME_REUSE_KB_RANGE};
 use aylis_core::{Component, EventCtx, ImageCacheLimits, properties};
 
@@ -11,12 +12,18 @@ struct Values {
     limits: ImageCacheLimits,
     auto_layers: bool,
     frame_reuse_kb: u32,
+    blend_compositor: BlendCompositor,
 }
 
 impl Values {
     /// Os que valem agora no processo.
     fn current() -> Self {
-        Self { limits: image_cache::limits(), auto_layers: image_cache::auto_layers(), frame_reuse_kb: image_cache::frame_reuse_kb() }
+        Self {
+            limits: image_cache::limits(),
+            auto_layers: image_cache::auto_layers(),
+            frame_reuse_kb: image_cache::frame_reuse_kb(),
+            blend_compositor: aylis_core::gpu::blend_compositor(),
+        }
     }
 
     /// Passa a valer no app inteiro (os limites, ajustados à faixa).
@@ -24,6 +31,7 @@ impl Values {
         image_cache::set_limits(self.limits);
         image_cache::set_auto_layers(self.auto_layers);
         image_cache::set_frame_reuse_kb(self.frame_reuse_kb);
+        aylis_core::gpu::set_blend_compositor(self.blend_compositor);
     }
 }
 
@@ -45,7 +53,9 @@ fn clamp(value: i64, (min, max): (u32, u32)) -> u32 {
 /// - `auto_layers`: as camadas automáticas nos forms com `layer_cache = project`; trocar
 ///   repinta;
 /// - `frame_reuse_kb`: até quantos KB um quadro de vídeo reaproveita o bitmap do anterior
-///   (Direct2D), nos forms sem `frame_reuse_kb` próprio; vale no quadro seguinte.
+///   (Direct2D), nos forms sem `frame_reuse_kb` próprio; vale no quadro seguinte;
+/// - `blend_compositor`: quem junta as camadas com `blend_mode` ao fundo no Direct2D
+///   (`direct2d` ou `direct3d`), nos forms sem `blend_compositor` próprio; trocar repinta.
 ///
 /// Valores fora da faixa são ajustados a ela, como o projeto faz ao abrir
 /// ([`ImageCacheLimits::clamped`], [`image_cache::set_frame_reuse_kb`]); ler de volta diz o
@@ -122,6 +132,16 @@ impl RenderSettings {
     fn set_frame_reuse_kb(&mut self, kb: i64) {
         self.change(|v| v.frame_reuse_kb = clamp(kb, FRAME_REUSE_KB_RANGE));
     }
+
+    /// Quem junta as camadas com `blend_mode` ao fundo no Direct2D, nos forms sem
+    /// `blend_compositor` próprio.
+    fn blend_compositor(&self) -> BlendCompositor {
+        self.values().blend_compositor
+    }
+
+    fn set_blend_compositor(&mut self, compositor: BlendCompositor) {
+        self.change(|v| v.blend_compositor = compositor);
+    }
 }
 
 impl Component for RenderSettings {
@@ -135,7 +155,8 @@ impl Component for RenderSettings {
             files: i64 => files / set_files,
             layers_mb: i64 => layers_mb / set_layers_mb,
             auto_layers: bool => auto_layers / set_auto_layers,
-            frame_reuse_kb: i64 => frame_reuse_kb / set_frame_reuse_kb
+            frame_reuse_kb: i64 => frame_reuse_kb / set_frame_reuse_kb,
+            blend_compositor: BlendCompositor => blend_compositor / set_blend_compositor
     }
 
     fn property_changed(&mut self, ctx: &mut EventCtx<'_>, _name: &str) {
@@ -148,7 +169,7 @@ impl Component for RenderSettings {
         v.apply();
         // As camadas automáticas mudam a pintura de todos os forms: repinta tudo. Os limites
         // valem no próximo uso, e o reaproveitamento dos quadros, no próximo quadro de vídeo.
-        if before.auto_layers != v.auto_layers || before.limits != v.limits {
+        if before.auto_layers != v.auto_layers || before.limits != v.limits || before.blend_compositor != v.blend_compositor {
             ctx.ui.request_repaint();
         }
     }

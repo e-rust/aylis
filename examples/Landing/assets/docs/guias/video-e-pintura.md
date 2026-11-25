@@ -24,6 +24,7 @@ O caminho é medir com o padrão, trocar um valor, medir de novo e só então gr
 | `render` (`"windows": "d2d"`, `"linux": "auto"`...) | Projeto → Opções | O renderizador de cada plataforma: `d2d`, `gpu` (Skia na placa), `cpu` (Skia na CPU) ou `auto` ([renderizadores.md](renderizadores.md)) | Direct2D no Windows, `auto` nas outras |
 | `gpu` | Projeto → Opções | A placa quando há mais de uma: `alto-desempenho`, `economia`, parte do nome ou `monitor` (segue o monitor da janela; [gpu-por-monitor.md](gpu-por-monitor.md)) | a do sistema |
 | `present` | Projeto → Opções | Como o quadro chega à janela no Windows: vazio (a swap chain da janela), `composition` (pelo compositor, como os navegadores) ou `composed` (sempre composto, fora do MPO: forms de overlay em tela cheia) | vazio |
+| `blend_compositor` | (só no `.aylisproj`, por enquanto) | Quem junta as camadas com `blend_mode` ao fundo no Direct2D: vazio ou `direct2d` (o efeito Blend do Direct2D) ou `direct3d` (o shader do Aylis em Direct3D 11, a base para o app que precisa de controle total da placa). O resultado é o mesmo; onde o shader não se aplica (a captura na CPU, recorte arredondado, camada de opacidade aberta), fica o efeito | `direct2d` |
 | `image_cache.pixels_mb` | Opções do projeto → Memória | Megabytes de imagens em pixels (vídeo, câmera, prévias) guardadas na placa | 96 |
 | `image_cache.files` | Opções do projeto → Memória | Quantas imagens de arquivo ficam prontas | 256 |
 | `image_cache.layers_mb` | Opções do projeto → Memória | Megabytes das camadas guardadas (`cache_layer`, transições); `0` desliga | 128 |
@@ -40,6 +41,7 @@ O caminho é medir com o padrão, trocar um valor, medir de novo e só então gr
 | `cache_layer` | todo controle | Guarda o desenho do controle como imagem enquanto ele anda ou esmaece |
 | `gpu` | Form | A placa deste form: vazia, a do projeto; `monitor`, `alto-desempenho`, `economia` ou parte do nome ([gpu-por-monitor.md](gpu-por-monitor.md)) |
 | `present` | Form | Como o quadro deste form chega à janela no Windows: `project` (o padrão), `window`, `composition` ou `composed` |
+| `blend_compositor` | Form | O compositor da mistura deste form: `project` (o padrão), `direct2d` ou `direct3d` |
 | `span_monitors` | Form | No Windows, um form maior que um monitor vira uma janela por monitor |
 | `frames_ahead` | VideoPlayer | Quantos quadros o decodificador prepara à frente (`0`: 6) |
 | `show_video` | VideoPlayer | Desligado, só o áudio (não decodifica a imagem para a tela) |
@@ -49,7 +51,7 @@ O caminho é medir com o padrão, trocar um valor, medir de novo e só então gr
 
 O `RenderSettings` (não visual, paleta System) tem as mesmas chaves do `image_cache` do projeto,
 como propriedades de execução: `pixels_mb`, `files`, `layers_mb`, `auto_layers` e
-`frame_reuse_kb`. Ler diz o que vale agora (o que o projeto aplicou ou a última troca); trocar
+`frame_reuse_kb`, e o `blend_compositor` do projeto. Ler diz o que vale agora (o que o projeto aplicou ou a última troca); trocar
 vale no app inteiro já no quadro seguinte: baixar um limite solta o excedente no próximo uso, e
 `auto_layers` repinta. Fora da faixa, o valor é ajustado (como o projeto faz ao abrir).
 
@@ -65,7 +67,8 @@ self.RenderSettings1.set_frame_reuse_kb(ui, 0);
 
 No Direct2D, o limite do reaproveitamento de quadros de uma janela sai, nesta ordem, da
 variável `AYLIS_FRAME_REUSE_KB` (só em debug), do `frame_reuse_kb` do form (se não for `-1`) e
-do valor do app (o do projeto ou o que o `RenderSettings` pôs).
+do valor do app (o do projeto ou o que o `RenderSettings` pôs). O `blend_compositor` segue a
+mesma ordem: `AYLIS_BLEND_COMPOSITOR`, o do form (se não for `project`) e o do app.
 
 ## Variáveis de ambiente (só em debug, no desenvolvimento)
 
@@ -76,6 +79,7 @@ do valor do app (o do projeto ou o que o `RenderSettings` pôs).
 | `AYLIS_PRESENT=window`, `composition` ou `composed` | Força o jeito de apresentar no Windows |
 | `AYLIS_VSYNC=0` | Não espera o monitor (para medir o custo do quadro) |
 | `AYLIS_FRAME_REUSE_KB=N` | Força o limite do reaproveitamento de quadros (`0`: sempre cria) |
+| `AYLIS_BLEND_COMPOSITOR=direct2d` ou `direct3d` | Força o compositor da mistura no Direct2D |
 | `AYLIS_BENCH=N` | Redesenha N quadros sem parar e escreve o tempo médio, o p50, o p95 e a memória |
 | `AYLIS_SNAPSHOT=pasta` | Grava a imagem do form (com `AYLIS_BENCH`) |
 | `AYLIS_D2D_DEBUG=1` | Diz em que placa e com que alvo o Direct2D desenha |

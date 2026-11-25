@@ -6,9 +6,10 @@
 //! - **Windows:** tudo (`GetCursorPos`, a ordem real das janelas, o registro do tema, o GDI).
 //! - **macOS:** o mouse e o Caps Lock pelo `NSEvent`; a captura ainda não (pede a permissão de
 //!   gravação da tela: `docs/testes-em-dispositivos.md`).
-//! - **Linux:** o X11 pela `libX11` carregada na hora (o mouse, o Caps/Num Lock e a imagem do
-//!   monitor); no Wayland o sistema não diz onde está o mouse nem deixa capturar sem o portal:
-//!   `None` e erro.
+//! - **Linux:** o X11 pela `libX11` carregada na hora (o mouse, o form sob um ponto, o
+//!   Caps/Num Lock e a imagem do monitor); numa sessão Wayland o sistema não diz onde está o
+//!   mouse (o XWayland só sabe dele sobre as janelas X) nem deixa capturar sem o portal: `None`
+//!   e erro.
 //! - **Celular e navegador:** o padrão (`None`; o Caps Lock da web vem da tecla, `web.rs`).
 
 #[cfg(not(any(web, mobile)))]
@@ -20,6 +21,10 @@ pub(crate) struct Desktop;
 
 #[cfg(not(any(web, mobile)))]
 impl DesktopService for Desktop {
+    fn lock_keys(&self) -> Option<aylis_core::LockKeys> {
+        Some(lock_keys())
+    }
+
     fn cursor_position(&self) -> Option<(i32, i32)> {
         #[cfg(windows)]
         return crate::win32::cursor_pos();
@@ -34,6 +39,8 @@ impl DesktopService for Desktop {
     fn form_at(&self, x: i32, y: i32) -> Option<ComponentId> {
         #[cfg(windows)]
         return crate::win32::form_at(x, y);
+        #[cfg(all(target_os = "linux", not(target_os = "android")))]
+        return x11::form_at(x, y);
         #[allow(unreachable_code)]
         {
             let _ = (x, y);
@@ -87,19 +94,33 @@ impl DesktopService for Desktop {
     }
 }
 
-/// O Caps Lock e o Num Lock ligados agora (o `Modifiers` de cada tecla e do mouse). No celular,
-/// `false`; no navegador, o que a última tecla disse (`web.rs`).
-pub(crate) fn lock_keys() -> (bool, bool) {
+/// O Caps Lock, o Num Lock e o Scroll Lock ligados agora (o `Modifiers` de cada tecla e do
+/// mouse, e o `Ui::lock_keys`). No celular, desligados; no navegador, o que a última tecla disse
+/// (`web.rs`); no Wayland, o do XWayland quando há `DISPLAY` (o winit não dá as travas do
+/// `wl_keyboard`), e sem ele, desligados.
+pub(crate) fn lock_keys() -> aylis_core::LockKeys {
     #[cfg(windows)]
     return crate::win32::lock_keys();
     #[cfg(target_os = "macos")]
-    return (mac::caps_lock(), false);
+    return aylis_core::LockKeys { caps_lock: mac::caps_lock(), ..Default::default() };
     #[cfg(all(target_os = "linux", not(target_os = "android")))]
-    return x11::lock_keys().unwrap_or((false, false));
+    return x11::lock_keys().unwrap_or_default();
     #[cfg(web)]
     return crate::web::lock_keys();
     #[allow(unreachable_code)]
-    (false, false)
+    aylis_core::LockKeys::default()
+}
+
+/// A janela nova do form no X11 (no Wayland, nada): o `form_at_screen` acha o form por ela.
+#[cfg(all(target_os = "linux", not(target_os = "android")))]
+pub(crate) fn track_x11_window(window: &winit::window::Window, form: ComponentId) {
+    use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
+    let id = match window.window_handle().map(|h| h.as_raw()) {
+        Ok(RawWindowHandle::Xlib(h)) => h.window as u64,
+        Ok(RawWindowHandle::Xcb(h)) => u64::from(h.window.get()),
+        _ => return,
+    };
+    x11::track(form, id);
 }
 
 /// A redução de uma área `width × height` para no máximo `max_width` de largura (0: inteira),
@@ -199,7 +220,17 @@ mod x11 {
         }
     }
 
+    /// A sessão é Wayland (`WAYLAND_DISPLAY`, ou o `XDG_SESSION_TYPE`): o XWayland só sabe do
+    /// mouse sobre as janelas X, e sobre as nativas (as do app também) a posição dele fica
+    /// parada na última que viu. Lá, o mouse e o form sob um ponto ficam sem valor.
+    pub(super) fn wayland_session() -> bool {
+        std::env::var_os("WAYLAND_DISPLAY").is_some_and(|d| !d.is_empty()) || std::env::var("XDG_SESSION_TYPE").is_ok_and(|t| t.eq_ignore_ascii_case("wayland"))
+    }
+
     pub(super) fn cursor_position() -> Option<(i32, i32)> {
+        if wayland_session() {
+            return None;
+        }
         with(|lib, display| {
             let (mut root, mut child) = (0, 0);
             let (mut rx, mut ry, mut wx, mut wy, mut mask) = (0, 0, 0, 0, 0);
@@ -213,17 +244,73 @@ mod x11 {
         .flatten()
     }
 
-    /// O Caps Lock e o Num Lock (os bits do `LockMask` e do `Mod2Mask` do ponteiro).
-    pub(super) fn lock_keys() -> Option<(bool, bool)> {
+    thread_local! {
+        /// A janela X (o id do servidor) de cada form aberto no X11.
+        static WINDOWS: std::cell::RefCell<Vec<(aylis_core::ComponentId, u64)>> = const { std::cell::RefCell::new(Vec::new()) };
+    }
+
+    /// Guarda a janela X do form (a do winit; a anterior do mesmo form sai).
+    pub(super) fn track(form: aylis_core::ComponentId, window: u64) {
+        WINDOWS.with(|w| {
+            let mut w = w.borrow_mut();
+            w.retain(|(f, _)| *f != form);
+            w.push((form, window));
+        });
+    }
+
+    /// O form cuja janela está à vista no ponto (pixels da tela): desce da janela raiz pela
+    /// filha mapeada que contém o ponto (o servidor dá a de cima, na ordem real), passando pela
+    /// moldura do gerenciador, até achar uma janela do app. Minimizada não é mapeada, e outro
+    /// programa por cima dá a janela dele: `None`.
+    pub(super) fn form_at(x: i32, y: i32) -> Option<aylis_core::ComponentId> {
+        if wayland_session() {
+            return None;
+        }
+        let ours = WINDOWS.with(|w| w.borrow().clone());
+        if ours.is_empty() {
+            return None;
+        }
+        with(|lib, display| {
+            // SAFETY: a conexão é válida; as janelas são só ids do servidor (uma que deixou de
+            // existir faz o `XTranslateCoordinates` falhar, e a busca para).
+            unsafe {
+                let root = (lib.XDefaultRootWindow)(display);
+                let mut current = root;
+                for _ in 0..32 {
+                    let (mut dx, mut dy, mut child) = (0, 0, 0);
+                    if (lib.XTranslateCoordinates)(display, root, current, x, y, &mut dx, &mut dy, &mut child) == 0 || child == 0 {
+                        return None;
+                    }
+                    if let Some((form, _)) = ours.iter().find(|(_, w)| *w == child as u64) {
+                        return Some(*form);
+                    }
+                    current = child;
+                }
+                None
+            }
+        })
+        .flatten()
+    }
+
+    /// O Caps Lock e o Num Lock (os bits do `LockMask` e do `Mod2Mask` do ponteiro) e o Scroll
+    /// Lock (a luz 3 do teclado no `XGetKeyboardControl`: o Scroll Lock não é modificador no X).
+    pub(super) fn lock_keys() -> Option<aylis_core::LockKeys> {
         with(|lib, display| {
             let (mut root, mut child) = (0, 0);
             let (mut rx, mut ry, mut wx, mut wy, mut mask) = (0, 0, 0, 0, 0u32);
-            // SAFETY: idem.
-            let ok = unsafe {
+            // SAFETY: idem; o `XKeyboardState` é preenchido pelo servidor.
+            let (ok, leds) = unsafe {
                 let window = (lib.XDefaultRootWindow)(display);
-                (lib.XQueryPointer)(display, window, &mut root, &mut child, &mut rx, &mut ry, &mut wx, &mut wy, &mut mask)
+                let ok = (lib.XQueryPointer)(display, window, &mut root, &mut child, &mut rx, &mut ry, &mut wx, &mut wy, &mut mask);
+                let mut keyboard: x11_dl::xlib::XKeyboardState = std::mem::zeroed();
+                (lib.XGetKeyboardControl)(display, &mut keyboard);
+                (ok, keyboard.led_mask)
             };
-            (ok != 0).then_some((mask & x11_dl::xlib::LockMask != 0, mask & x11_dl::xlib::Mod2Mask != 0))
+            (ok != 0).then_some(aylis_core::LockKeys {
+                caps_lock: mask & x11_dl::xlib::LockMask != 0,
+                num_lock: mask & x11_dl::xlib::Mod2Mask != 0,
+                scroll_lock: leds & 4 != 0,
+            })
         })
         .flatten()
     }

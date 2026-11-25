@@ -116,6 +116,70 @@ class Form(AylisForm):
         self._set("topmost", value)
 
     @property
+    def bottommost(self) -> bool:
+        return self._get("bottommost")
+
+    @bottommost.setter
+    def bottommost(self, value: bool) -> None:
+        self._set("bottommost", value)
+
+    @property
+    def keep_awake(self) -> KeepAwake:
+        return _enum(KeepAwake, self._get("keep_awake"))
+
+    @keep_awake.setter
+    def keep_awake(self, value: KeepAwake) -> None:
+        self._set("keep_awake", value.value)
+
+    @property
+    def confine_cursor(self) -> CursorConfine:
+        return _enum(CursorConfine, self._get("confine_cursor"))
+
+    @confine_cursor.setter
+    def confine_cursor(self, value: CursorConfine) -> None:
+        self._set("confine_cursor", value.value)
+
+    @property
+    def window_opacity(self) -> float:
+        return self._get("window_opacity")
+
+    @window_opacity.setter
+    def window_opacity(self, value: float) -> None:
+        self._set("window_opacity", value)
+
+    @property
+    def full_screen_mode(self) -> FullScreenMode:
+        return _enum(FullScreenMode, self._get("full_screen_mode"))
+
+    @full_screen_mode.setter
+    def full_screen_mode(self, value: FullScreenMode) -> None:
+        self._set("full_screen_mode", value.value)
+
+    @property
+    def video_width(self) -> int:
+        return self._get("video_width")
+
+    @video_width.setter
+    def video_width(self, value: int) -> None:
+        self._set("video_width", value)
+
+    @property
+    def video_height(self) -> int:
+        return self._get("video_height")
+
+    @video_height.setter
+    def video_height(self, value: int) -> None:
+        self._set("video_height", value)
+
+    @property
+    def video_refresh(self) -> float:
+        return self._get("video_refresh")
+
+    @video_refresh.setter
+    def video_refresh(self, value: float) -> None:
+        self._set("video_refresh", value)
+
+    @property
     def show_in_taskbar(self) -> bool:
         return self._get("show_in_taskbar")
 
@@ -244,6 +308,14 @@ class Form(AylisForm):
         self._set("present", value.value)
 
     @property
+    def blend_compositor(self) -> FormBlendCompositor:
+        return _enum(FormBlendCompositor, self._get("blend_compositor"))
+
+    @blend_compositor.setter
+    def blend_compositor(self, value: FormBlendCompositor) -> None:
+        self._set("blend_compositor", value.value)
+
+    @property
     def span_monitors(self) -> bool:
         return self._get("span_monitors")
 
@@ -298,6 +370,22 @@ class Form(AylisForm):
     @orientation.setter
     def orientation(self, value: FormOrientation) -> None:
         self._set("orientation", value.value)
+
+    @property
+    def host(self) -> AylisComponent | None:
+        return self._get_ref("host")
+
+    @host.setter
+    def host(self, value: AylisComponent | None) -> None:
+        self._set_ref("host", value)
+
+    @property
+    def dockable(self) -> bool:
+        return self._get("dockable")
+
+    @dockable.setter
+    def dockable(self, value: bool) -> None:
+        self._set("dockable", value)
 
     @property
     def on_show(self) -> str:
@@ -370,6 +458,62 @@ class Form(AylisForm):
     @on_gpu_change.setter
     def on_gpu_change(self, value: str) -> None:
         self._set("on_gpu_change", value)
+
+    @property
+    def on_dock(self) -> str:
+        return self._get("on_dock")
+
+    @on_dock.setter
+    def on_dock(self, value: str) -> None:
+        self._set("on_dock", value)
+
+    @property
+    def on_undock(self) -> str:
+        return self._get("on_undock")
+
+    @on_undock.setter
+    def on_undock(self, value: str) -> None:
+        self._set("on_undock", value)
+
+    @property
+    def on_files_drop(self) -> str:
+        return self._get("on_files_drop")
+
+    @on_files_drop.setter
+    def on_files_drop(self, value: str) -> None:
+        self._set("on_files_drop", value)
+
+    @property
+    def on_view_change(self) -> str:
+        return self._get("on_view_change")
+
+    @on_view_change.setter
+    def on_view_change(self, value: str) -> None:
+        self._set("on_view_change", value)
+
+    @property
+    def on_topmost_lost(self) -> str:
+        return self._get("on_topmost_lost")
+
+    @on_topmost_lost.setter
+    def on_topmost_lost(self, value: str) -> None:
+        self._set("on_topmost_lost", value)
+
+    @property
+    def on_scale_change(self) -> str:
+        return self._get("on_scale_change")
+
+    @on_scale_change.setter
+    def on_scale_change(self, value: str) -> None:
+        self._set("on_scale_change", value)
+
+    @property
+    def on_resize_end(self) -> str:
+        return self._get("on_resize_end")
+
+    @on_resize_end.setter
+    def on_resize_end(self, value: str) -> None:
+        self._set("on_resize_end", value)
 
     @property
     def client_width(self) -> float:
@@ -1062,11 +1206,35 @@ class Form(AylisForm):
     def move_to_monitor(self, monitor: int) -> None:
         self.aylis.send("invoke", target=self.id, method="move_to_monitor", args=[monitor])
 
+    def request_attention(self, critical: bool) -> None:
+        self.aylis.send("invoke", target=self.id, method="request_attention", args=[critical])
+
+    def bring_to_front(self) -> None:
+        self.aylis.send("invoke", target=self.id, method="bring_to_front", args=[])
+
+    def set_activation_token(self, token: str) -> None:
+        self.aylis.send("invoke", target=self.id, method="set_activation_token", args=[token])
+
+    def window_scale(self) -> float:
+        return self.aylis.call("invoke", target=self.id, method="window_scale", args=[])
+
+    def pointer_over(self) -> bool:
+        return self.aylis.call("invoke", target=self.id, method="pointer_over", args=[])
+
+    def place(self, monitor: int, x: int, y: int, width: int, height: int, activate: bool) -> None:
+        self.aylis.send("invoke", target=self.id, method="place", args=[monitor, x, y, width, height, activate])
+
     def gpu_adapter(self) -> str:
         return self.aylis.call("invoke", target=self.id, method="gpu_adapter", args=[])
 
     def gpu_adapters(self) -> list[str]:
         return _list(self.aylis.call("invoke", target=self.id, method="gpu_adapters", args=[]))
+
+    def drop_x(self) -> float:
+        return self.aylis.call("invoke", target=self.id, method="drop_x", args=[])
+
+    def drop_y(self) -> float:
+        return self.aylis.call("invoke", target=self.id, method="drop_y", args=[])
 
     def render_rgba(self, x: float, y: float, width: float, height: float, scale: float) -> str:
         return self.aylis.call("invoke", target=self.id, method="render_rgba", args=[x, y, width, height, scale])

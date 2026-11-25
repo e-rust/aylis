@@ -50,6 +50,12 @@ fn opening_and_saving_an_example_form_changes_nothing() {
                     let i = a.iter().zip(&b).position(|(x, y)| x != y).unwrap_or(a.len().min(b.len()));
                     println!("{}:{}\n  arquivo: {}\n  salvo:   {}", path.display(), i + 1, a.get(i).unwrap_or(&""), b.get(i).unwrap_or(&""));
                 }
+                // `AYLIS_UPDATE_FORMS=1`: regrava o form no formato canônico (o de quem o abre e
+                // salva na IDE), para o exemplo escrito à mão.
+                if std::env::var_os("AYLIS_UPDATE_FORMS").is_some() {
+                    std::fs::write(&path, &saved).unwrap();
+                    continue;
+                }
                 changed.push(path.display().to_string());
             }
         }

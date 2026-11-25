@@ -1,7 +1,7 @@
 // Eventos do form frmCalculadora: o código é seu (o registro dos handlers fica no index.ts
 // gerado). Dentro de um handler, o form é a janela do evento.
 
-import type { Aylis, AylisEvent } from "../aylis.ts";
+import type { Aylis } from "../aylis.ts";
 import { Calculadora, botaoDoTeclado, formatar } from "../motor.ts";
 import { frmCalculadora } from "./components.ts";
 
@@ -42,9 +42,10 @@ function apertar(aylis: Aylis, texto: string) {
     if (calc.tecla(texto)) atualizar(aylis);
 }
 
-export async function form_key_down(aylis: Aylis, ev: AylisEvent) {
-    const args = (ev.args ?? {}) as { key?: string; ctrl?: boolean; shift?: boolean };
-    const botao = botaoDoTeclado(args.key ?? "", args.ctrl ?? false, args.shift ?? false);
+export async function form_key_down(aylis: Aylis, sender: import("./components.ts").Form, value: import("./components.ts").KeyEvent) {
+    // aylis.reply("key", "") engoliria a tecla.
+    void sender;
+    const botao = botaoDoTeclado(value.key, value.ctrl, value.shift);
     if (botao === "historico") await historico_click(aylis, frmCalculadora.btnHistorico);
     else if (botao !== null) apertar(aylis, botao);
 }

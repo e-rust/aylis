@@ -506,6 +506,37 @@ fn question_events_get_the_right_signature() {
     std::fs::remove_dir_all(&base).unwrap();
 }
 
+/// O `on_key_down` é pergunta e tipado ao mesmo tempo (como o `on_key_up`): o handler novo
+/// recebe o `KeyEvent` e ainda responde (o `Result` em Rust; o `reply` dos clientes nas outras),
+/// e o registro gerado chama o tipado com o registro da tecla.
+#[test]
+fn the_key_down_handler_gets_the_typed_key_and_still_answers() {
+    let base = temp("key_down");
+    let mut project = create(&base, "Loja", Language::Rust).unwrap();
+    let layout = r#"{"aylis":1,"root":{"class":"Form","name":"frmPrincipal","key_preview":true,"on_key_down":"form_tecla","children":[{"class":"Edit","name":"edtNome","on_key_up":"solta"}]}}"#;
+    std::fs::write(project.file("forms/principal.json"), layout).unwrap();
+    codegen::generate(&project).unwrap();
+    let rust = std::fs::read_to_string(source(&project, Language::Rust)).unwrap();
+    assert!(
+        rust.contains("pub fn form_tecla(&mut self, ui: &mut Ui, sender: crate::generated::Form, value: aylis::prelude::KeyEvent) -> Result<(), String> {"),
+        "{rust}"
+    );
+    assert!(rust.contains("pub fn solta(&mut self, ui: &mut Ui, sender: crate::generated::Edit, value: aylis::prelude::KeyEvent) {"), "{rust}");
+
+    project.language = Language::Python;
+    codegen::generate(&project).unwrap();
+    let python = std::fs::read_to_string(source(&project, Language::Python)).unwrap();
+    assert!(python.contains("def form_tecla(aylis, sender: \"Form\", value: \"KeyEvent\"):"), "{python}");
+    let init = std::fs::read_to_string(project.code_dir_of(Language::Python).join("src/forms/__init__.py")).unwrap();
+    assert!(init.contains("form_tecla(aylis, components.frmPrincipal, KeyEvent.from_json("), "{init}");
+
+    project.language = Language::Pascal;
+    codegen::generate(&project).unwrap();
+    let pascal = std::fs::read_to_string(source(&project, Language::Pascal)).unwrap();
+    assert!(pascal.contains("procedure TFrmPrincipal.form_tecla(Sender: TForm; Value: TKeyEvent);"), "{pascal}");
+    std::fs::remove_dir_all(&base).unwrap();
+}
+
 /// O F12 gera só o código do form aberto: a unit dele ganha o handler novo e o acesso
 /// tipado acompanha, sem refazer o que é de compilar (o `Cargo.toml` mexido fica). Um form
 /// sem unit ainda gera o projeto inteiro.

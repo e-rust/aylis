@@ -120,7 +120,7 @@ pub fn formatar(v: f64) -> String {
 fn agrupar(digitos: &str) -> String {
     let mut out = String::new();
     for (i, c) in digitos.chars().enumerate() {
-        if i > 0 && (digitos.len() - i) % 3 == 0 {
+        if i > 0 && (digitos.len() - i).is_multiple_of(3) {
             out.push('.');
         }
         out.push(c);
