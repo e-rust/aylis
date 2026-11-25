@@ -20,8 +20,8 @@ http = ["dep:ureq", "dep:serde", "dep:web-sys", "dep:wasm-bindgen", "dep:wasm-bi
 websocket = ["dep:tungstenite", "dep:rustls", "dep:webpki-roots", "dep:serde", "dep:web-sys", "dep:wasm-bindgen", "dep:wasm-bindgen-futures", "dep:js-sys"]
 
 [dependencies]
-aylis-core = { version = "0.11.1", path = "../aylis-core" }
-aylis-data = { version = "0.11.1", path = "../aylis-data" }
+aylis-core = { version = "0.12.0", path = "../aylis-core" }
+aylis-data = { version = "0.12.0", path = "../aylis-data" }
 # O QR Code do provedor padrão de códigos de barras (sem dependências).
 qrcode = { version = "0.14", default-features = false }
 # A planilha do XlsxProvider.
