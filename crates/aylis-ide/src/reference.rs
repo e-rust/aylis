@@ -134,6 +134,7 @@ const EVENT_NOTES: &[(&str, &str)] = &[
     ("on_resize", "o tamanho mudou"),
     ("on_resize_end", "o usuário parou de redimensionar a janela (no Windows, ao soltar a borda; fora dele, 300 ms sem tamanho novo)"),
     ("on_scale_change", "a escala da janela mudou (outro monitor, outra escala no sistema), com a escala nova"),
+    ("on_monitor_change", "a janela foi para outro monitor, com o índice dele (o mesmo do `form_monitor` e da propriedade `monitor`)"),
     ("on_key_down", "uma tecla com o foco no componente"),
     ("on_capture_change", "o teclado foi preso (`true`: a janela ganhou o foco) ou solto (`false`)"),
     ("before_post", "o registro vai ser gravado: `Err` recusa, com a mensagem"),

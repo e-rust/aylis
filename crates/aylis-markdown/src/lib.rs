@@ -261,7 +261,7 @@ impl Markdown {
         if let Some(image) = self.images.borrow().get(&path) {
             return Some(image.clone());
         }
-        let image = Image::encoded(ctx.resource(&path)?);
+        let image = ctx.resource_image(&path)?;
         self.images.borrow_mut().insert(path, image.clone());
         Some(image)
     }

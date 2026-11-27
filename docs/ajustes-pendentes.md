@@ -13,6 +13,150 @@ leitor NFC, um aparelho Bluetooth, um controle, um Mac, uma placa NVIDIA, outro 
 depois; os itens feitos que só esperam a confirmação dele são conferidos primeiro, pelo
 [roteiro de conferência](roteiro-de-conferencia.md), e saem daqui para os concluídos.
 
+**Correção de 26/11/2026: a janela fantasma (a imagem da janela escondida volta à tela)**
+
+Relatado pelo NoOBS: depois do print, a imagem da janela principal (escondida na bandeja)
+aparecia na área de trabalho, branca e sem receber clique. Isolado num app só do Aylis 0.12.0
+(fora do repositório, `teste-janela-branca`): numa janela escondida, o
+`SetWindowDisplayAffinity(WDA_NONE)` seguido do `SetWindowRgn(NULL)` faz o Windows mostrar a
+imagem dela de novo, e o Aylis fazia as duas em **todas** as janelas a cada mudança de
+propriedade de qualquer `WindowSettings` (o `UpdateOptions`, também ao montar o form do JSON).
+Feito, sem commit, esperando a conferência (roteiro, item 202):
+
+- **Só quando muda** (`win32.rs`): o `capture_excluded` lê a afinidade atual
+  (`GetWindowDisplayAffinity`) e só chama o sistema se ela for diferente; o `set_window_shape`
+  sem forma só tira a região da janela que tem uma (`GetWindowRgnBox`). Teste:
+  `the_window_region_is_seen_before_it_is_removed`.
+- **Só as janelas que usam aquele `WindowSettings`** (`update_window_options(form)`): as do
+  próprio form e, se ele for do app (`scope` "app"), as dos forms que usam o do app. O de
+  `scope` "form" num form que ainda não tem janela não mexe em nenhuma.
+- **A janela escondida espera** (`options_pending`): as opções que mudaram com ela escondida
+  são aplicadas quando ela aparece (no fim do `apply_window_commands`, pelo `Show`, pelo
+  `Place` ou por outro caminho).
+- **Conferido no app de teste** com o Aylis da pasta: os casos 2 (o overlay do print do NoOBS)
+  e 4 (só mudar o `animation`) saem "sem fantasma" (3 de 3 cada); o caso 21, que chama o
+  Windows direto, continua com fantasma (o controle de que a medida enxerga o problema).
+- **Falta:** devolver o `WindowSettings { animation: false }` ao print do NoOBS (`wsShot`) e
+  conferir lá, com o Aylis publicado.
+
+**Testes extremos de 26/11/2026: o que ainda não tinha sido medido**
+
+Pedidos pelo autor em 26/11 ("vamos fazer", histórico, seção 23). Feitos, sem commit, esperando
+a conferência:
+
+- **A enxurrada de eventos remotos** (`crates/aylis-remote/tests/flood.rs`,
+  `medicoes/enxurrada.json`): 50 painéis de 20 cotações (1000 `Label`) e um backend que manda
+  1 milhão de `set` sem esperar a tela.
+  - **Antes:** o `aylis-host` lia o backend para um canal **sem limite** e esvaziava o canal
+    inteiro antes de pintar. A tela pintou **1 quadro em 16,6 s**, e a fila chegou a **723 mil
+    mensagens** na memória.
+  - **A fila:** `aylis_remote::inbox`, com 4096 mensagens no máximo. Cheia, quem lê o backend
+    espera, e o pipe ou o TCP seguram o backend: nada se perde e a memória não cresce. Um
+    acordar da tela por rodada, não por mensagem.
+  - **A rodada:** cada rodada trata no máximo 8 ms e devolve a vez à pintura. A plataforma
+    pinta no meio da enxurrada (o `paint_if_starved`, que já valia para o mouse de 8000 Hz,
+    agora também depois da bomba de mensagens).
+  - **O WebSocket do `--connect`:** com a fila cheia, deixa de ler o socket até ter lugar, e o
+    TCP segura o backend. Antes, a conexão fechava. A ponte (`--bridge`) continua fechando a
+    conexão da tela que manda demais.
+  - **Depois:** 51 quadros por segundo durante a enxurrada, o pior intervalo sem pintar de
+    72 ms e a fila em 4096. A vazão caiu de 60 mil para 28 mil `set` por segundo, porque agora
+    a tela também pinta.
+  - **O `resolve` do protocolo:** percorria a árvore inteira a cada comando por nome, para
+    conferir que o nome era único (`named_everywhere`). Agora consulta o índice de nomes, que
+    conta quantos têm cada nome (`Ui::count_named`), e só percorre para montar a mensagem de
+    erro.
+- **O gráfico com milhões de pontos** (`crates/aylis-controls-charts/tests/huge_series.rs`,
+  `medicoes/grafico_milhoes.json`): um `Chart` de linha de 1200 × 400 com um sinal de sensor,
+  no Skia da CPU.
+  - **Antes:** 10 mil pontos levavam 170 ms por quadro e 100 mil, **12,5 s** (10 s sem os
+    marcadores). Com 1 milhão, a medição passou de 22 minutos sem terminar. Três causas:
+    - a cada quadro o `Chart` copiava todas as séries (`shown`);
+    - desenhava cada ponto;
+    - inseria a área da dica de cada ponto **no começo** da lista, o que dava custo quadrático.
+  - **A redução por pixel:** uma linha (ou área) no eixo de categorias com mais de 4 pontos por
+    pixel é reduzida, em cada coluna de pixel, ao primeiro, ao menor, ao maior e ao último ponto
+    da janela do zoom. O desenho sai igual, com os picos, e o eixo Y automático continua sendo o
+    da série inteira. A redução fica guardada entre os quadros (pela versão dos dados, a janela e
+    a largura): passar o mouse não percorre a série de novo.
+  - **Sem cópia:** fora da animação, a pintura usa as próprias séries (`Cow`).
+  - **A dica:** as colunas entram de uma vez, e, na linha reduzida, cada coluna da dica tem pelo
+    menos 3 px.
+  - **A animação:** séries com mais de 100 mil pontos não animam na troca dos dados.
+  - **Depois:** com 10 milhões de pontos, 10 ms por quadro só com a linha e 45 ms com os
+    marcadores; 10 mil pontos com marcadores caíram de 170 para 63 ms. O `set_data` de 10
+    milhões leva 0,5 a 0,8 s, a maior parte no texto JSON da propriedade `series`.
+  - **Fica de fora:** a dispersão, o eixo de datas (`time_axis`, que ainda lê as datas dos
+    rótulos a cada quadro) e os empilhados continuam ponto por ponto.
+- **A latência da entrada ao pixel** (`crates/aylis-platform-winit/examples/input_latency.rs`,
+  `medicoes/latencia.json`).
+  - **A medição no núcleo:** `Ui::set_measure_input_latency` e `Ui::input_latency` (p50, p95,
+    p99, máximo), da entrada que o Aylis recebe ao quadro apresentado, desligada por padrão.
+    `AYLIS_LATENCY=1` liga pela plataforma e imprime ao fechar.
+  - **O exemplo:** posta o mouse só na própria janela (`PostMessageW`, nunca o `SendInput`,
+    que iria para a janela em foco) e mede também a fila do Windows.
+  - **Os números, a 60 Hz:**
+    - parado: 0,5 ms (Direct2D) e 1 ms (Skia CPU) até o quadro;
+    - numa rajada de 1000 Hz, ~6 ms, com as entradas juntas no quadro seguinte;
+    - com uma animação, 4 a 5 ms.
+  - **Falta:** o compositor e o monitor, só com uma câmera rápida ou um fotodiodo
+    ([testes-em-dispositivos](testes-em-dispositivos.md)).
+- **A acessibilidade em escala** (`access::tests::accessibility_tree_cost`,
+  `medicoes/acessibilidade.json`).
+  - **O custo:** com o leitor de tela ativo, a janela refazia a árvore inteira **a cada
+    quadro**. Com 18 mil controles, são 12,25 ms por árvore (só o lado do Aylis), ¾ de um
+    quadro a 60 Hz numa animação.
+  - **O ritmo:** agora sai no máximo uma árvore a cada 100 ms (`access::ACCESS_EVERY`), e a
+    última de uma sequência sai no prazo, pelo `about_to_wait`. Sem leitor ativo, nada muda.
+  - **O total do grid:** o grid virtualizado entregava só as linhas visíveis, e o leitor diria
+    "linha 5 de 30". O `AccessibleItems::access_table_size` novo dá o total, que o DataGrid
+    implementa, e o nó do grid leva `row_count` e `column_count`.
+  - **Falta:** conferir com o NVDA e o Narrador ([testes-em-dispositivos](testes-em-dispositivos.md)).
+- **O texto patológico** (`crates/aylis-dbcontrols/examples/pathological_text.rs`,
+  `medicoes/texto_patologico.json`).
+  - **O log de 200 MB e o de 2 GB no `Memo`:** rolar custa de 1 a 5 ms.
+    - Com 2 GB, abrir leva 5,5 s e ocupa 5,5 GB.
+    - Cada tecla custa 269 ms (pior caso 1,2 s): o texto é uma `String` só, e inserir no meio
+      move o resto.
+    - Um editor de logs desse tamanho pediria outra estrutura (uma *rope* ou blocos), que é
+      decisão sua.
+  - **O grid de 1 milhão de linhas com árabe, devanágari, emoji e bidi:** rola de 4 a 7 ms (pior
+    21 ms), mas carregar leva 14,7 s e ocupa 823 MB (~200 bytes por célula).
+  - **A linha única de JSON minificado no `CodeEditor`:**
+    - **Antes:** 1 MB custava 1,7 s por quadro em qualquer ação, e 50 MB não passaram do
+      primeiro quadro (136 s).
+    - **As causas:** quatro, todas medindo a linha inteira, do começo, a cada quadro:
+      - a largura da linha (para o alinhamento e a barra de rolagem de lado) e a posição do
+        cursor, logo depois de carregar no fim da linha;
+      - cada trecho do realce antes da parte à vista, uns 200 mil por quadro;
+      - as marcas, com o par do colchete no fim de uma linha de 20 MB custando 11 s por
+        quadro;
+      - no Skia, um parágrafo por texto medido, guardado num cache limitado por quantidade e
+        não por tamanho. Um parágrafo de 1 MB de texto passa de 1 GB, e no meio do caminho a
+        memória chegou a 9 GB.
+    - **O que mudou:**
+      - **os blocos:** a linha com mais de 4096 caracteres alinhada à esquerda é medida em
+        blocos de 256 caracteres, com a largura acumulada guardada no editor
+        (`Memo::blocks_of`). Numa edição, os blocos do começo e do fim iguais valem, e só o meio
+        é medido de novo;
+      - **o que usa os blocos:** a parte à vista, a posição do cursor, a largura da linha, o
+        início do realce e as marcas saem dos blocos por busca binária;
+      - **o realce:** uma linha com mais de 20 mil bytes fica na cor do texto, como no VS Code
+        (`editor.maxTokenizationLineLength`), porque recolorir 50 MB a cada tecla levava 17 s.
+        Se preferir uma propriedade, ela vira uma;
+      - **o Skia:** o texto longo é medido em blocos somados, e os parágrafos longos ficam num
+        cache de um só.
+    - **Depois, com o realce:**
+      - 1 MB: rolar em 5 ms e digitar em 10 ms, com 203 MB;
+      - 5 MB: 23 e 47 ms;
+      - 20 MB: 93 e 188 ms;
+      - 50 MB: 232 e 468 ms, e o primeiro quadro leva 19 s, porque mede a linha inteira uma vez.
+    - **Aberto:** o primeiro quadro de uma linha enorme. A formação do texto no Skia custa
+      ~0,4 µs por caractere, e só com uma estimativa de largura (fonte monoespaçada) ele sairia
+      na hora. No Direct2D e no navegador, a medida em blocos ainda não foi feita.
+- **Os apps fora do alcance:** a análise em [apps-fora-do-alcance.md](apps-fora-do-alcance.md),
+  com as perguntas sobre a saída de 10 bits, a cor do vídeo na placa e o HDR.
+
 **Ajustes de 25/11/2026: a bandeja e o sempre por cima com o shell**
 
 Decididos pelo autor em 25/11 (histórico, seção 21). Feitos, para o Windows (roteiro, item 199):
@@ -338,7 +482,26 @@ Conferência: roteiro, item 194.
   volta (o `remember_placement` e o `store_placement` usam o mesmo `current_monitor`). No WSLg,
   o monitor certo já na primeira linha (1 s). No `on_window_created` pode ainda ser `None`
   (documentado). O `on_monitor_change` citado no relato não existe no Aylis: quem quer saber da
-  troca hoje lê o `form_monitor` (fica como pergunta ao autor, se for o caso de um evento).
+  troca hoje lê o `form_monitor`. **Decidido pelo autor em 26/11 (histórico, seção 22), feito
+  em 26/11:** o `on_monitor_change` do form, com o índice do monitor novo (o mesmo do
+  `form_monitor` e da propriedade `monitor`), disparado pelo `Ui::set_form_monitor` (o único
+  lugar onde a plataforma grava o monitor: ao criar a janela, no `Moved` e na varredura de 2 s).
+  - O primeiro aviso de cada janela não dispara (o monitor de abrir, que o `on_window_created`
+    lê); aberta sem monitor (o Wayland, antes do primeiro quadro), o primeiro que chegar
+    dispara. Ficar sem monitor não dispara (o `Screen.on_change` avisa o desligado). Reaberta,
+    volta a valer como a primeira vez.
+  - Como o índice é a ordem do sistema, uma lista de monitores que muda pode renumerar e
+    disparar o evento sem a janela sair do lugar (documentado no `set_form_monitor`).
+  - *Diferente do decidido:* "no Wayland, o monitor com a maior parte da janela" não dá para
+    fazer: o cliente do Wayland não sabe a posição da janela. Vale o `current_monitor` do winit
+    (a saída em que a superfície entrou), e no Wayland a troca chega pela varredura de 2 s (não
+    há `Moved`).
+  - Catálogo regravado, a referência da IDE (`reference.rs`) e a página do Form na Landing
+    (`aylis-tool docs`, que também gerou a página do guia `apps-fora-do-alcance`, de outra
+    sessão). O `window_reports` escreve o evento. Testes: `aylis-controls/tests/form_window.rs`
+    (2 novos), o `catalog`, o `language_projects` (6 linguagens), as traduções da IDE; wasm e
+    Android compilam. *Não conferido na tela:* esta máquina tem um monitor só (roteiro, item
+    200).
 - **A permissão do `KeyboardCapture` no GNOME:** conferido que o GNOME só guarda a resposta de
   um app que ele liga a um `.desktop` (o `inhibitShortcutsDialog` do gnome-shell não usa o
   armazém de permissões para janela sem app). Os `.desktop` da publicação para Linux (`.deb`,
@@ -385,9 +548,71 @@ Medido em release (Direct2D, RX 9070 XT, 1920 × 1200, `AYLIS_BENCH=150`, o `sam
 O custo é do `VideoPlayer`, não da marca: 100 vídeos sem a marca (`--mark ""`) deram o mesmo ou
 pior, e `frames_ahead: 1` não mudou a memória. Cada player abre o próprio decodificador (thread +
 Media Foundation), ~22 MB e alguns ms de quadro cada; 400, 625 e 1000 não foram rodados (≈9 GB,
-14 GB e 22 GB, com 9 GB livres na máquina). **Pergunta ao autor:** vale atacar no `aylis-media`
-(um decodificador por arquivo dividido entre os players que tocam o mesmo vídeo, e/ou a placa e
-o decodificador compartilhados entre players), para a grade de 1000 caber?
+14 GB e 22 GB, com 9 GB livres na máquina). **Decidido pelo autor em 26/11 (histórico, seção
+22), não feito:** a placa e o decodificador compartilhados entre os players (um dispositivo D3D e
+um gerenciador de dispositivo do Media Foundation por processo, e não um por player); o
+decodificador por arquivo dividido entre os players fica de fora. A grade de 1000 serve para medir
+a inversão do texto, e para isso a decodificação não precisa entrar (o "Vídeo" desmarcado, ou
+`--still`, já mede sem decodificador).
+
+*Investigado em 26/11, nada mudou no código:* a placa **já era compartilhada** (o `VideoGpu` do
+`mf.rs`: um Direct3D 11 por placa para todos os vídeos). Medido em regime (`AYLIS_BENCH=1600`,
+porque nos primeiros quadros os players ainda estão abrindo e a memória sai baixa demais), o
+`sample.mp4` de 320 × 240 em todas as células:
+
+| Vídeos | Memória privada | Por player |
+|---|---|---|
+| 0 (`--still`, 16 células) | 133 MB | |
+| 1 | 145 MB | 12 MB |
+| 4 | 246 MB | 28 MB |
+| 16 | 503 MB | 23 MB |
+| 64 | 1612 MB | 23 MB |
+| 256 (400 quadros) | ~2 GB (uma rodada deu 5,6 GB) | |
+
+Experimentos, cada um desfeito depois:
+
+| Mudança | 16 vídeos |
+|---|---|
+| Nenhuma | 517–531 MB |
+| O gerenciador do Media Foundation um por placa | sem diferença medida (256: 2002 contra 2013 MB) |
+| Menos texturas por player (`POOL` 4 e `QUEUED` 2, no lugar de 12 e 8) | 553 MB |
+| `MF_LOW_LATENCY` no leitor | 541 MB |
+| O player mudo sem abrir o som (cada um abre leitor, thread e saída de áudio) | 496 MB (1,7 MB por player) |
+| **Decodificando pela CPU** (sem o caminho da placa) | **282 MB** (9 MB por player), e o quadro em 1,4 ms contra 2,1 |
+
+O custo é a instância do decodificador por hardware: ~16 MB por player neste driver (RX 9070
+XT), fixo, sem depender do tamanho da célula nem do vídeo. Ela não se divide entre vídeos
+diferentes (cada fluxo tem a própria sessão de decodificação).
+
+**Decidido pelo autor em 26/11 ("Sim, com auto"; histórico, seção 22), feito:** a propriedade
+`decoder` do `VideoPlayer` (`VideoDecode`: `auto`, o padrão, `gpu` ou `cpu`).
+- No Windows, o `auto` abre o arquivo pela CPU e lê o tamanho: até 480p (`AUTO_CPU_MAX_PIXELS`,
+  854 × 480) fica na CPU; maior, ou num formato que a CPU não decodifica (o HEVC sem a extensão
+  de software), reabre na placa. O `gpu` é o de antes (a placa, e a CPU se ela recusar).
+- A escolha chega ao decodificador pelo `VideoDecoder::set_decode`, antes de o arquivo abrir
+  (um decodificador registrado pelo app também recebe). Vale ao abrir o arquivo (o próximo
+  `file`): trocar com o vídeo aberto não reabre.
+- Nas outras plataformas o sistema decide (o GStreamer, o AVFoundation e o MediaCodec ficam com
+  o padrão do trait, que não faz nada).
+- *Muda o comportamento de forms existentes:* um vídeo até 480p que decodificava na placa
+  passa para a CPU (mesma imagem; os testes de textura agora pedem `gpu`). Foi o pedido.
+
+Medido em regime (release, Direct2D, a janela de 1440 × 800 do exemplo, sem a marca), o `auto`
+contra a versão anterior (a placa):
+
+| Vídeos | Placa | `auto` |
+|---|---|---|
+| 16 (1600 quadros) | 494 MB, 2,0 ms | 304 MB, 1,3 ms |
+| 64 (1600 quadros) | 1637 MB, 14,0 ms | 921 MB, 8,2 ms |
+| 256 (1200 quadros) | 5669 MB, 214 ms | 3084 MB, 147 ms |
+| 1000 (600 quadros) | ~23 GB pela conta, não rodado | 5110 MB, 47 ms |
+
+Testes: `aylis-media/tests/media.rs` (a escolha chega ao decodificador; o nome errado é
+recusado) e `texture.rs` (o `auto` deixa o vídeo de 320 × 240 na CPU; o caminho da placa pedido
+com `gpu`); o `catalog`, as traduções (o rótulo em `properties.tsv`), o `classes`, o
+`language_projects` (6 linguagens); wasm e Android compilam. Não compilado: o Linux e o macOS
+(o trait ganhou um método com padrão, sem mudança nos decodificadores deles). Documentado em
+`docs/video-e-pintura.md` (e a página do VideoPlayer na Landing). Conferência: roteiro, item 202.
 
 Depois, o autor: "eu queria forçar o 3D da placa para ver o consumo do texto invertido". O app
 ganhou "Vídeo" (desmarcado: uma imagem fixa em cada célula, sem decodificador) e "Mover" (a
@@ -409,6 +634,43 @@ fora da tela novo por quadro (`open_offscreen` → `CreateCompatibleRenderTarget
 célula (100 células: 56 ms contra 16 ms em `normal`); um conjunto de alvos reaproveitados por
 tamanho deve cortar isso; (2) com 1000 células, ~1 ms de CPU por célula por quadro mesmo sem a
 marca (layout e pintura numa thread só). **Pergunta ao autor:** atacar os dois?
+**Decidido pelo autor em 26/11 para o (2) (histórico, seção 22):** investigar e medir de onde vem
+o crescimento antes de qualquer coisa (de 256 para 1000 células, ×4, o tempo ia ×26).
+Paralelizar layout e pintura fica para depois, só se ainda fizer falta. **Feito em 26/11**, duas
+causas, os dois caches estourando a cada quadro:
+
+- **Cada célula com a própria cópia da imagem.** O `Image` (e o `DragImage`, o `ImageList`, os
+  do Quasar, o do `widgets.rs` e as imagens do Markdown) criava uma `Image` por controle com os
+  bytes do arquivo, cada uma com id próprio. Acima de 256 (o limite `files` do cache de imagens
+  de arquivo), o Direct2D despejava uma para guardar outra, e cada quadro decodificava o PNG de
+  novo (WIC) e o mandava à placa, célula por célula. Agora `Image::shared_file` (no
+  `aylis-core`) e `PaintCtx::resource_image`: o mesmo caminho com os mesmos bytes é a mesma
+  imagem enquanto alguém a segura (os bytes conferidos deixam o hot reload trocar). Vale para
+  os três renderizadores (a chave do cache é o id). Teste: `aylis-core/tests/image_cache.rs`.
+- **Os layouts de texto do DirectWrite se esvaziando.** O cache guarda 4096 layouts e se esvazia
+  inteiro ao encher; a quebra de linha mede cada pedaço do texto (palavras, começos de linha) por
+  layout, e 1000 rótulos com quebra enchiam o cache todo quadro. Agora a largura medida vai para
+  um cache só de larguras (65.536, alguns MB), e o layout fica só para a linha desenhada
+  (`aylis-d2d`, `Text::width`). Com o limite dos layouts ×64 o tempo caía igual, mas com
+  +140 MB.
+
+Medido em release (Direct2D, RX 9070 XT, a janela de 1440 × 800 do exemplo, `AYLIS_BENCH=30` a
+40, `--still`; o binário com a `release-diagnostics`):
+
+| Células | Sem marca | Marca `exclusion` | Marca `difference` |
+|---|---|---|---|
+| 256, antes | 23,8 ms, 618 MB | 41,9 ms, 690 MB | 48,2 ms |
+| 256, depois | 22,1 ms, 130 MB | 38,3 ms, 155 MB | 42,5 ms |
+| 400, antes | 786,5 ms, 645 MB | | |
+| 400, depois | 29,0 ms, 132 MB | | |
+| 1000, antes | 2256 ms, 654 MB | 1821 ms, 740 MB | 2099 ms |
+| 1000, depois | 40,7–76,6 ms, 145 MB | 92,6 ms, 222 MB | 107,9 ms |
+
+O que sobra é linear (~0,1 ms por célula com a marca). Não medido: o Skia e o navegador com
+1000 textos diferentes (os caches de texto deles têm limites próprios), e a grade com vídeo
+(depende do decodificador compartilhado, a pergunta (1)). Testes: os do `aylis-core`,
+`aylis-controls-base`, `aylis-d2d`, `aylis-markdown`, o `partial_paint`, o `clipboard` e o
+`giant_screen` (release) passam; wasm e Android compilam. Conferência: roteiro, item 201.
 
 O autor escolheu primeiro o ajuste do Direct2D e depois um compositor em Direct3D, podendo
 escolher qual usar. **Feito o ajuste do Direct2D** (`crates/aylis-d2d`, `BlendPool` no
@@ -819,9 +1081,14 @@ os que dependiam dele ("fazer tudo", na ordem abaixo). As decisões estão no hi
     fabricante é a última origem, ligada por padrão, com o SHA-256 do manifesto (o Drive saiu
     do padrão e ficou só para o que o Aylis monta); sem origem, o erro traz o passo a passo.
     As máquinas limpas foram testadas depois (o Fedora 45, o Windows 11, o Mint 22.3, o macOS).
-  - Ainda em aberto (propostas sem decisão): o kit offline publicado como arquivo da release
-    do GitHub, e tirar as Build Tools do Visual Studio do caminho do Rust no Windows (o
-    `rust-lld` ou o Rust do MinGW, a pesquisar; empacotá-las não pode, pela licença).
+  - Decidido pelo autor em 26/11 (histórico, seção 22): o kit offline **não** é publicado na
+    release do GitHub; continua o `aylis-tool packages pack`, e a ordem é o fabricante e, se não
+    der, o Drive do autor (onde está o que o Aylis compila).
+  - Decidido pelo autor em 26/11: as Build Tools do Visual Studio continuam no caminho do Rust
+    no Windows (pelo `winget`), sem o `rust-lld` nem o Rust do MinGW: o MinGW não tem o Skia
+    pronto nem compila as dependências em C, e o `rust-lld` ainda pede o `clang-cl`
+    (empacotá-las não pode, pela licença). No Drive do autor ficam só os dois arquivos que o
+    Aylis monta (o Skia de 32 bits do Android e o `fpc`).
 - Pedido do autor em 20/11 ("prepare para ser compatível com .deb do linux"; ele instala o
   Linux numa VM para testar). Feito (`aylis-tools::ide_package::linux_deb`, `aylis-tool
   ide-package --target linux --binary aylis-ide --deb`): o `.deb` da IDE, montado em Rust (o

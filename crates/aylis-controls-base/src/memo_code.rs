@@ -1122,16 +1122,27 @@ impl Memo {
         ctx: &PaintCtx<'_>,
         style: &TextStyle,
         row: (usize, usize),
+        window: (usize, usize),
+        long: Option<(&[super::Block], &str)>,
         x: f32,
         y: f32,
         lh: f32,
         occurrences: &[(usize, usize)],
         brackets: Option<(usize, usize)>,
     ) {
-        let width_of = |canvas: &mut dyn Canvas, a: usize, b: usize| canvas.measure_text(&expand_tabs(self.slice(a, b)), style).width;
         let (rs, re) = row;
+        // Na linha enorme, o x pelos blocos guardados (medir do começo da linha até o par do
+        // colchete no fim de um JSON de 20 MB levava 11 s por quadro).
+        let width_of = |canvas: &mut dyn Canvas, a: usize, b: usize| match long {
+            Some((blocks, line)) if a == rs => super::x_of_char(blocks, line, b - rs, &mut |s: &str| canvas.measure_text(&expand_tabs(s), style).width),
+            _ => canvas.measure_text(&expand_tabs(self.slice(a, b)), style).width,
+        };
         let mark = |canvas: &mut dyn Canvas, a: usize, b: usize, fill: Option<aylis_core::Color>, border: Option<aylis_core::Color>| {
             if b <= rs || a >= re.max(rs + 1) || a > re {
+                return;
+            }
+            // Fora da parte à vista (a linha enorme): nem mede.
+            if b < window.0 || a > window.1 {
                 return;
             }
             let x1 = x + width_of(canvas, rs, a.max(rs));
@@ -1165,7 +1176,7 @@ impl Memo {
         }
         for d in &self.diagnostics {
             let (a, b) = (d.start, d.end.max(d.start + 1));
-            if b <= rs || a > re {
+            if b <= rs || a > re || b < window.0 || a > window.1 {
                 continue;
             }
             let color = match d.severity {

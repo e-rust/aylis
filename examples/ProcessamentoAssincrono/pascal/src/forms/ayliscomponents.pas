@@ -716,6 +716,8 @@ type
     procedure SetOnTopmostLost(Value: string);
     function GetOnScaleChange: string;
     procedure SetOnScaleChange(Value: string);
+    function GetOnMonitorChange: string;
+    procedure SetOnMonitorChange(Value: string);
     function GetOnResizeEnd: string;
     procedure SetOnResizeEnd(Value: string);
     function GetClientWidth: Double;
@@ -970,6 +972,7 @@ type
     property OnViewChange: string read GetOnViewChange write SetOnViewChange;
     property OnTopmostLost: string read GetOnTopmostLost write SetOnTopmostLost;
     property OnScaleChange: string read GetOnScaleChange write SetOnScaleChange;
+    property OnMonitorChange: string read GetOnMonitorChange write SetOnMonitorChange;
     property OnResizeEnd: string read GetOnResizeEnd write SetOnResizeEnd;
     property ClientWidth: Double read GetClientWidth write SetClientWidth;
     property ClientHeight: Double read GetClientHeight write SetClientHeight;
@@ -5517,6 +5520,16 @@ end;
 procedure TForm.SetOnScaleChange(Value: string);
 begin
   SetProp('on_scale_change', TJSONString.Create(Value));
+end;
+
+function TForm.GetOnMonitorChange: string;
+begin
+  Result := AsText(GetProp('on_monitor_change'));
+end;
+
+procedure TForm.SetOnMonitorChange(Value: string);
+begin
+  SetProp('on_monitor_change', TJSONString.Create(Value));
 end;
 
 function TForm.GetOnResizeEnd: string;

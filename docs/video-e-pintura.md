@@ -45,6 +45,7 @@ O caminho é medir com o padrão, trocar um valor, medir de novo e só então gr
 | `blend_compositor` | Form | O compositor da mistura deste form: `project` (o padrão), `direct2d` ou `direct3d` |
 | `span_monitors` | Form | No Windows, um form maior que um monitor vira uma janela por monitor |
 | `frames_ahead` | VideoPlayer | Quantos quadros o decodificador prepara à frente (`0`: 6) |
+| `decoder` | VideoPlayer | Onde decodificar: `auto` (o padrão) na CPU até 480p e na placa os maiores (e o formato que a CPU não decodifica, como o HEVC), `gpu` ou `cpu`. Cada vídeo na placa é uma sessão do decodificador, ~16 MB no Windows (medido em 26/11): numa parede de câmeras pequenas, a CPU sai mais leve (64 vídeos de 320 × 240: 921 MB contra 1637 MB, e o quadro em 8 ms contra 14). Vale ao abrir o arquivo. Só o Windows escolhe; nas outras plataformas, o sistema decide |
 | `show_video` | VideoPlayer | Desligado, só o áudio (não decodifica a imagem para a tela) |
 | `quality`, `resolution` | CameraView | O tamanho que a câmera entrega; menor é mais leve. A câmera já entrega no tamanho em que aparece |
 

@@ -1,0 +1,7 @@
+{
+  "descricao": "A árvore do leitor de tela (AccessKit) montada pela janela (26/11): um form 1920 x 1080 com N Label em painéis de 100 e um DataGrid com 1 milhão de registros (o grid entrega só as linhas visíveis). Mediana de 7 montagens, release, na máquina do autor; só o lado do Aylis (access::tree), sem o processamento do AccessKit nem o do leitor. crates/aylis-platform-winit/src/access.rs (accessibility_tree_cost). Com o leitor ativo, a árvore era refeita a cada quadro; desde 26/11, no máximo a cada 100 ms (access::ACCESS_EVERY).",
+  "medidas": [
+    { "rotulos": 1000, "registros_no_grid": 1000000, "nos": 1059, "arvore_ms": 0.56 },
+    { "rotulos": 18000, "registros_no_grid": 1000000, "nos": 18229, "arvore_ms": 12.25 }
+  ]
+}

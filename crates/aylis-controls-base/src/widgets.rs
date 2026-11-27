@@ -447,7 +447,7 @@ impl Avatar {
         }
         let mut loaded = self.loaded.borrow_mut();
         if loaded.as_ref().is_none_or(|(path, _)| *path != self.image) {
-            *loaded = Some((self.image.clone(), ctx.resource(&self.image).map(Image::encoded)));
+            *loaded = Some((self.image.clone(), ctx.resource_image(&self.image)));
         }
         loaded.as_ref().and_then(|(_, i)| i.clone())
     }

@@ -5,12 +5,16 @@
 //! implementação de `Canvas` decodifica e guarda em cache pelo [`Image::id`]. Uma `Image`
 //! é barata de clonar e pode ir para outra thread (um decodificador de vídeo, por exemplo).
 
-use std::sync::{Arc, Weak};
+use std::collections::HashMap;
+use std::sync::{Arc, LazyLock, Mutex, Weak};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use crate::geometry::SizeF;
 
 static NEXT_ID: AtomicU64 = AtomicU64::new(1);
+
+/// As imagens dos arquivos do app em uso, pelo caminho ([`Image::shared_file`]).
+static SHARED_FILES: LazyLock<Mutex<HashMap<String, Weak<ImageData>>>> = LazyLock::new(Mutex::default);
 
 /// O maior lado de uma imagem: o tamanho máximo de textura das placas de vídeo (Direct3D 11);
 /// acima disso o renderizador não desenha num bitmap só.
@@ -129,6 +133,28 @@ impl Image {
     /// Um arquivo de imagem (PNG, JPEG, WebP, GIF, BMP, ICO; SVG conforme o canvas).
     pub fn encoded(bytes: Vec<u8>) -> Self {
         Self::new(ImageSource::Encoded(bytes))
+    }
+
+    /// Um arquivo do app (`assets/images/logo.png`) com os `bytes` lidos dele: os controles
+    /// que mostram o mesmo arquivo, com os mesmos bytes, recebem a mesma imagem enquanto
+    /// alguém a segura, e o renderizador decodifica e manda à placa uma vez só. Com uma cópia
+    /// por controle, uma grade de 400 células com a mesma imagem passava do limite de imagens
+    /// de arquivo do cache (256) e cada quadro decodificava de novo o PNG de cada célula (de
+    /// 24 para 786 ms). Os bytes conferidos deixam o arquivo trocado (hot reload) virar outra.
+    pub fn shared_file(path: &str, bytes: Vec<u8>) -> Self {
+        let mut files = SHARED_FILES.lock().unwrap_or_else(|e| e.into_inner());
+        if let Some(data) = files.get(path).and_then(Weak::upgrade) {
+            if matches!(&data.source, ImageSource::Encoded(b) if *b == bytes) {
+                return Self(data);
+            }
+        }
+        let image = Self::encoded(bytes);
+        // As soltas saem de tempos em tempos (o mapa fica em até o dobro das vivas).
+        if files.len() >= 64 && files.len().is_power_of_two() && !files.contains_key(path) {
+            files.retain(|_, data| data.strong_count() > 0);
+        }
+        files.insert(path.to_string(), Arc::downgrade(&image.0));
+        image
     }
 
     /// Pixels RGBA prontos. `pixels.len()` precisa ser `width * height * 4`.

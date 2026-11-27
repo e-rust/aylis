@@ -1051,6 +1051,48 @@ foram aprovados os itens 38, 41, 48, 59 e 67. Os números dos itens continuam os
       um escreve `on_topmost_lost` com `system true` e o form fica por baixo (não volta ao topo);
       com o `desktop_checks cover` (ou o Gerenciador de Tarefas com "Sempre visível"), `system
       false`, o nome do exe, e o form volta ao topo 1 s depois.
+200. **O `on_monitor_change` do form** (decisão de 26/11). Com dois monitores, `cargo run -p
+    aylis-platform-winit --example window_reports --features cpu`. *Esperado:* ao abrir, nenhum
+    `on_monitor_change`; arraste a janela para o outro monitor: `on_monitor_change Value(Int(1))`
+    (ou o índice dele) uma vez, quando a maior parte passar; de volta, o índice do primeiro. Com
+    Win+Shift+seta, o mesmo. No Linux com Wayland, o evento chega até 2 s depois.
+201. **A grade de 1000 células sem o salto de tempo** (decisão de 26/11). `cargo run --release -p
+    marca_dagua` em `examples/MarcaDagua`, "Vídeo" desmarcado, 1000. *Esperado:* a grade
+    responde (o medidor perto de 10 fps com a marca invertida, não 1 quadro a cada 2 s), e a
+    memória do processo perto de 220 MB; com 256, igual a antes.
+202. **O `decoder` do VideoPlayer** (decisão de 26/11). `cargo run --release -p marca_dagua` em
+    `examples/MarcaDagua`, com vídeo, 64 e depois 256. *Esperado:* a grade toca lisa, o
+    Gerenciador de Tarefas mostra o processo perto de 0,9 GB com 64 e de 3 GB com 256 (antes, 1,6
+    e 5,7 GB), e o "Decodificação de vídeo" da placa quase parado (os vídeos de 320 × 240 vão
+    para a CPU). Um vídeo 1080p num `VideoPlayer` comum continua na placa (o "Decodificação de
+    vídeo" sobe).
+202. **A janela fantasma do NoOBS** (correção de 26/11). Com o Aylis da pasta no NoOBS, devolva o
+    `WindowSettings { animation: false }` ao form do print (`forms/print.json`, o `wsShot`),
+    deixe o NoOBS na bandeja, tire um print e volte à área de trabalho. *Esperado:* o print abre
+    sem a animação do Windows, e nenhuma imagem branca da janela principal fica na tela.
+203. **A enxurrada de eventos remotos** (pedido de 26/11). `cargo test -p aylis-remote --release
+     --test flood -- --ignored --nocapture`. *Esperado:* em `medicoes/enxurrada.json`, o
+     "depois" com uns 50 quadros por segundo, o `pico_da_fila` em 4096 e o pior intervalo
+     abaixo de 100 ms. Com um backend seu que mande `set` sem parar (Python, num laço), a janela
+     continua pintando e respondendo ao mouse.
+204. **O gráfico com milhões de pontos** (pedido de 26/11). `cargo test -p aylis-controls-charts
+     --release --test huge_series -- --ignored --nocapture`. *Esperado:* 10 milhões de pontos
+     em dezenas de ms por quadro. Num form, um `Chart` de linha com uma série de 1 milhão de
+     valores: o desenho igual ao de antes (os picos aparecem), o zoom e a dica funcionando.
+205. **A latência da entrada** (pedido de 26/11). `cargo run --release -p aylis-platform-winit
+     --example input_latency --features d2d -- parado` (e `rajada`, `animando`). *Esperado:* a
+     janela abre, o quadrado anda sozinho e ela fecha. A última linha, `AYLIS_INPUT_LATENCY`,
+     fica perto de `medicoes/latencia.json`, e o mouse de verdade não é mexido.
+206. **A acessibilidade em escala** (pedido de 26/11). Com o NVDA ou o Narrador ligado, um form
+     com animação continua fluido. Num DBGrid grande, o leitor diz o total de linhas.
+207. **O texto patológico** (pedido de 26/11). `cargo run --release -p aylis-dbcontrols --example
+     pathological_text -- log 200`, `-- grade` e `-- linha 5`. *Esperado:* rolar e digitar em
+     poucas dezenas de ms nos três (a linha de 5 MB abre em ~2 s). Na IDE, abra um JSON
+     minificado grande: rolar de lado e digitar no fim acompanham, e uma linha acima de 20 mil
+     bytes fica sem cor, como no VS Code.
+208. **A análise dos apps fora do alcance** (pedido de 26/11). Leia
+     [apps-fora-do-alcance.md](apps-fora-do-alcance.md) e responda as perguntas de cada caso
+     (a saída de 10 bits, a cor do vídeo na placa, o HDR).
 
 ## Os ajustes de 08/11 que faltam conferir
 

@@ -96,7 +96,7 @@ pub use camera_view::CameraView;
 pub use microphone::Microphone;
 pub use output::{OUTPUT_SPEC_RECORD, OutputDevice, OutputSpec, Tap, format_outputs, output_devices, parse_outputs};
 pub use sound::{AudioMixer, AudioOutput, MIX_SOURCE_RECORD, MixSource, Sound, parse_sources};
-pub use video::{Frame, FrameSink, GpuFrame, GpuFrameSource, MediaSource, VideoDecoder, VideoDecoderFactory, VideoInfo, open_video, register_decoder};
+pub use video::{AUTO_CPU_MAX_PIXELS, Frame, FrameSink, GpuFrame, GpuFrameSource, MediaSource, VideoDecode, VideoDecoder, VideoDecoderFactory, VideoInfo, open_video, register_decoder};
 
 use aylis_core::Ui;
 

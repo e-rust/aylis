@@ -181,3 +181,22 @@ fn named_caches_show_up_in_the_memory_panel() {
     drop((first, second));
     assert_eq!(stat("teste · pixels"), None, "o cache que sumiu sai do painel");
 }
+
+#[test]
+fn the_same_app_file_is_one_image_for_every_control() {
+    let a = Image::shared_file("assets/images/shared_test.png", vec![1, 2, 3]);
+    let b = Image::shared_file("assets/images/shared_test.png", vec![1, 2, 3]);
+    assert_eq!(a.id(), b.id(), "o mesmo arquivo com os mesmos bytes: uma imagem só no cache");
+    let changed = Image::shared_file("assets/images/shared_test.png", vec![9, 9]);
+    assert_ne!(a.id(), changed.id(), "o arquivo trocado (hot reload) é outra imagem");
+    let other = Image::shared_file("assets/images/other_test.png", vec![1, 2, 3]);
+    assert_ne!(a.id(), other.id());
+}
+
+#[test]
+fn a_shared_file_image_is_not_kept_alive_by_the_sharing() {
+    let weak = Image::shared_file("assets/images/dropped_test.png", vec![4, 5]).downgrade();
+    assert!(!weak.is_alive(), "o compartilhamento não segura a imagem que ninguém usa");
+    let again = Image::shared_file("assets/images/dropped_test.png", vec![4, 5]);
+    assert!(again.downgrade().is_alive());
+}

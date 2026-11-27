@@ -97,10 +97,11 @@ impl App {
                 self.update_gpu(form);
                 continue;
             }
-            // Um `WindowSettings` mudou: todas as janelas (o do app vale para todas).
+            // Um `WindowSettings` do form mudou: as janelas que usam as opções dele (o do app vale
+            // para todas; o de um form, só para as dele).
             if command == WindowCommand::UpdateOptions {
                 #[cfg(not(any(web, mobile)))]
-                self.update_window_options();
+                self.update_window_options(form);
                 continue;
             }
             // O form em vários monitores (ou que pode virar): o lugar, o tamanho e a tela cheia
@@ -333,6 +334,14 @@ impl App {
             }
         }
         self.sizes_applied(&applied);
+        // As opções que mudaram com a janela escondida, agora que ela apareceu (pelo `Show`, pelo
+        // `Place` ou por outro caminho).
+        #[cfg(not(any(web, mobile)))]
+        for index in 0..self.windows.len() {
+            if self.windows[index].options_pending && self.window_shown(index) {
+                self.apply_pending_options(index);
+            }
+        }
     }
 
     /// O botão maximizar das barras próprias (Windows): o mouse que chegou pela moldura vai

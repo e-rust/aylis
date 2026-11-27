@@ -49,28 +49,66 @@ impl DeactivationHandler for Deactivation {
 pub(crate) struct Adapter {
     #[cfg(not(target_os = "android"))]
     inner: accesskit_winit::Adapter,
+    /// Quando a última árvore saiu (com o leitor ativo) e se um quadro espera o prazo.
+    sent_at: Option<std::time::Instant>,
+    pending: bool,
 }
+
+/// O intervalo mínimo entre duas árvores com o leitor de tela ativo. A árvore é a janela
+/// inteira, e uma animação a 60 quadros por segundo a refazia a cada quadro (o custo segue o
+/// número de controles: medido em 26/11, veja o pendente); o leitor fala bem mais devagar
+/// que isso.
+#[cfg(not(web))]
+pub(crate) const ACCESS_EVERY: std::time::Duration = std::time::Duration::from_millis(100);
 
 #[cfg(not(web))]
 impl Adapter {
     pub(crate) fn new(event_loop: &ActiveEventLoop, window: &Window, poster: Poster) -> Self {
         #[cfg(not(target_os = "android"))]
         {
-            Self { inner: accesskit_winit::Adapter::with_direct_handlers(event_loop, window, Activation(poster.clone()), Actions(poster), Deactivation) }
+            Self {
+                inner: accesskit_winit::Adapter::with_direct_handlers(event_loop, window, Activation(poster.clone()), Actions(poster), Deactivation),
+                sent_at: None,
+                pending: false,
+            }
         }
         #[cfg(target_os = "android")]
         {
             let _ = (window, &Deactivation);
             android::init(event_loop, poster);
-            Self {}
+            Self { sent_at: None, pending: false }
         }
     }
 
-    pub(crate) fn update_if_active(&mut self, update: impl FnOnce() -> TreeUpdate) {
+    /// Manda a árvore se o leitor estiver ativo; devolve se mandou.
+    fn update_if_active(&mut self, update: impl FnOnce() -> TreeUpdate) -> bool {
+        let mut ran = false;
+        let update = || {
+            ran = true;
+            update()
+        };
         #[cfg(not(target_os = "android"))]
         self.inner.update_if_active(update);
         #[cfg(target_os = "android")]
         android::update_if_active(update);
+        ran
+    }
+
+    /// Um quadro novo: a árvore sai já ou, se a última saiu há menos de [`ACCESS_EVERY`], no
+    /// prazo ([`Adapter::due`]). Sem leitor ativo, nada é montado nem fica esperando.
+    pub(crate) fn frame(&mut self, update: impl FnOnce() -> TreeUpdate) {
+        let now = std::time::Instant::now();
+        if self.sent_at.is_some_and(|at| now.duration_since(at) < ACCESS_EVERY) {
+            self.pending = true;
+            return;
+        }
+        self.pending = false;
+        self.sent_at = self.update_if_active(update).then_some(now);
+    }
+
+    /// Quando a árvore que espera tem de sair (`None`: nada esperando).
+    pub(crate) fn due(&self) -> Option<std::time::Instant> {
+        self.sent_at.filter(|_| self.pending).map(|at| at + ACCESS_EVERY)
     }
 
     pub(crate) fn process_event(&mut self, window: &Window, event: &winit::event::WindowEvent) {
@@ -324,6 +362,12 @@ fn build(ui: &Ui, id: ComponentId, scale: f64, out: &mut Vec<(NodeId, Node)>) {
     let mut child_ids: Vec<NodeId> = children.iter().map(|&c| node_id(c)).collect();
     // Os itens que o controle desenha (abas, linhas, itens de menu, células): filhos dele
     // (as células, filhas da linha).
+    // A tabela virtualizada entrega só as linhas visíveis: o total vai no nó dela (o leitor
+    // de tela diz "linha 5 de 10 milhões", e as linhas levam o índice no total).
+    if let Some((rows, columns)) = ui.access_table_size(id) {
+        node.set_row_count(rows);
+        node.set_column_count(columns);
+    }
     let items = ui.access_items(id);
     if !items.is_empty() {
         let origin = ui.absolute_rect(id).map_or((0.0, 0.0), |r| (r.x as f64, r.y as f64));
@@ -428,5 +472,76 @@ mod tests {
 
         perform(&mut ui, ActionRequest { action: Action::Click, target_tree: TreeId::ROOT, target_node: tab_nodes[1], data: None });
         assert_eq!(ui.get::<TabControl>(tabs).unwrap().tab_index, 1);
+    }
+
+    /// Uma tela com `labels` rótulos (em painéis de 100) e um grid de `rows` registros.
+    fn big_screen(labels: usize, rows: usize) -> (Ui, ComponentId, ComponentId) {
+        use aylis_data::{ClientDataSet, DataSource, Field, FieldType, Value, data_set};
+        let mut ui = Ui::new();
+        aylis_controls::register(&mut ui);
+        let form = ui.add_root(Form::new("Tela grande", 1920.0, 1080.0));
+        for p in 0..labels.div_ceil(100) {
+            let panel = ui.add(aylis_controls::Panel::default(), form);
+            ui.control_mut(panel).unwrap().set_rect((p % 20) as f32 * 96.0, (p / 20) as f32 * 60.0, 96.0, 60.0);
+            for i in 0..100.min(labels - p * 100) {
+                let l = ui.add(aylis_controls::Label::new(format!("Valor {p}.{i}")), panel);
+                ui.control_mut(l).unwrap().set_rect(0.0, i as f32 * 0.6, 96.0, 0.6);
+            }
+        }
+        let cds = ui.add(ClientDataSet::new(), form);
+        ui.add(Field::new("id", FieldType::Integer), cds);
+        ui.add(Field::new("nome", FieldType::String), cds);
+        let ds = ui.add(DataSource::new(cds), form);
+        let grid = ui.add(aylis_dbcontrols::DataGrid::new(ds), form);
+        ui.control_mut(grid).unwrap().set_rect(0.0, 600.0, 1920.0, 480.0);
+        let mut loaded = 0;
+        while loaded < rows {
+            let n = 100_000.min(rows - loaded);
+            let batch = (loaded..loaded + n).map(|r| vec![Value::Int(r as i64), Value::String(format!("Registro {r}"))]).collect();
+            data_set(&mut ui, cds).append_rows(batch, loaded + n < rows).unwrap();
+            loaded += n;
+        }
+        ui.layout();
+        // O grid prepara as linhas visíveis na pintura.
+        let mut canvas = aylis_core::pages::RecordingCanvas::new(None);
+        ui.paint(form, &mut canvas);
+        (ui, form, grid)
+    }
+
+    /// O grid virtualizado diz o total de linhas e de colunas (não só as visíveis).
+    #[test]
+    fn the_virtual_grid_tells_the_whole_size() {
+        let (ui, form, grid) = big_screen(10, 50_000);
+        let update = tree(&ui, form, 1.0);
+        let node = update.nodes.iter().find(|(n, _)| *n == node_id(grid)).map(|(_, n)| n).unwrap();
+        assert_eq!((node.row_count(), node.column_count()), (Some(50_000), Some(2)));
+    }
+
+    /// A árvore do leitor de tela em escala (26/11): quanto custa montar a árvore inteira (o
+    /// que a janela faz a cada quadro com o leitor ativo).
+    ///
+    /// ```text
+    /// cargo test -p aylis-platform-winit --release --lib access::tests::accessibility_tree_cost -- --ignored --nocapture
+    /// ```
+    #[test]
+    #[ignore = "medição: rode em release (veja o comentário)"]
+    fn accessibility_tree_cost() {
+        let mut rows = Vec::new();
+        for (labels, records) in [(1_000, 1_000_000), (18_000, 1_000_000)] {
+            let (ui, form, _) = big_screen(labels, records);
+            let mut times = Vec::new();
+            let mut nodes = 0;
+            for _ in 0..7 {
+                let started = std::time::Instant::now();
+                let update = tree(&ui, form, 1.0);
+                times.push(started.elapsed().as_secs_f64() * 1000.0);
+                nodes = update.nodes.len();
+            }
+            times.sort_by(f64::total_cmp);
+            let ms = (times[times.len() / 2] * 100.0).round() / 100.0;
+            println!("{labels} rótulos + grid de {records}: {nodes} nós, {ms} ms por árvore");
+            rows.push(serde_json::json!({ "rotulos": labels, "registros_no_grid": records, "nos": nodes, "arvore_ms": ms }));
+        }
+        println!("AYLIS_ACCESS {}", serde_json::Value::Array(rows));
     }
 }

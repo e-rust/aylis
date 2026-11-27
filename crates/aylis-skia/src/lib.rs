@@ -810,6 +810,23 @@ fn measure_line(fonts: &FontCollection, text: &str, style: &TextStyle) -> SizeF 
     if text.is_empty() {
         return SizeF::new(0.0, style.font.size * 1.3);
     }
+    // O texto longo, em blocos somados: montar um parágrafo de 1 MB de texto só para a
+    // largura passava de 1 GB e de meio segundo. A diferença é só o kerning entre o fim de um
+    // bloco e o começo do outro.
+    if text.len() > LONG_TEXT {
+        let (mut width, mut height, mut start) = (0.0f32, 0.0f32, 0usize);
+        while start < text.len() {
+            let mut end = (start + LONG_TEXT / 4).min(text.len());
+            while !text.is_char_boundary(end) {
+                end += 1;
+            }
+            let paragraph = line_paragraph(fonts, &text[start..end], style);
+            width += line_width(&paragraph, style) + style.letter_spacing;
+            height = height.max(paragraph.height());
+            start = end;
+        }
+        return SizeF::new(width - style.letter_spacing, height);
+    }
     let paragraph = line_paragraph(fonts, text, style);
     SizeF::new(line_width(&paragraph, style), paragraph.height())
 }
@@ -859,6 +876,14 @@ thread_local! {
 /// Quantos parágrafos o cache guarda antes de esvaziar.
 const MAX_LINES: usize = 8192;
 
+/// A partir de quantos bytes o texto vai para o cache dos longos, e quantos ele guarda.
+const LONG_TEXT: usize = 4096;
+const MAX_LONG_LINES: usize = 1;
+
+thread_local! {
+    static LONG_LINES: RefCell<Vec<(LineKey, Rc<Paragraph>)>> = const { RefCell::new(Vec::new()) };
+}
+
 /// O parágrafo de uma linha (`layout` sem limite de largura), montado ou do cache.
 fn line_paragraph(fonts: &FontCollection, text: &str, style: &TextStyle) -> Rc<Paragraph> {
     let font = &style.font;
@@ -875,6 +900,25 @@ fn line_paragraph(fonts: &FontCollection, text: &str, style: &TextStyle) -> Rc<P
         fonts: fonts as *const FontCollection as usize,
         generation: aylis_core::fonts::generation(),
     };
+    // Um texto longo (a linha de um JSON minificado) num cache à parte, de poucos: o parágrafo
+    // de 1 MB de texto passa de 200 MB, e o cache comum guardava milhares (medido em 26/11:
+    // 9 GB numa linha de 1 MB editada, cada prefixo até o cursor guardado).
+    if text.len() > LONG_TEXT {
+        if let Some(hit) = LONG_LINES.with(|c| c.borrow().iter().find(|(k, _)| *k == key).map(|(_, p)| p.clone())) {
+            return hit;
+        }
+        let mut paragraph = build_paragraph(fonts, text, style);
+        paragraph.layout(1.0e6);
+        let paragraph = Rc::new(paragraph);
+        LONG_LINES.with(|c| {
+            let mut c = c.borrow_mut();
+            if c.len() >= MAX_LONG_LINES {
+                c.remove(0);
+            }
+            c.push((key, paragraph.clone()));
+        });
+        return paragraph;
+    }
     if let Some(hit) = LINES.with(|c| c.borrow().get(&key).cloned()) {
         return hit;
     }

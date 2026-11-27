@@ -25,6 +25,8 @@ aylis-project = { version = "0.12.0", path = "../aylis-project" }
 serde_json = { version = "1", features = ["preserve_order"] }
 # A compactação entre a ponte e a tela (Rust puro: vale no navegador também).
 miniz_oxide = "0.8"
+# O relógio do orçamento da fila (o `Instant` do std não roda no navegador).
+web-time = "1"
 
 # O token do servidor MCP (o componente McpServer).
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
@@ -35,3 +37,5 @@ getrandom = "0.3"
 # protocolo não registra: o 3D e o visualizador de documentos.
 aylis-3d = { path = "../aylis-3d" }
 aylis-docview = { path = "../aylis-docview" }
+# A pintura de verdade na medição da enxurrada (tests/flood.rs).
+aylis-skia = { path = "../aylis-skia" }

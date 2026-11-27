@@ -28,6 +28,7 @@ Mostra vídeo: **ele mesmo desenha cada quadro**, então dá para ter cantos arr
 | `rate` | Velocidade | número | A velocidade: 1 é a normal, 2 o dobro, 0.5 a metade. Fora de 1 o som fica mudo (volta no lugar certo em 1). Só áudio e o navegador tocam sempre em 1. |
 | `output` | Saída | lista de `OutputSpec` | As saídas do som (como no `MediaPlayer`). No navegador, o `<video>` toca na saída padrão. |
 | `frames_ahead` | Quadros à frente | inteiro | Quantos quadros o decodificador prepara à frente do relógio (0: o padrão, 6; W13). |
+| `decoder` | Decodificador | um de: `auto`, `gpu`, `cpu` | Onde decodificar: `auto` (o padrão) na CPU até 480p e na placa os maiores, `gpu` ou `cpu`. Cada vídeo na placa é uma sessão do decodificador, que pesa (~16 MB no Windows): numa parede de câmeras pequenas, a CPU sai mais leve. Só o Windows escolhe; nas outras plataformas o sistema decide. Vale ao abrir o arquivo (o próximo `file`). |
 
 ## Eventos
 

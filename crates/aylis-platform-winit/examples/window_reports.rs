@@ -12,6 +12,7 @@
 //! - arraste a borda: o `on_resize_end` sai uma vez, ao soltar (Windows) ou 300 ms depois do
 //!   último tamanho (Linux, macOS);
 //! - leve a janela a um monitor de outra escala: o `on_scale_change` com a escala nova;
+//! - leve a janela a outro monitor: o `on_monitor_change` com o índice dele;
 //! - com `auto`: aos 1 s muda a largura pelo código (o `on_resize_end` 300 ms depois), aos 2 s
 //!   minimiza e aos 3 s traz para a frente (`bring_to_front`), escreve se voltou e fecha aos
 //!   5 s. No meio, o form sob o centro da janela (`form_at_screen`).
@@ -39,6 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     ui.set_prop(label, "align", "client")?;
     ui.set_prop(label, "text", "Arraste a borda, troque de monitor, passe o mouse")?;
     ui.on(form, "on_scale_change", move |_, _, args| say(format!("on_scale_change {args:?}")));
+    ui.on(form, "on_monitor_change", move |_, _, args| say(format!("on_monitor_change {args:?}")));
     ui.on(form, "on_resize_end", move |ui, f, _| {
         let w = ui.get_prop(f, "client_width").unwrap_or_default();
         say(format!("on_resize_end (client_width {w:?})"));

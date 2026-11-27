@@ -25,6 +25,8 @@ struct FormWindows {
     resizing: HashMap<ComponentId, Option<u64>>,
     /// O token de ativação dado pelo app (o `XDG_ACTIVATION_TOKEN` de outra abertura).
     activation_token: Option<String>,
+    /// As janelas que já informaram o monitor (o `on_monitor_change` não sai na primeira).
+    monitor_reported: std::collections::HashSet<ComponentId>,
 }
 
 impl Ui {
@@ -49,6 +51,12 @@ impl Ui {
         if old.is_some_and(|o| (o - scale).abs() > f32::EPSILON) {
             self.fire(form, "on_scale_change", &EventArgs::Value(PropValue::Float(f64::from(scale))));
         }
+    }
+
+    /// Anota que a janela do form informou o monitor: `true` na primeira vez desde que abriu
+    /// (o monitor de abrir, ou nenhum, no Wayland).
+    pub(crate) fn note_form_monitor_reported(&mut self, form: ComponentId) -> bool {
+        self.extension::<FormWindows>().monitor_reported.insert(form)
     }
 
     /// A plataforma informa o tamanho novo da janela do form (pixels físicos). `holding`: o
@@ -107,6 +115,7 @@ impl Ui {
         let state = self.extension::<FormWindows>();
         state.scales.remove(&form);
         state.sizes.remove(&form);
+        state.monitor_reported.remove(&form);
         if let Some(Some(timeout)) = state.resizing.remove(&form) {
             self.clear_timeout(timeout);
         }

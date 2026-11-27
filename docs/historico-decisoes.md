@@ -494,3 +494,32 @@ Decididos pelo autor em 25/11, como recomendado:
 |---|---|
 | Fixar o identificador do ícone da bandeja (o Windows 11 lembra o lugar do ícone, na barra ou no "^", pelo exe e pelo uID, ou pelo GUID) | Os dois, no `TrayIcon`: o `guid` (que o `tray-icon` já aceita; preso ao caminho do exe, documentado) e o `tray_uid` (o número fixo, para herdar o lugar de um programa anterior), com o ajuste no `tray-icon` levado também ao projeto original. |
 | O `on_topmost_lost` sai também quando quem cobre é o próprio Windows (o "^" da bandeja, o Iniciar, a central de notificações) | O evento traz quem cobriu: o processo, a classe da janela e `system` (o shell do Windows). O app decide; o padrão continua avisando sempre. |
+
+## 22. As perguntas em aberto nas pendências (26/11)
+
+Respondidas pelo autor em 26/11, uma de cada vez:
+
+| Pedido | Decisão |
+|---|---|
+| A grade de 1000 vídeos do `examples/MarcaDagua` (cada `VideoPlayer` abre o próprio decodificador, ~22 MB cada) | A placa e o decodificador compartilhados entre os players (a opção B), sem o decodificador por arquivo dividido: "a intenção do teste é pegar o consumo do texto invertido então a parte de decodificação não precisaria entrar no teste". |
+| O ~1 ms de CPU por célula por quadro com 1000 células (layout e pintura numa thread só) | "Investigar e medir de onde vem o crescimento antes de qualquer coisa": de 256 para 1000 células o tempo cresceu ×26 (não linear), e o paralelismo só entra se ainda fizer falta depois da causa corrigida. |
+| Um evento para a troca de monitor do form (citado num relato do Wayland; hoje o app lê o `form_monitor`, e só por timer saberia da troca) | Sim, o `on_monitor_change` no form, com o índice do monitor novo (o mesmo do `form_monitor`): o app não alcança sem gastar parado, e o framework já acompanha o monitor de cada janela. |
+| Publicar o kit offline (`aylis-tool packages pack`) como arquivo da release do GitHub | Não: "a ordem correta é baixar do repositório oficial, e se não for possível baixar do meu google drive.. tem algumas coisas que só tem no meu drive pois dependeram de compilação". |
+| O Drive do autor como segunda origem de todos os pacotes, quando o fabricante falha | Não muda: "acredito que a forma atual ja é a correta". O Drive é automático só para o que o Aylis monta (o Skia de 32 bits do Android e o `fpc`) e espelho opcional, pelas Opções, para o resto. |
+| Tirar as Build Tools do Visual Studio do caminho do Rust no Windows (o Rust do MinGW, ou o `rust-lld` com as bibliotecas da Microsoft baixadas à parte) | Não, como recomendado: "manter as build tools". O MinGW não tem o Skia pronto nem compila as dependências em C, e o `rust-lld` ainda pede o `clang-cl`. No Drive do autor ficam só os dois arquivos que o Aylis monta. |
+| A placa e o decodificador compartilhados (a opção B): medido, a placa já era uma só para todos os players, e o custo de ~23 MB por player é a instância do decodificador por hardware, que não se divide entre vídeos diferentes. Proposta: escolher onde cada `VideoPlayer` decodifica | "Sim, com auto": a propriedade `decoder` (`auto`, `gpu`, `cpu`); o `auto` decodifica na CPU os vídeos até 480p e na placa os maiores. |
+
+## 23. Os testes de desempenho extremos e os apps fora do alcance (26/11)
+
+Levantado o que ainda não tinha sido medido e que tipo de app esbarra no Aylis; o autor respondeu
+item por item em 26/11:
+
+| Pedido | Decisão |
+|---|---|
+| A enxurrada de eventos remotos (100 mil mudanças por segundo vindas do backend; o que acontece quando o backend manda mais rápido do que a tela pinta) | "vamos fazer": medir, e a fila não pode crescer sem limite. |
+| O gráfico com milhões de pontos (o `Chart` desenhava ponto por ponto) | "vamos fazer": a redução de pontos por pixel no próprio controle, medida. |
+| A latência da entrada ao pixel | "vamos fazer": medir do evento de entrada ao quadro apresentado. |
+| A acessibilidade em escala (o grid de 10 milhões de linhas e a `giant_screen` no leitor de tela) | "vamos fazer": medir o custo da árvore de acessibilidade em escala. |
+| O texto patológico (uma linha de 50 MB, um log de 2 GB, um grid de 1 milhão de células com árabe, devanágari, emoji e bidi) | "vamos fazer". |
+| Os apps que esbarram nas diretrizes (imagem médica, editor de vídeo com correção de cor, diagramação profissional, DAW com VST3) | "vamos analizar cada caso": a análise em [apps-fora-do-alcance.md](apps-fora-do-alcance.md), sem mudar diretriz por conta própria. |
+| O quadro infinito colaborativo (1 milhão de objetos vetoriais) | "vamos analizar oque precisaria para funcionar": na mesma análise. |

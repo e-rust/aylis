@@ -73,7 +73,8 @@ pub fn connect(url: &str, extra_ca: Option<&Path>) -> Result<Connection, String>
         _ => return Err(fail(&"transporte inesperado")),
     };
     tcp.set_read_timeout(Some(POLL)).map_err(|e| e.to_string())?;
-    Ok(pump(socket))
+    // O backend é nosso: mandando mais rápido do que a tela trata, ele espera (não cai).
+    Ok(pump(socket, Full::Wait))
 }
 
 /// O TLS do cliente: as raízes do sistema (como o navegador) mais `extra_ca`.
@@ -160,14 +161,14 @@ pub fn accept(stream: TcpStream, config: Option<Arc<rustls::ServerConfig>>, orig
             let socket = tungstenite::accept_hdr_with_config(rustls::StreamOwned::new(tls, stream), check, Some(ws_config())).map_err(|e| fail(&e))?;
             socket.get_ref().sock.set_read_timeout(Some(POLL)).map_err(|e| e.to_string())?;
             socket.get_ref().sock.set_write_timeout(None).map_err(|e| e.to_string())?;
-            pump(socket)
+            pump(socket, Full::Close)
         }
         None => {
             let socket = tungstenite::accept_hdr_with_config(stream, check, Some(ws_config())).map_err(|e| fail(&e))?;
             // O prazo vai no próprio socket (no Windows, num clone ele não vale para o original).
             socket.get_ref().set_read_timeout(Some(POLL)).map_err(|e| e.to_string())?;
             socket.get_ref().set_write_timeout(None).map_err(|e| e.to_string())?;
-            pump(socket)
+            pump(socket, Full::Close)
         }
     })
 }
@@ -175,9 +176,19 @@ pub fn accept(stream: TcpStream, config: Option<Arc<rustls::ServerConfig>>, orig
 /// Prazo de cada leitura: a thread alterna entre receber e enviar.
 const POLL: Duration = Duration::from_millis(20);
 
+/// O que fazer quando a fila de entrada enche.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Full {
+    /// A tela (na ponte) mandando mais do que o backend dá conta: a conexão fecha.
+    Close,
+    /// O backend (no `--connect`) mandando mais do que a tela trata: para de ler o socket
+    /// até ter lugar, e o TCP segura o backend; o envio e o ping continuam.
+    Wait,
+}
+
 /// Uma thread cuida da conexão: entrega o que chega e envia o que sai (o socket já tem o
 /// prazo de leitura [`POLL`], para alternar entre os dois).
-fn pump<S: std::io::Read + std::io::Write + Send + 'static>(mut socket: WebSocket<S>) -> Connection {
+fn pump<S: std::io::Read + std::io::Write + Send + 'static>(mut socket: WebSocket<S>, full: Full) -> Connection {
     // A entrada tem limite (a tela não enche a memória mais rápido do que o backend trata);
     // a saída vem do nosso backend.
     let (in_tx, in_rx) = mpsc::sync_channel::<String>(MAX_QUEUED);
@@ -190,6 +201,8 @@ fn pump<S: std::io::Read + std::io::Write + Send + 'static>(mut socket: WebSocke
             // A tela anunciou `deflate` (na resposta do hello): as mensagens grandes vão
             // compactadas.
             let mut deflate = false;
+            // As linhas lidas que ainda não couberam na fila (só no `Full::Wait`).
+            let mut held: std::collections::VecDeque<String> = std::collections::VecDeque::new();
             loop {
                 if last_seen.elapsed() > IDLE {
                     let _ = socket.close(None);
@@ -223,6 +236,22 @@ fn pump<S: std::io::Read + std::io::Write + Send + 'static>(mut socket: WebSocke
                         }
                     }
                 }
+                // Com a fila ainda cheia, nada mais é lido do socket por enquanto.
+                while let Some(line) = held.pop_front() {
+                    match in_tx.try_send(line) {
+                        Ok(()) => {}
+                        Err(mpsc::TrySendError::Full(line)) => {
+                            held.push_front(line);
+                            break;
+                        }
+                        Err(mpsc::TrySendError::Disconnected(_)) => return,
+                    }
+                }
+                if !held.is_empty() {
+                    let _ = socket.flush();
+                    std::thread::sleep(Duration::from_millis(1));
+                    continue;
+                }
                 let result = socket.read();
                 if debug {
                     if let Err(e) = &result {
@@ -243,8 +272,13 @@ fn pump<S: std::io::Read + std::io::Write + Send + 'static>(mut socket: WebSocke
                             if !deflate && aylis_remote::announces_deflate(line) {
                                 deflate = true;
                             }
+                            if !held.is_empty() {
+                                held.push_back(line.to_string());
+                                continue;
+                            }
                             match in_tx.try_send(line.to_string()) {
                                 Ok(()) => {}
+                                Err(mpsc::TrySendError::Full(line)) if full == Full::Wait => held.push_back(line),
                                 Err(mpsc::TrySendError::Full(_)) => {
                                     aylis_core::stderr_line!("aylis-host: a tela mandou mensagens demais sem o backend dar conta; conexão fechada");
                                     let _ = socket.close(None);

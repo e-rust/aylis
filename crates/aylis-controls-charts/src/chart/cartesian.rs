@@ -130,6 +130,76 @@ struct Point {
     base: f64,
 }
 
+/// Acima de quantos pontos por pixel da largura uma linha é reduzida.
+const REDUCE_ABOVE: f64 = 4.0;
+
+/// Uma linha enorme (o sensor, o osciloscópio) reduzida por pixel: em cada coluna de pixel,
+/// o primeiro, o menor, o maior e o último ponto, na ordem (o desenho sai igual, com os
+/// picos, e o custo segue a largura e não a série). Guardada entre os quadros: passar o
+/// mouse ou piscar o cursor não percorre a série de novo.
+pub(crate) struct Reduced {
+    version: u64,
+    series: usize,
+    /// Os extremos da série inteira (o eixo Y automático é o da série toda) e o menor
+    /// positivo (o logarítmico).
+    lo: f64,
+    hi: f64,
+    min_pos: f64,
+    /// A faixa de índices e as colunas da última redução, e os índices escolhidos.
+    range: (usize, usize),
+    columns: usize,
+    picked: Vec<usize>,
+}
+
+/// Os extremos da série (guardados por versão dos dados).
+fn summary(values: &[f64]) -> (f64, f64, f64) {
+    let (mut lo, mut hi, mut min_pos) = (f64::MAX, f64::MIN, f64::MAX);
+    for &v in values {
+        lo = lo.min(v);
+        hi = hi.max(v);
+        if v > 0.0 {
+            min_pos = min_pos.min(v);
+        }
+    }
+    (lo, hi, min_pos)
+}
+
+/// Os índices de `values[first..=last]` que ficam, `columns` colunas, `column(i)` dizendo a
+/// coluna de cada índice (crescente).
+fn reduce(values: &[f64], first: usize, last: usize, columns: usize, column: impl Fn(usize) -> usize) -> Vec<usize> {
+    let mut picked = Vec::with_capacity(columns * 4 + 2);
+    let flush = |b: &mut [usize; 4], picked: &mut Vec<usize>| {
+        b.sort_unstable();
+        for (k, &i) in b.iter().enumerate() {
+            if k == 0 || i != b[k - 1] {
+                picked.push(i);
+            }
+        }
+    };
+    // O primeiro, o menor, o maior e o último da coluna atual.
+    let mut bucket = [first; 4];
+    let mut current = column(first);
+    for i in first + 1..=last {
+        let c = column(i);
+        if c != current {
+            flush(&mut bucket, &mut picked);
+            bucket = [i; 4];
+            current = c;
+            continue;
+        }
+        let v = values[i];
+        if v < values[bucket[1]] {
+            bucket[1] = i;
+        }
+        if v > values[bucket[2]] {
+            bucket[2] = i;
+        }
+        bucket[3] = i;
+    }
+    flush(&mut bucket, &mut picked);
+    picked
+}
+
 /// Monta e desenha. `area`: o espaço do gráfico (sem título nem legenda).
 pub(super) fn paint(chart: &Chart, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, area: RectF, data: &[Series]) {
     if chart.kind == ChartKind::HorizontalBar {
@@ -143,11 +213,27 @@ pub(super) fn paint(chart: &Chart, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, 
     let numeric = matches!(kind, ChartKind::Scatter | ChartKind::Bubble) || data.iter().any(|s| !s.hidden && matches!(draw_of(kind, s), Draw::Scatter | Draw::Bubble) && !s.x.is_empty());
     // Os pontos de cada série visível.
     let mut series_pts: Vec<(usize, Draw, Vec<Point>)> = Vec::new();
+    // As linhas enormes no eixo de categorias (o índice é o X): os pontos saem depois, da
+    // redução por pixel na janela do zoom; aqui, só os extremos da série inteira. Na animação
+    // (os valores mudam a cada quadro), sem guardar.
+    let animating = !chart.anim_from.borrow().is_empty();
+    let reducible = !legacy_x && !numeric && times.is_none() && !stacked(kind);
+    // (posição em `series_pts`, a série, os extremos)
+    let mut pending: Vec<(usize, usize, (f64, f64, f64))> = Vec::new();
     for (si, s) in data.iter().enumerate() {
         if s.hidden || (legacy_x && si == 0) {
             continue;
         }
         let draw = draw_of(kind, s);
+        if reducible && matches!(draw, Draw::Line | Draw::Area) && s.values.len() as f64 > REDUCE_ABOVE * area.width.max(1.0) as f64 {
+            let cached = (!animating)
+                .then(|| chart.reduced.borrow().iter().find(|r| r.version == chart.data_version && r.series == si).map(|r| (r.lo, r.hi, r.min_pos)))
+                .flatten();
+            let extremes = cached.unwrap_or_else(|| summary(&s.values));
+            pending.push((series_pts.len(), si, extremes));
+            series_pts.push((si, draw, Vec::new()));
+            continue;
+        }
         let pts = s
             .values
             .iter()
@@ -203,6 +289,17 @@ pub(super) fn paint(chart: &Chart, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, 
                 }
             }
         }
+        // As linhas reduzidas: os extremos da série inteira (a área vai até o zero).
+        for &(at, si, (l, h, m)) in &pending {
+            if data[si].right_axis != right {
+                continue;
+            }
+            any = true;
+            let area_base = if series_pts[at].1 == Draw::Area { 0.0 } else { l };
+            lo = lo.min(l).min(area_base);
+            hi = hi.max(h).max(area_base);
+            min_pos = min_pos.min(m);
+        }
         any.then_some((lo, hi, min_pos))
     };
     let fixed = (!chart.auto_scale).then_some((chart.y_min, chart.y_max));
@@ -237,6 +334,38 @@ pub(super) fn paint(chart: &Chart, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, 
         chart.window.set(window);
         *chart.published_range.borrow_mut() = None;
     }
+    // As linhas enormes: os pontos da janela do zoom, reduzidos por coluna de pixel (a área
+    // é mais larga que o desenho: a coluna nunca é mais grossa que um pixel).
+    if !pending.is_empty() {
+        let (w0, w1) = chart.window.get();
+        let span = (w1 - w0).max(1e-6);
+        let total = n.max(1) as f64;
+        let columns = (area.width.ceil() as usize).max(1);
+        let mut cache = chart.reduced.borrow_mut();
+        cache.retain(|r| r.version == chart.data_version);
+        for &(at, si, (lo, hi, min_pos)) in &pending {
+            let values = &data[si].values;
+            // Um ponto a mais de cada lado: a linha chega até a borda.
+            let first = ((w0 * total - 0.5).floor() as isize - 1).clamp(0, values.len() as isize - 1) as usize;
+            let last = ((w1 * total - 0.5).ceil() as isize + 1).clamp(first as isize, values.len() as isize - 1) as usize;
+            let column = |i: usize| ((((i as f64 + 0.5) / total - w0) / span * columns as f64).floor().max(0.0) as usize).min(columns - 1);
+            let reuse = if animating {
+                None
+            } else {
+                cache.iter().find(|r| r.series == si && r.range == (first, last) && r.columns == columns).map(|r| r.picked.clone())
+            };
+            let picked = reuse.unwrap_or_else(|| {
+                let picked = reduce(values, first, last, columns, column);
+                if !animating {
+                    cache.retain(|r| r.series != si);
+                    cache.push(Reduced { version: chart.data_version, series: si, lo, hi, min_pos, range: (first, last), columns, picked: picked.clone() });
+                }
+                picked
+            });
+            series_pts[at].2 = picked.into_iter().map(|i| Point { index: i, x: i as f64, y: values[i], base: 0.0 }).collect();
+        }
+    }
+    let reduced_any = !pending.is_empty();
 
     // Margens dos rótulos.
     let small = small_text(ctx);
@@ -494,12 +623,21 @@ pub(super) fn paint(chart: &Chart, canvas: &mut dyn Canvas, ctx: &PaintCtx<'_>, 
                 e.y = e.y.min(at.y);
             }
         }
+        // Reduzida, a coluna da dica tem pelo menos uns pixels (com milhões de pontos, o lugar
+        // de cada um é uma fração de pixel e o mouse não acertaria nenhum).
+        let hit_w = if reduced_any { slot.max(3.0) } else { slot };
+        // As colunas vão na frente das outras dicas, da última para a primeira, como antes; de
+        // uma vez (inserir uma a uma no começo era quadrático: 100 mil pontos levavam 10 s por
+        // quadro, medido em 26/11).
+        let mut columns: Vec<Hit> = Vec::new();
         for (index, at) in seen {
-            let column = RectF::new(at.x - slot / 2.0, plot.y, slot, plot.height);
+            let column = RectF::new(at.x - hit_w / 2.0, plot.y, hit_w, plot.height);
             if column.right() >= plot.x && column.x <= plot.right() {
-                hits.insert(0, Hit { shape: Shape::Column(column), series: 0, index, at });
+                columns.push(Hit { shape: Shape::Column(column), series: 0, index, at });
             }
         }
+        columns.reverse();
+        hits.splice(0..0, columns);
     }
 }
 

@@ -124,6 +124,7 @@
 //! tratam um evento-pergunta mesmo enquanto esperam a resposta de um comando (o `post` do
 //! próprio backend dispara o `before_post`).
 
+pub mod inbox;
 pub mod inspect;
 pub mod mcp;
 pub mod script;
@@ -873,6 +874,13 @@ pub fn resolve(ui: &Ui, value: &Value) -> Result<ComponentId, String> {
         // Um nome solto que está em mais de um lugar (frames diferentes com o mesmo `lblTotal`):
         // pegar o primeiro mexia no componente errado sem avisar (relatório do InsightDB, 11/11).
         Value::String(name) if !name.is_empty() && !name.contains('.') => {
+            // O caso comum (um só com o nome) pelo índice, sem percorrer a árvore a cada
+            // comando (a enxurrada de cotações, 26/11); o resto monta a mensagem.
+            if ui.count_named(name) == 1 {
+                if let Some(id) = ui.find(name) {
+                    return Ok(id);
+                }
+            }
             let found = named_everywhere(ui, name);
             match found.as_slice() {
                 [one] => Ok(*one),

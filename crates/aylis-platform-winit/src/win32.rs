@@ -1315,6 +1315,26 @@ mod caption_tests {
             let _ = DestroyWindow(hwnd);
         }
     }
+
+    /// A janela fantasma (26/11): o `set_window_shape(None)` só tira a região da janela que tem
+    /// uma, e o `has_window_region` que decide isso enxerga a região posta e a tirada.
+    #[test]
+    fn the_window_region_is_seen_before_it_is_removed() {
+        use windows::Win32::Graphics::Gdi::{CreateRectRgn, HRGN, SetWindowRgn};
+        use windows::Win32::UI::WindowsAndMessaging::{CreateWindowExW, DestroyWindow, WINDOW_EX_STYLE, WS_OVERLAPPEDWINDOW};
+        use windows::core::w;
+        // SAFETY: uma janela escondida da classe pronta "STATIC", desta thread, destruída no fim;
+        // a região passa a ser do sistema no `SetWindowRgn`.
+        unsafe {
+            let hwnd = CreateWindowExW(WINDOW_EX_STYLE(0), w!("STATIC"), w!(""), WS_OVERLAPPEDWINDOW, 0, 0, 200, 100, None, None, None, None).expect("janela");
+            assert!(!has_window_region(hwnd), "a janela nasce sem região");
+            let _ = SetWindowRgn(hwnd, Some(CreateRectRgn(0, 0, 100, 50)), false);
+            assert!(has_window_region(hwnd), "a região posta aparece");
+            let _ = SetWindowRgn(hwnd, Some(HRGN::default()), false);
+            assert!(!has_window_region(hwnd), "e a tirada some");
+            let _ = DestroyWindow(hwnd);
+        }
+    }
 }
 
 /// A forma da janela (`window_shape`) como a região do Windows (`SetWindowRgn`): fora dela, os
@@ -1330,6 +1350,10 @@ pub(crate) fn set_window_shape(window: &winit::window::Window, shape: Option<ayl
     // `SetWindowRgn` dá certo (e a nula tira a região).
     unsafe {
         let region = match shape {
+            // Sem forma numa janela que não tem região: nada a tirar. O `SetWindowRgn(NULL)` à
+            // toa, depois de um `SetWindowDisplayAffinity`, traz de volta a imagem da janela
+            // escondida (a janela fantasma: branca, na tela, sem receber clique).
+            None if !has_window_region(hwnd) => return,
             None => HRGN::default(),
             Some(aylis_core::ClipShape::Ellipse) => CreateEllipticRgn(-1, -1, w + 1, h + 1),
             Some(aylis_core::ClipShape::RoundRect(radius)) => {
@@ -1341,6 +1365,36 @@ pub(crate) fn set_window_shape(window: &winit::window::Window, shape: Option<ayl
         };
         let _ = SetWindowRgn(hwnd, Some(region), true);
     }
+}
+
+/// A janela tem uma região própria (`SetWindowRgn`): sem ela, o `GetWindowRgnBox` dá erro.
+fn has_window_region(hwnd: HWND) -> bool {
+    use windows::Win32::Graphics::Gdi::{GetWindowRgnBox, RGN_ERROR};
+    let mut rect = windows::Win32::Foundation::RECT::default();
+    // SAFETY: `hwnd` é uma janela viva e `rect` é local.
+    unsafe { GetWindowRgnBox(hwnd, &mut rect) != RGN_ERROR }
+}
+
+/// Liga ou desliga a proteção contra captura (`SetWindowDisplayAffinity`, o `capture_excluded`)
+/// só quando ela muda. Regravar o `WDA_NONE` numa janela escondida, seguido de um
+/// `SetWindowRgn`, faz o Windows mostrar a imagem dela de novo (a janela fantasma).
+pub(crate) fn set_content_protected(window: &winit::window::Window, protected: bool) {
+    use windows::Win32::UI::WindowsAndMessaging::{GetWindowDisplayAffinity, WDA_NONE};
+    let Some(hwnd) = hwnd_of(window) else { return };
+    let mut affinity = 0u32;
+    // SAFETY: `hwnd` é a janela viva do winit e `affinity` é local.
+    let current = unsafe { GetWindowDisplayAffinity(hwnd, &mut affinity) }.ok().map(|_| affinity != WDA_NONE.0);
+    if current != Some(protected) {
+        window.set_content_protected(protected);
+    }
+}
+
+/// A janela está visível para o Windows (`IsWindowVisible`), que é quem manda: o app pode tê-la
+/// mostrado ou escondido pela API do sistema, sem o winit saber.
+pub(crate) fn is_shown(window: &winit::window::Window) -> bool {
+    use windows::Win32::UI::WindowsAndMessaging::IsWindowVisible;
+    // SAFETY: a janela existe (é a do form).
+    hwnd_of(window).is_some_and(|hwnd| unsafe { IsWindowVisible(hwnd) }.as_bool())
 }
 
 /// O contorno da forma em pixels da janela (`size`), com as medidas da forma em unidades do form

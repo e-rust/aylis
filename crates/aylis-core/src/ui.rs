@@ -2924,6 +2924,12 @@ impl Ui {
         self.component(id).and_then(|c| c.accessible_items()).map_or_else(Vec::new, |a| a.access_items(self, id))
     }
 
+    /// O tamanho inteiro da tabela (linhas, colunas) que só entrega as linhas visíveis
+    /// ([`crate::AccessibleItems::access_table_size`]).
+    pub fn access_table_size(&self, id: ComponentId) -> Option<(usize, usize)> {
+        self.component(id).and_then(|c| c.accessible_items()).and_then(|a| a.access_table_size(self))
+    }
+
     /// Clica ou seleciona um item do controle (sem evento de mouse, como a automação do
     /// sistema faz). Devolve `false` se o controle não fez nada.
     pub fn access_action(&mut self, id: ComponentId, index: usize, action: crate::automation::ItemAction) -> bool {

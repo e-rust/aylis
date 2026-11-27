@@ -45,7 +45,7 @@ mod bridge;
 mod transport;
 
 use std::process::{Child, Command, ExitCode, Stdio};
-use std::sync::mpsc::{self, TryRecvError};
+use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
@@ -293,33 +293,28 @@ fn startup(
 /// Abre a janela; os comandos chegam por uma thread que lê o stdout do backend.
 fn window(ui: Ui, form: ComponentId, lines: transport::Incoming, out: Output, renderer: Renderer) -> Result<(), Error> {
     aylis_platform_winit::run_with_pump(ui, form, Options { renderer, ..Default::default() }, move |waker| {
-        let (tx, rx) = mpsc::channel::<Value>();
+        // A fila tem limite: cheia, esta thread espera e o backend, que escreve no pipe ou no
+        // socket, espera junto (veja `aylis_remote::inbox`).
+        let (tx, mut inbox) = aylis_remote::inbox::inbox(aylis_remote::inbox::INBOX_CAPACITY);
+        let reader_waker = waker.clone();
         std::thread::spawn(move || {
             for line in lines {
                 let Ok(line) = line else { break };
                 if let Some(message) = parse(&line) {
-                    if tx.send(message).is_err() {
+                    if tx.send(message, || reader_waker.wake()).is_err() {
                         break;
                     }
-                    waker.wake();
                 }
             }
             drop(tx); // backend terminou: a bomba fecha a janela
-            waker.wake();
+            reader_waker.wake();
         });
-        Box::new(move |ui: &mut Ui| loop {
-            match rx.try_recv() {
-                Ok(message) => {
-                    if let Some(reply) = handle_message(ui, &message) {
-                        send(&out, &reply);
-                    }
-                }
-                Err(TryRecvError::Empty) => break,
-                Err(TryRecvError::Disconnected) => {
-                    ui.request_close();
-                    break;
-                }
-            }
+        // Cada rodada trata um orçamento de tempo e devolve a vez à pintura; sobrou, acorda
+        // de novo (o quadro do meio sai pelo `paint_if_starved` da plataforma).
+        Box::new(move |ui: &mut Ui| match inbox.drain(ui, aylis_remote::inbox::INBOX_BUDGET, |reply| send(&out, &reply)) {
+            aylis_remote::inbox::Drain::Empty => {}
+            aylis_remote::inbox::Drain::More => waker.wake(),
+            aylis_remote::inbox::Drain::Closed => ui.request_close(),
         })
     })
 }

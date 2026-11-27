@@ -9,6 +9,9 @@ use std::rc::Rc;
 use crate::syntax::{Carry, LineHighlighter, Span};
 use crate::textmate::{Grammar, LineState};
 
+/// A partir de quantos bytes uma linha não é colorida (o padrão do VS Code, 20 mil).
+pub(super) const MAX_TOKENIZED_LINE: usize = 20_000;
+
 /// As linhas realçadas e os estados, num estado `S` qualquer (o da gramática TextMate ou o do
 /// realce embutido).
 pub(super) struct Lines<S> {
@@ -105,7 +108,10 @@ impl<S: Clone + Default + PartialEq> Lines<S> {
                 break;
             }
             self.starts[i] = state.clone();
-            spans[i] = tokenize(line(i), &mut state);
+            // Uma linha enorme fica na cor do texto, como no VS Code (`editor.maxTokenizationLineLength`):
+            // colorir de novo um JSON minificado de 50 MB a cada tecla levava 17 s (medido em 26/11).
+            let text = line(i);
+            spans[i] = if text.len() > MAX_TOKENIZED_LINE { Vec::new() } else { tokenize(text, &mut state) };
             i += 1;
         }
         self.valid = i;

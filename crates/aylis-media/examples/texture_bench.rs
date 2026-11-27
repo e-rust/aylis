@@ -24,6 +24,9 @@ fn main() {
     };
     for texture in [false, true, false, true] {
         let mut decoder = open_video(&source).expect("abrir o vídeo");
+        // Os dois na placa (o `auto` levaria um vídeo pequeno para a CPU): a diferença é só a
+        // ida e volta dos pixels.
+        decoder.set_decode(aylis_media::VideoDecode::Gpu);
         if texture {
             decoder.set_gpu_device(Some(GpuDevice::Direct3D11 { adapter_luid }));
         }

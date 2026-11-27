@@ -144,3 +144,32 @@ fn lsp_positions_count_utf16() {
     assert_eq!(memo.position_of_index(4), (1, 3));
     assert_eq!(memo.index_of_position(0, 1), 1);
 }
+
+/// O texto que um quadro desenha (as operações de texto do `RecordingCanvas`).
+fn drawn_chars(ui: &mut Ui, form: ComponentId) -> usize {
+    let mut canvas = aylis_core::pages::RecordingCanvas::new(None);
+    ui.paint(form, &mut canvas);
+    canvas.ops.iter().map(|op| if let aylis_core::pages::Op::Text { text, .. } = op { text.chars().count() } else { 0 }).sum()
+}
+
+/// A linha enorme (um JSON minificado numa linha só, 26/11): o quadro desenha só a parte à
+/// vista, com o cursor no fim (rolado até lá) e no começo, antes e depois de digitar, com o
+/// realce e sem ele; e o que o cursor mostra é o fim da linha.
+#[test]
+fn a_huge_line_draws_only_the_visible_part() {
+    let record = r#"{"id":1,"nome":"Cliente","cidade":"São Paulo","ativo":true},"#;
+    let line = format!("[{}]", record.repeat(4000));
+    let (mut ui, form, m) = setup(&line);
+    ui.get_mut::<Memo>(m).unwrap().syntax = "json".into();
+    let n = line.chars().count();
+    for step in ["fim", "digitar no fim", "começo", "digitar no começo"] {
+        match step {
+            "fim" => ui.get_mut::<Memo>(m).unwrap().go_to(0, n),
+            "começo" => ui.get_mut::<Memo>(m).unwrap().go_to(0, 0),
+            _ => ui.text_input(form, "x"),
+        }
+        let drawn = drawn_chars(&mut ui, form);
+        assert!(drawn > 0 && drawn < 4000, "{step}: {drawn} caracteres desenhados de {n}");
+    }
+    assert_eq!(text(&ui, m).chars().count(), n + 2);
+}

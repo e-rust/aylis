@@ -180,6 +180,35 @@ pub type FullFrame = Arc<dyn Fn() -> Option<Frame> + Send + Sync>;
 /// Um decodificador de vídeo. Roda numa thread do player (precisa ser `Send`).
 /// Vive na thread de vídeo do player: é aberto lá ([`VideoDecoderFactory::open`]) e não
 /// troca de thread (os decodificadores do sistema, como o Media Foundation, não podem).
+/// Onde o vídeo é decodificado (a propriedade `decoder` do [`VideoPlayer`](crate::VideoPlayer)).
+/// Cada decodificador da placa é uma sessão própria, que não se divide entre vídeos: no
+/// Windows, ~16 MB por vídeo (medido em 26/11 com uma parede de câmeras), contra ~9 MB pela
+/// CPU, que decodifica um vídeo pequeno com folga.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum VideoDecode {
+    /// A CPU até 480p ([`AUTO_CPU_MAX_PIXELS`]) e a placa nos maiores; o formato que a CPU
+    /// não decodifica (o HEVC sem a extensão de software) vai para a placa.
+    #[default]
+    Auto,
+    /// Sempre a placa (se ela não decodifica o formato, a CPU).
+    Gpu,
+    /// Sempre a CPU.
+    Cpu,
+}
+
+impl aylis_core::PropEnum for VideoDecode {
+    const NAMES: &'static [&'static str] = &["auto", "gpu", "cpu"];
+    fn from_index(index: usize) -> Option<Self> {
+        [Self::Auto, Self::Gpu, Self::Cpu].get(index).copied()
+    }
+    fn index(self) -> usize {
+        self as usize
+    }
+}
+
+/// O maior vídeo que o [`VideoDecode::Auto`] decodifica na CPU: 854 × 480 (480p).
+pub const AUTO_CPU_MAX_PIXELS: u64 = 854 * 480;
+
 pub trait VideoDecoder {
     fn info(&self) -> VideoInfo;
     /// Vai para `seconds` (o próximo quadro é o de lá).
@@ -214,6 +243,11 @@ pub trait VideoDecoder {
     /// que o canvas compõe sem a ida e volta pela CPU (W15). Padrão: nada (quadros na CPU).
     fn set_gpu_device(&mut self, device: Option<GpuDevice>) {
         let _ = device;
+    }
+    /// Onde decodificar ([`VideoDecode`], a propriedade `decoder` do player): chega antes de
+    /// o arquivo abrir (antes do [`info`](Self::info)). Padrão: nada (o decodificador escolhe).
+    fn set_decode(&mut self, decode: VideoDecode) {
+        let _ = decode;
     }
     /// Quantos quadros, no máximo, podem esperar na fila (as texturas vêm de um conjunto
     /// fixo). Padrão: sem limite próprio.
@@ -359,6 +393,8 @@ pub(crate) struct Frames {
     pub(crate) want: (u32, u32),
     /// Quantos quadros o decodificador prepara à frente (0: o padrão, 6).
     pub(crate) ahead: usize,
+    /// Onde decodificar (a propriedade `decoder` do player), lido ao abrir.
+    pub(crate) decode: VideoDecode,
     /// A placa do canvas que mostra o vídeo (a pintura atualiza): o decodificador entrega
     /// texturas para ela (W15).
     pub(crate) gpu: Option<GpuDevice>,
@@ -446,6 +482,7 @@ impl DecodeThread {
                         return;
                     }
                 };
+                decoder.set_decode(frames.lock().map(|f| f.decode).unwrap_or_default());
                 if let Ok(mut f) = frames.lock() {
                     f.info = decoder.info();
                     f.live = false;

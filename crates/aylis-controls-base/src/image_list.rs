@@ -71,7 +71,7 @@ impl ImageList {
         let mut files = me.files.borrow_mut();
         files
             .entry(at)
-            .or_insert_with(|| ui.services().resources.as_ref().and_then(|r| r.read(item.image.trim())).map(Image::encoded))
+            .or_insert_with(|| ui.services().resources.as_ref().and_then(|r| r.read(item.image.trim())).map(|b| Image::shared_file(item.image.trim(), b)))
             .clone()
             .map(Picture::Image)
     }

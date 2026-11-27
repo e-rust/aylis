@@ -127,3 +127,23 @@ fn freeing_many_at_once_keeps_the_indexes_right() {
     // Repetir não libera nada.
     assert_eq!(ui.free_many(&rows), 0);
 }
+
+/// O `count_named` (o protocolo confere que um nome solto é único) segue as mudanças: um nome
+/// novo, o mesmo nome em outro form, renomear e liberar.
+#[test]
+fn count_named_follows_the_changes() {
+    let mut ui = Ui::new();
+    let a = ui.add_root(boxy(100.0, 100.0));
+    let b = ui.add_root(boxy(100.0, 100.0));
+    let x = ui.add(boxy(10.0, 10.0), a);
+    ui.set_name(x, "lblTotal").unwrap();
+    assert_eq!(ui.count_named("LBLTOTAL"), 1);
+    let y = ui.add(boxy(10.0, 10.0), b);
+    ui.set_name(y, "lblTotal").unwrap();
+    assert_eq!(ui.count_named("lblTotal"), 2);
+    ui.set_name(y, "lblOutro").unwrap();
+    assert_eq!(ui.count_named("lblTotal"), 1);
+    ui.free(x);
+    assert_eq!(ui.count_named("lblTotal"), 0);
+    assert_eq!(ui.count_named(""), 0);
+}

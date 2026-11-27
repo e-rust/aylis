@@ -177,7 +177,7 @@ pub mod prelude {
     #[cfg(feature = "dbcontrols")]
     pub use aylis_dbcontrols::{BandKind, Column, ColumnKind, ColumnLayout, DBChart, DBImage, DataGrid, DataNavigator, DataRepeater, GridColumn, HorizontalWheel, NavButton};
     #[cfg(feature = "media")]
-    pub use aylis_media::{AudioSpectrum, CameraQuality, MediaInfo, MediaPlayer, MediaTagsInfo, MediaSession, Playlist, RepeatMode, SpectrumStyle, VideoPlayer};
+    pub use aylis_media::{AudioSpectrum, CameraQuality, MediaInfo, MediaPlayer, MediaTagsInfo, MediaSession, Playlist, RepeatMode, SpectrumStyle, VideoDecode, VideoPlayer};
     #[cfg(feature = "vector")]
     pub use aylis_vector::{Lottie, Svg};
     #[cfg(feature = "markdown")]

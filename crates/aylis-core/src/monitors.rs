@@ -191,15 +191,22 @@ impl Ui {
         }
     }
 
-    /// A plataforma informa em que monitor está a janela do form.
+    /// A plataforma informa em que monitor está a janela do form (ao criar a janela, ao mover
+    /// e na varredura periódica). Um monitor diferente do anterior dispara o
+    /// `on_monitor_change` do form com o índice novo; a primeira informação da janela não (é o
+    /// monitor de abrir, que o `on_window_created` já lê), a não ser que ela tenha vindo sem
+    /// monitor (no Wayland, ele só se sabe depois do primeiro quadro). Ficar sem monitor não
+    /// dispara (o `Screen.on_change` avisa o monitor desligado). O índice é a ordem do sistema:
+    /// um monitor ligado ou desligado pode renumerar a lista e disparar o evento sem a janela
+    /// sair do lugar.
     pub fn set_form_monitor(&mut self, form: ComponentId, monitor: Option<usize>) {
-        match monitor {
-            Some(m) => {
-                self.form_monitors.insert(form, m);
-            }
-            None => {
-                self.form_monitors.remove(&form);
-            }
+        let first = self.note_form_monitor_reported(form);
+        let old = match monitor {
+            Some(m) => self.form_monitors.insert(form, m),
+            None => self.form_monitors.remove(&form),
+        };
+        if let Some(m) = monitor.filter(|&m| old != Some(m) && !first && self.is_open(form)) {
+            self.fire(form, "on_monitor_change", &crate::EventArgs::Value(crate::PropValue::Int(m as i64)));
         }
     }
 }

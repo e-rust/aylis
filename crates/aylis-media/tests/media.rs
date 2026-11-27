@@ -397,3 +397,54 @@ fn rate_speeds_up_the_clock() {
     assert!((VideoPlayer::position(&ui, player) - 0.52).abs() < 1e-6);
     assert!(VideoPlayer::playback_quality(&ui, player).shown >= 2);
 }
+
+/// A escolha do `decoder` que o decodificador recebeu ao abrir (o da extensão `escolha`).
+static CHOSEN: std::sync::Mutex<Option<VideoDecode>> = std::sync::Mutex::new(None);
+
+struct Chooser(Ramp);
+
+impl VideoDecoder for Chooser {
+    fn info(&self) -> VideoInfo {
+        self.0.info()
+    }
+    fn seek(&mut self, seconds: f64) {
+        self.0.seek(seconds);
+    }
+    fn next_frame(&mut self) -> Option<Frame> {
+        self.0.next_frame()
+    }
+    fn set_decode(&mut self, decode: VideoDecode) {
+        *CHOSEN.lock().unwrap() = Some(decode);
+    }
+}
+
+struct ChooserFactory;
+
+impl VideoDecoderFactory for ChooserFactory {
+    fn name(&self) -> &str {
+        "escolha"
+    }
+    fn accepts(&self, extension: &str) -> bool {
+        extension == "escolha"
+    }
+    fn open(&self, _: &MediaSource) -> Result<Box<dyn VideoDecoder>, String> {
+        Ok(Box::new(Chooser(Ramp { frames: 10, next: 0 })))
+    }
+}
+
+/// O `decoder` do player chega ao decodificador antes de abrir; o padrão é o `auto`.
+#[test]
+fn the_decoder_choice_reaches_the_decoder_before_it_opens() {
+    register_decoder(ChooserFactory);
+    let mut ui = Ui::new();
+    aylis_controls::register(&mut ui);
+    register(&mut ui);
+    let form = ui.add_root(Form::new("v", 200.0, 120.0));
+    let player = ui.add(VideoPlayer::new("teste.escolha"), form);
+    assert_eq!(ui.get_prop(player, "decoder").unwrap(), PropValue::Enum("auto".into()));
+    ui.set_prop(player, "decoder", "cpu").unwrap();
+    VideoPlayer::play(&mut ui, player).unwrap();
+    wait_ready(&mut ui, player);
+    assert_eq!(*CHOSEN.lock().unwrap(), Some(VideoDecode::Cpu));
+    assert!(ui.set_prop(player, "decoder", "placa").is_err(), "só auto, gpu ou cpu");
+}

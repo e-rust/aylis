@@ -1,0 +1,16 @@
+{
+  "descricao": "A latência da entrada ao quadro (26/11): crates/aylis-platform-winit/examples/input_latency.rs, release, janela de 800 x 600 num monitor de 60 Hz, na máquina do autor. Uma thread posta WM_MOUSEMOVE só na janela do exemplo, e um quadrado segue o mouse. 'fila': de postar a mensagem até o on_pointer_move (a fila do Windows e o laço do winit); 'entrada_ao_quadro': do Aylis receber a entrada até o quadro apresentado (Ui::input_latency: a pintura e o Present, sem o compositor nem o monitor). Cenários: parado (um movimento a cada 50 ms), rajada (a cada 1 ms, um mouse de 1000 Hz; as entradas se juntam no quadro seguinte) e animando (a cada 50 ms, com uma animação contínua). Uma rodada do Skia na CPU com a máquina carregada por compilações de outras sessões deu fila de 703 ms e 4 quadros na rajada; não se repetiu em duas rodadas seguidas (as de baixo).",
+  "d2d": {
+    "parado": { "fila_p50_ms": 0.14, "fila_p95_ms": 5.64, "entrada_ao_quadro_p50_ms": 0.5, "entrada_ao_quadro_p95_ms": 3.71, "entrada_ao_quadro_p99_ms": 12.15 },
+    "rajada": { "quadros": 75, "fila_p50_ms": 3.07, "fila_p95_ms": 19.07, "entrada_ao_quadro_p50_ms": 5.86, "entrada_ao_quadro_p95_ms": 6.73, "entrada_ao_quadro_p99_ms": 7.73 },
+    "animando": { "fila_p50_ms": 0.12, "fila_p95_ms": 2.1, "entrada_ao_quadro_p50_ms": 4.01, "entrada_ao_quadro_p95_ms": 6.98, "entrada_ao_quadro_p99_ms": 11.41 }
+  },
+  "skia_cpu": {
+    "parado": { "fila_p50_ms": 0.11, "fila_p95_ms": 1.12, "entrada_ao_quadro_p50_ms": 1.02, "entrada_ao_quadro_p95_ms": 3.56, "entrada_ao_quadro_p99_ms": 8.96 },
+    "rajada": { "quadros": 81, "fila_p50_ms": 0.08, "fila_p95_ms": 0.75, "entrada_ao_quadro_p50_ms": 5.87, "entrada_ao_quadro_p95_ms": 6.58, "entrada_ao_quadro_p99_ms": 6.66 },
+    "animando": { "fila_p50_ms": 0.27, "fila_p95_ms": 7.06, "entrada_ao_quadro_p50_ms": 4.87, "entrada_ao_quadro_p95_ms": 9.19, "entrada_ao_quadro_p99_ms": 14.15 }
+  },
+  "skia_gpu": {
+    "rajada": { "quadros": 92, "fila_p50_ms": 0.08, "fila_p95_ms": 0.26, "entrada_ao_quadro_p50_ms": 4.93, "entrada_ao_quadro_p95_ms": 6.56, "entrada_ao_quadro_p99_ms": 6.81 }
+  }
+}

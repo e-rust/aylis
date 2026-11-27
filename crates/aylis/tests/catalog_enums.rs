@@ -84,6 +84,7 @@ fn the_catalog_enums_are_in_the_prelude() {
     let _: Option<aylis::prelude::Trimming> = None;
     let _: Option<aylis::prelude::ValueFormat> = None;
     let _: Option<aylis::prelude::ValveState> = None;
+    let _: Option<aylis::prelude::VideoDecode> = None;
     let _: Option<aylis::prelude::WindowBackdrop> = None;
     let _: Option<aylis::prelude::WindowCorners> = None;
     let _: Option<aylis::prelude::WindowSettingsScope> = None;

@@ -865,7 +865,7 @@ impl Component for Parallax {
         let image = {
             let mut loaded = self.loaded.borrow_mut();
             if loaded.as_ref().is_none_or(|(p, _)| *p != self.image) {
-                let image = if self.image.is_empty() { None } else { ctx.resource(&self.image).map(Image::encoded) };
+                let image = if self.image.is_empty() { None } else { ctx.resource_image(&self.image) };
                 *loaded = Some((self.image.clone(), image));
             }
             loaded.as_ref().and_then(|(_, i)| i.clone())
@@ -1597,7 +1597,7 @@ impl Component for ChatBubble {
         let image = {
             let mut loaded = self.loaded.borrow_mut();
             if loaded.as_ref().is_none_or(|(p, _)| *p != self.avatar) {
-                let image = if self.avatar.is_empty() { None } else { ctx.resource(&self.avatar).map(Image::encoded) };
+                let image = if self.avatar.is_empty() { None } else { ctx.resource_image(&self.avatar) };
                 *loaded = Some((self.avatar.clone(), image));
             }
             loaded.as_ref().and_then(|(_, i)| i.clone())

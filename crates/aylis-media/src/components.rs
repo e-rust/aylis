@@ -11,7 +11,7 @@ use aylis_core::{
 
 use crate::audio::{AudioOpener, AudioPlayer, AudioSource, SymphoniaSource, open_audio_location};
 use crate::output::{Tap, WeakTap, parse_outputs};
-use crate::video::{DecodeThread, Frame, FrameSink, Frames, MediaSource};
+use crate::video::{DecodeThread, Frame, FrameSink, Frames, MediaSource, VideoDecode};
 
 /// Abre o áudio do aplicativo (pasta do projeto ou pacote) ou, se não houver, do disco, lido
 /// aos poucos enquanto toca. Um endereço (`https://...`) abre na thread do áudio, lido pela
@@ -466,8 +466,13 @@ pub struct VideoPlayer {
     pub show_video: bool,
     /// Quantos quadros o decodificador prepara à frente do relógio (0: o padrão, 6; W13).
     pub frames_ahead: u32,
+    /// Onde decodificar: `auto` (o padrão) na CPU até 480p e na placa os maiores, `gpu` ou
+    /// `cpu`. Cada vídeo na placa é uma sessão do decodificador, que pesa (~16 MB no Windows):
+    /// numa parede de câmeras pequenas, a CPU sai mais leve. Só o Windows escolhe; nas outras
+    /// plataformas o sistema decide. Vale ao abrir o arquivo (o próximo `file`).
+    pub decoder: VideoDecode,
     frames: Arc<Mutex<Frames>>,
-    decoder: Option<DecodeThread>,
+    decode_thread: Option<DecodeThread>,
     audio: Option<AudioPlayer>,
     /// Tocando só o som (o arquivo não tem imagem): o tempo vem do áudio.
     audio_only: bool,
@@ -503,8 +508,9 @@ impl Default for VideoPlayer {
             output: String::new(),
             show_video: true,
             frames_ahead: 0,
+            decoder: VideoDecode::Auto,
             frames: Arc::default(),
-            decoder: None,
+            decode_thread: None,
             audio: None,
             audio_only: false,
             loaded: String::new(),
@@ -555,6 +561,11 @@ impl VideoPlayer {
                     f.ahead = self.frames_ahead.min(120) as usize;
                 }
             }
+            "decoder" => {
+                if let Ok(mut f) = self.frames.lock() {
+                    f.decode = self.decoder;
+                }
+            }
             "looping" => {
                 #[cfg(target_arch = "wasm32")]
                 if let Some(w) = &self.web {
@@ -569,7 +580,7 @@ impl VideoPlayer {
                 {
                     self.web = None;
                 }
-                self.decoder = None;
+                self.decode_thread = None;
                 self.audio = None;
                 self.audio_only = false;
                 *self.clock.borrow_mut() = Clock::at_rate(self.rate);
@@ -688,7 +699,7 @@ impl VideoPlayer {
                         a.set_looping(v.looping);
                     }
                 }
-                v.decoder = o.decoder;
+                v.decode_thread = o.decoder;
                 if let Some(a) = &o.audio {
                     v.listeners.attach(a);
                 }
@@ -740,7 +751,7 @@ impl VideoPlayer {
                 clock.ended = false;
                 clock.base = 0.0;
                 clock.current = None;
-                if let Some(d) = &v.decoder {
+                if let Some(d) = &v.decode_thread {
                     d.seek(0.0);
                 }
                 if let Some(a) = &v.audio {
@@ -800,7 +811,7 @@ impl VideoPlayer {
             clock.started = now;
             clock.current = None;
             clock.ended = false;
-            if let Some(d) = &v.decoder {
+            if let Some(d) = &v.decode_thread {
                 d.seek(seconds);
             }
             if let Some(a) = &v.audio {
@@ -894,7 +905,7 @@ impl VideoPlayer {
         if self.web.is_some() {
             return true;
         }
-        self.decoder.is_some() || (self.audio_only && self.audio.is_some())
+        self.decode_thread.is_some() || (self.audio_only && self.audio.is_some())
     }
 
     /// Para entregar quadros prontos de qualquer thread (o player mostra o último).
@@ -956,7 +967,7 @@ impl VideoPlayer {
                 drop(f);
                 clock.base = 0.0;
                 clock.started = now;
-                if let Some(d) = &self.decoder {
+                if let Some(d) = &self.decode_thread {
                     d.seek(0.0);
                 }
                 if let Some(a) = &self.audio {
@@ -1004,7 +1015,8 @@ impl Component for VideoPlayer {
         rate: f32 => "Behavior",
         output: String as RecordList(&crate::OUTPUT_SPEC_RECORD) => "Behavior",
         show_video: bool => "Appearance",
-        frames_ahead: u32 => "Behavior";
+        frames_ahead: u32 => "Behavior",
+        decoder: VideoDecode => "Behavior";
         events: on_ready: (), on_end: (), on_error: String, on_frame: f64;
         on_set: sync
     }

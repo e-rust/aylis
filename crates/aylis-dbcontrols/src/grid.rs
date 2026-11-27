@@ -2567,6 +2567,13 @@ impl aylis_core::AccessibleItems for DataGrid {
         self.access_layout().into_iter().map(|(item, _)| item).collect()
     }
 
+    /// Os itens são só as linhas visíveis: o total vem dos registros (com o `record_total`
+    /// do backend, quando ainda faltam registros).
+    fn access_table_size(&self, _: &Ui) -> Option<(usize, usize)> {
+        let rows = if self.cache.has_more && self.cache.total > self.cache.count { self.cache.total } else { self.cache.count };
+        Some((rows, self.cols.len()))
+    }
+
     fn access_action(&mut self, ctx: &mut EventCtx<'_>, index: usize, action: ItemAction) -> bool {
         let Some((_, target)) = self.access_layout().into_iter().nth(index) else { return false };
         if !self.close_editor(ctx, true) {

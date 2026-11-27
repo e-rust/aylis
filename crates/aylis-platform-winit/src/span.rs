@@ -480,6 +480,7 @@ impl App {
             hovered: false,
             uncloak_after_draw: false,
             clipped_monitor: false,
+            options_pending: false,
         });
         Ok(())
     }

@@ -42,6 +42,38 @@ fn the_window_scale_is_known_and_its_change_is_an_event() {
 }
 
 #[test]
+fn moving_to_another_monitor_is_an_event_with_its_index() {
+    let (mut ui, form) = ui();
+    let child = ui.create("Button", Some(form)).unwrap();
+    let got = record(&mut ui, form, "on_monitor_change");
+    ui.set_form_monitor(form, Some(0));
+    assert!(got.borrow().is_empty(), "o monitor de abrir não é uma mudança");
+    assert_eq!(ui.form_monitor(child), Some(0), "o controle dá o form dele");
+    ui.set_form_monitor(form, Some(0));
+    ui.set_form_monitor(form, Some(1));
+    assert_eq!(*got.borrow(), vec![EventArgs::Value(PropValue::Int(1))]);
+    ui.set_form_monitor(form, None);
+    assert_eq!(got.borrow().len(), 1, "ficar sem monitor não é ir para outro (o Screen.on_change avisa)");
+    ui.set_form_monitor(form, Some(1));
+    assert_eq!(got.borrow().len(), 2, "voltou a ter monitor: o app fica sabendo");
+    // Reaberta: a primeira de novo é a de abrir.
+    ui.forget_form_window(form);
+    ui.set_form_monitor(form, Some(0));
+    assert_eq!(got.borrow().len(), 2);
+}
+
+#[test]
+fn a_window_that_opens_without_a_monitor_reports_the_first_one() {
+    // O Wayland: o monitor só se sabe depois do primeiro quadro.
+    let (mut ui, form) = ui();
+    let got = record(&mut ui, form, "on_monitor_change");
+    ui.set_form_monitor(form, None);
+    assert_eq!(ui.form_monitor(form), None);
+    ui.set_form_monitor(form, Some(2));
+    assert_eq!(*got.borrow(), vec![EventArgs::Value(PropValue::Int(2))]);
+}
+
+#[test]
 fn the_resize_ends_after_a_quiet_moment() {
     let (mut ui, form) = ui();
     let got = record(&mut ui, form, "on_resize_end");
@@ -127,7 +159,7 @@ fn bring_to_front_is_a_window_command_and_keeps_the_token_once() {
     assert_eq!(ui.take_activation_token(), None);
     // Os eventos existem no form, para o JSON e as outras linguagens.
     let props = ui.component(form).unwrap().props();
-    for event in ["on_scale_change", "on_resize_end"] {
+    for event in ["on_scale_change", "on_monitor_change", "on_resize_end"] {
         assert!(props.iter().any(|p| p.name == event && p.kind == PropKind::Event), "{event}");
     }
 }

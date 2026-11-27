@@ -164,12 +164,19 @@ struct Text {
     formats: RefCell<HashMap<FontKey, IDWriteTextFormat>>,
     /// Layouts prontos (texto + fonte): medir e desenhar reaproveitam.
     layouts: RefCell<HashMap<(FontKey, String), (IDWriteTextLayout, f32)>>,
+    /// Só a largura dos trechos medidos para quebrar as linhas (palavras, começos de linha):
+    /// leve, cabe muito mais que os layouts. Com tudo nos layouts, 1000 rótulos com quebra
+    /// (uma grade de vídeos com marca d'água) passavam do limite a cada quadro, o cache se
+    /// esvaziava e cada medida criava um layout de novo (526 ms por quadro; 94 ms sem isso).
+    widths: RefCell<HashMap<(FontKey, String), f32>>,
     line_heights: RefCell<HashMap<FontKey, f32>>,
     /// Os tamanhos de `measure_text_wrapped` já calculados.
     wrapped: RefCell<aylis_core::canvas::WrapCache>,
 }
 
 const LAYOUT_CACHE: usize = 4096;
+/// As larguras guardadas (texto + número: alguns MB no máximo).
+const WIDTH_CACHE: usize = 65_536;
 
 impl Text {
     /// Fontes novas no registro: monta a coleção (sistema + registradas) e limpa os caches.
@@ -181,6 +188,7 @@ impl Text {
         self.font_generation.set(generation);
         self.formats.borrow_mut().clear();
         self.layouts.borrow_mut().clear();
+        self.widths.borrow_mut().clear();
         self.line_heights.borrow_mut().clear();
         let fonts = aylis_core::fonts::registered();
         if fonts.is_empty() {
@@ -333,6 +341,17 @@ impl Text {
         if let Some(l) = self.layouts.borrow().get(&cache_key) {
             return Some(l.clone());
         }
+        let entry = self.new_layout(text, key)?;
+        let mut cache = self.layouts.borrow_mut();
+        if cache.len() > LAYOUT_CACHE {
+            cache.clear();
+        }
+        cache.insert(cache_key, entry.clone());
+        Some(entry)
+    }
+
+    /// Um layout novo da linha e a largura dela, sem guardar.
+    fn new_layout(&self, text: &str, key: &FontKey) -> Option<(IDWriteTextLayout, f32)> {
         let format = self.format(key)?;
         let w = wide(text);
         let layout = unsafe { self.dwrite.CreateTextLayout(&w, &format, 1.0e6, 1.0e6).ok()? };
@@ -355,20 +374,28 @@ impl Text {
         let mut m = DWRITE_TEXT_METRICS::default();
         unsafe { layout.GetMetrics(&mut m).ok()? };
         let width = if spacing != 0.0 && !text.is_empty() { m.widthIncludingTrailingWhitespace - spacing } else { m.widthIncludingTrailingWhitespace };
-        let entry = (layout, width);
-        let mut cache = self.layouts.borrow_mut();
-        if cache.len() > LAYOUT_CACHE {
-            cache.clear();
-        }
-        cache.insert(cache_key, entry.clone());
-        Some(entry)
+        Some((layout, width))
     }
 
+    /// A largura da linha: do cache de larguras, de um layout já guardado ou de um novo, que
+    /// não fica (o desenho guarda o dele).
     fn width(&self, text: &str, key: &FontKey) -> f32 {
         if text.is_empty() {
             return 0.0;
         }
-        self.layout(text, key).map_or(0.0, |(_, w)| w)
+        self.sync_fonts();
+        let cache_key = (key.clone(), text.to_string());
+        if let Some(w) = self.widths.borrow().get(&cache_key) {
+            return *w;
+        }
+        let known = self.layouts.borrow().get(&cache_key).map(|(_, w)| *w);
+        let Some(width) = known.or_else(|| self.new_layout(text, key).map(|(_, w)| w)) else { return 0.0 };
+        let mut widths = self.widths.borrow_mut();
+        if widths.len() > WIDTH_CACHE {
+            widths.clear();
+        }
+        widths.insert(cache_key, width);
+        width
     }
 
     fn line_height(&self, key: &FontKey) -> f32 {
@@ -676,6 +703,7 @@ impl D2dRenderer {
                     font_generation: std::cell::Cell::new(u64::MAX),
                     formats: RefCell::default(),
                     layouts: RefCell::default(),
+                    widths: RefCell::default(),
                     line_heights: RefCell::default(),
                     wrapped: RefCell::default(),
                 }),

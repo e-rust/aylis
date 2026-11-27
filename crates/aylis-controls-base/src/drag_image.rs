@@ -69,7 +69,7 @@ impl DragImage {
         }
         let mut loaded = self.loaded.borrow_mut();
         if loaded.as_ref().is_none_or(|(path, _)| *path != self.image) {
-            let image = ui.services().resources.as_ref().and_then(|r| r.read(&self.image)).map(Image::encoded);
+            let image = ui.services().resources.as_ref().and_then(|r| r.read(&self.image)).map(|b| Image::shared_file(&self.image, b));
             *loaded = Some((self.image.clone(), image));
         }
         loaded.as_ref().and_then(|(_, image)| image.clone())

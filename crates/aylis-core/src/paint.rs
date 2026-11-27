@@ -47,6 +47,12 @@ impl PaintCtx<'_> {
         self.resources?.read(path)
     }
 
+    /// Uma imagem do aplicativo pelo caminho: a mesma para todos os controles que mostram o
+    /// mesmo arquivo ([`Image::shared_file`](crate::Image::shared_file)).
+    pub fn resource_image(&self, path: &str) -> Option<crate::Image> {
+        self.resource(path).map(|bytes| crate::Image::shared_file(path, bytes))
+    }
+
     /// Desenha um ícone pelo nome (os do app e os do aylis), centralizado em `rect`.
     /// Nome desconhecido não desenha nada.
     pub fn draw_icon(&self, canvas: &mut dyn crate::Canvas, name: &str, rect: RectF, color: crate::Color) {

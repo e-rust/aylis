@@ -634,7 +634,7 @@ impl Component for Form {
         orientation: aylis_core::FormOrientation => "Layout",
         host: Option<ComponentId> => "Behavior",
         dockable: bool => "Behavior";
-        events: on_show: (), on_window_created: (), on_close: (), on_close_query, on_back, on_activate: (), on_deactivate: (), on_minimize: (), on_restore: (), on_navigate: String, on_gpu_change: String, on_dock: Option<ComponentId>, on_undock: (), on_files_drop: Vec<String>, on_view_change: String, on_topmost_lost: TopmostLost, on_scale_change: f64, on_resize_end: ();
+        events: on_show: (), on_window_created: (), on_close: (), on_close_query, on_back, on_activate: (), on_deactivate: (), on_minimize: (), on_restore: (), on_navigate: String, on_gpu_change: String, on_dock: Option<ComponentId>, on_undock: (), on_files_drop: Vec<String>, on_view_change: String, on_topmost_lost: TopmostLost, on_scale_change: f64, on_monitor_change: i64, on_resize_end: ();
         computed: client_width: f32 => client_width / set_client_width, client_height: f32 => client_height / set_client_height
     }
 

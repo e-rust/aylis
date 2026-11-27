@@ -1,0 +1,104 @@
+{
+  "antes": [
+    {
+      "marcador": "circle",
+      "operacoes": 20022,
+      "pontos": 10000,
+      "primeiro_quadro_ms": 198.84,
+      "quadro_ms": 169.89,
+      "set_data_ms": 1.39
+    },
+    {
+      "marcador": "none",
+      "operacoes": 22,
+      "pontos": 10000,
+      "primeiro_quadro_ms": 97.16,
+      "quadro_ms": 102.73,
+      "set_data_ms": 0.9
+    },
+    {
+      "marcador": "circle",
+      "operacoes": 200022,
+      "pontos": 100000,
+      "primeiro_quadro_ms": 15069.52,
+      "quadro_ms": 12514.7,
+      "set_data_ms": 5.13
+    },
+    {
+      "marcador": "none",
+      "operacoes": 22,
+      "pontos": 100000,
+      "primeiro_quadro_ms": 9205.27,
+      "quadro_ms": 10414.53,
+      "set_data_ms": 4.46
+    }
+  ],
+  "antes_nota": "Com 1 milhão de pontos, a rodada passou de 22 minutos de CPU sem terminar os 12 quadros e foi interrompida (o custo crescia com o quadrado dos pontos: as áreas da dica inseridas uma a uma no começo da lista).",
+  "depois": [
+    {
+      "marcador": "circle",
+      "operacoes": 8350,
+      "pontos": 10000,
+      "primeiro_quadro_ms": 74.78,
+      "quadro_ms": 62.78,
+      "set_data_ms": 1.96
+    },
+    {
+      "marcador": "none",
+      "operacoes": 22,
+      "pontos": 10000,
+      "primeiro_quadro_ms": 8.27,
+      "quadro_ms": 11.82,
+      "set_data_ms": 0.54
+    },
+    {
+      "marcador": "circle",
+      "operacoes": 9282,
+      "pontos": 100000,
+      "primeiro_quadro_ms": 82.64,
+      "quadro_ms": 75.37,
+      "set_data_ms": 10.68
+    },
+    {
+      "marcador": "none",
+      "operacoes": 22,
+      "pontos": 100000,
+      "primeiro_quadro_ms": 14.91,
+      "quadro_ms": 13.65,
+      "set_data_ms": 7.54
+    },
+    {
+      "marcador": "circle",
+      "operacoes": 9376,
+      "pontos": 1000000,
+      "primeiro_quadro_ms": 103.92,
+      "quadro_ms": 75.16,
+      "set_data_ms": 84.63
+    },
+    {
+      "marcador": "none",
+      "operacoes": 18,
+      "pontos": 1000000,
+      "primeiro_quadro_ms": 32.71,
+      "quadro_ms": 14.03,
+      "set_data_ms": 84.81
+    },
+    {
+      "marcador": "circle",
+      "operacoes": 9404,
+      "pontos": 10000000,
+      "primeiro_quadro_ms": 196.16,
+      "quadro_ms": 44.9,
+      "set_data_ms": 817.75
+    },
+    {
+      "marcador": "none",
+      "operacoes": 18,
+      "pontos": 10000000,
+      "primeiro_quadro_ms": 91.61,
+      "quadro_ms": 10.17,
+      "set_data_ms": 463.25
+    }
+  ],
+  "descricao": "O Chart de linha com uma série enorme (26/11): 1200 x 400, Skia na CPU sem janela, release, na máquina do autor. Um sinal com ruído e picos raros; 'circle' é o marcador padrão e 'none' só a linha. 'quadro_ms' é a mediana de 5 quadros depois do primeiro; 'operacoes', o que o gráfico manda ao Canvas. crates/aylis-controls-charts/tests/huge_series.rs."
+}

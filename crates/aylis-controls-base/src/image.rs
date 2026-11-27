@@ -64,7 +64,7 @@ impl ImageView {
         if let Some((_, image)) = self.loaded.borrow().as_ref().filter(|(path, _)| *path == self.image) {
             return image.clone();
         }
-        (!self.image.is_empty()).then(|| ui.services().resources.as_ref()?.read(&self.image).map(Image::encoded)).flatten()
+        (!self.image.is_empty()).then(|| ui.services().resources.as_ref()?.read(&self.image).map(|b| Image::shared_file(&self.image, b))).flatten()
     }
 
     /// Mostra um arquivo do disco (ou um `memory:/` do [`aylis_core::files`]) no lugar do
@@ -110,7 +110,7 @@ impl ImageView {
         }
         let mut loaded = self.loaded.borrow_mut();
         if loaded.as_ref().is_none_or(|(path, _)| *path != self.image) {
-            let image = ctx.resource(&self.image).map(Image::encoded);
+            let image = ctx.resource_image(&self.image);
             // Não achou: o aviso, uma vez por caminho, no app compilado para depurar (o que a
             // IDE roda). Antes ficava vazio sem dizer nada (o relatório do player de música).
             if image.is_none() && !ctx.design && cfg!(debug_assertions) {

@@ -342,6 +342,7 @@ impl App {
             hovered: false,
             uncloak_after_draw: false,
             clipped_monitor: false,
+            options_pending: false,
         });
         let index = self.windows.len() - 1;
         // As que esperavam por esta janela como dona (veja `reown_windows_of`).
@@ -572,14 +573,48 @@ impl App {
         self.ui.window_options(form).animation
     }
 
-    /// Aplica a todas as janelas abertas as opções do `WindowSettings` delas (um componente
-    /// mudou em execução: o de um form ou o do app inteiro).
+    /// Um `WindowSettings` do form `form` mudou em execução: as janelas que usam as opções dele
+    /// (as do próprio form e, se for o do app, as dos outros forms) recebem as opções de novo. A
+    /// janela escondida fica para o `Show` ([`App::apply_pending_options`]).
     #[cfg(not(any(web, mobile)))]
-    pub(crate) fn update_window_options(&mut self) {
-        for w in &self.windows {
-            apply_window_options(&w.window, &self.ui.window_options(w.form));
-            #[cfg(windows)]
-            self.shape_window(&w.window, w.form);
+    pub(crate) fn update_window_options(&mut self, form: ComponentId) {
+        for index in 0..self.windows.len() {
+            let w = &self.windows[index];
+            let uses = w.form == form || self.ui.window_settings_of(w.form).is_some_and(|s| self.ui.root_of(s) == form);
+            if !uses {
+                continue;
+            }
+            if self.window_shown(index) {
+                apply_window_options(&w.window, &self.ui.window_options(w.form));
+                #[cfg(windows)]
+                self.shape_window(&w.window, w.form);
+            } else {
+                self.windows[index].options_pending = true;
+            }
         }
+    }
+
+    /// A janela `index` está na tela (no Windows, pelo sistema: o app pode tê-la mostrado pela
+    /// API dele, sem o winit saber).
+    #[cfg(not(any(web, mobile)))]
+    pub(crate) fn window_shown(&self, index: usize) -> bool {
+        let Some(w) = self.windows.get(index) else { return false };
+        #[cfg(windows)]
+        return win32::is_shown(&w.window);
+        #[cfg(not(windows))]
+        return w.window.is_visible() != Some(false);
+    }
+
+    /// Aplica as opções que esperavam a janela `index` aparecer (veja `update_window_options`).
+    #[cfg(not(any(web, mobile)))]
+    pub(crate) fn apply_pending_options(&mut self, index: usize) {
+        let Some(w) = self.windows.get_mut(index) else { return };
+        if !std::mem::take(&mut w.options_pending) {
+            return;
+        }
+        let w = &self.windows[index];
+        apply_window_options(&w.window, &self.ui.window_options(w.form));
+        #[cfg(windows)]
+        self.shape_window(&w.window, w.form);
     }
 }

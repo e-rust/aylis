@@ -30,6 +30,7 @@
   "aylis-controls-base/lib": {
     "always": "textmate.rs: uma tecla < 50 ms"
   },
+  "aylis-controls-charts/huge_series": "pure",
   "aylis-controls-charts/lib": "pure",
   "aylis-controls-device/lib": "pure",
   "aylis-controls-editors/lib": "pure",
@@ -465,6 +466,7 @@
     "crates/aylis/tests/catalog_enums.rs"
   ],
   "aylis-remote/change_events": "pure",
+  "aylis-remote/flood": "pure",
   "aylis-remote/lib": "pure",
   "aylis-remote/mcp": "pure",
   "aylis-remote/protocol": "pure",

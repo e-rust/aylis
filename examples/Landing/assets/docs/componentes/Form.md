@@ -96,6 +96,7 @@ Janela. Pinta o fundo com o estilo `Form` do tema.
 | `on_view_change` | — | — |  |
 | `on_topmost_lost` | — | — |  |
 | `on_scale_change` | a escala da janela mudou (outro monitor, outra escala no sistema), com a escala nova | — |  |
+| `on_monitor_change` | a janela foi para outro monitor, com o índice dele (o mesmo do `form_monitor` e da propriedade `monitor`) | — |  |
 | `on_resize_end` | o usuário parou de redimensionar a janela (no Windows, ao soltar a borda; fora dele, 300 ms sem tamanho novo) | — |  |
 
 ## Em código

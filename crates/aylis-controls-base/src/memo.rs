@@ -211,6 +211,11 @@ pub struct Memo {
     /// cada pintura sairia caro num arquivo grande), e as linhas editadas desde então (medidas
     /// na próxima pintura: a mais larga só cresce até o texto ser trocado).
     widest: RefCell<(u64, u64, f32, Vec<usize>)>,
+    /// A posição do cursor na linha (texto, cursor, fonte → x): numa linha enorme, medir do
+    /// começo da linha até o cursor a cada quadro custava centenas de ms.
+    caret_x_cache: Cell<Option<(u64, usize, u64, f32)>>,
+    /// Os blocos medidos das linhas enormes à vista (texto, início da linha, fonte).
+    long_blocks: RefCell<Vec<LongBlocks>>,
     /// O `auto_size`: a largura de cada linha, exata (a caixa também encolhe ao apagar).
     auto_widths: RefCell<AutoWidths>,
     /// O começo de cada linha do texto (em caracteres e em bytes), pelo hash do texto: a
@@ -351,6 +356,8 @@ impl Default for Memo {
             hbar: Cell::new(None),
             bar_grab: None,
             widest: RefCell::new((0, 0, 0.0, Vec::new())),
+            caret_x_cache: Cell::new(None),
+            long_blocks: RefCell::new(Vec::new()),
             auto_widths: RefCell::default(),
             line_table: RefCell::new((0, Rc::new(Vec::new()))),
             rows_cache: RefCell::new((0, 0, Rc::new(Vec::new()))),
@@ -409,6 +416,65 @@ fn byte_in(text: &str, table: &[(usize, usize)], chars: usize) -> usize {
 
 fn byte_index(text: &str, chars: usize) -> usize {
     text.char_indices().nth(chars).map_or(text.len(), |(b, _)| b)
+}
+
+/// A partir de quantos caracteres uma linha é "enorme" na pintura: só a parte à vista é
+/// desenhada (o JSON minificado numa linha só: 1 MB custava 1,7 s por quadro, medido em
+/// 26/11).
+const LONG_ROW: usize = 4096;
+
+/// Um bloco medido de uma linha enorme: o byte e o caractere do fim (contados do começo da
+/// linha) e a largura acumulada até ele.
+type Block = (usize, usize, f32);
+
+/// Os blocos de uma linha enorme, na ordem.
+type Blocks = std::rc::Rc<Vec<Block>>;
+
+/// Os blocos guardados de uma linha enorme: de que texto (a chave e a própria linha, para
+/// aproveitar o começo e o fim iguais depois de uma edição), de que linha e fonte.
+struct LongBlocks {
+    key: u64,
+    row_start: usize,
+    font: u64,
+    line: std::rc::Rc<str>,
+    blocks: Blocks,
+}
+
+/// Quantos caracteres tem cada bloco medido de uma linha enorme.
+const BLOCK: usize = 256;
+
+/// Mede `line` em blocos de [`BLOCK`] caracteres, somando as larguras.
+fn measure_blocks(line: &str, measure: &mut dyn FnMut(&str) -> f32) -> Vec<Block> {
+    let ends = line.char_indices().map(|(b, _)| b).step_by(BLOCK).skip(1).chain(std::iter::once(line.len()));
+    let (mut start, mut chars, mut x, mut out) = (0usize, 0usize, 0.0f32, Vec::new());
+    for end in ends {
+        let piece = &line[start..end];
+        x += measure(piece);
+        chars += if end == line.len() { piece.chars().count() } else { BLOCK };
+        out.push((end, chars, x));
+        start = end;
+    }
+    out
+}
+
+/// A parte da linha (que começa em `x0`) entre `left` e `right`, pelos blocos: o primeiro
+/// byte e o caractere dele, o x dele, e o byte e o caractere do fim. Busca binária: não
+/// depende do tamanho da linha.
+fn visible_part(blocks: &[Block], x0: f32, left: f32, right: f32) -> (usize, usize, f32, usize, usize) {
+    let first = blocks.partition_point(|b| x0 + b.2 < left);
+    let (from, from_char, at) = if first == 0 { (0, 0, x0) } else { (blocks[first - 1].0, blocks[first - 1].1, x0 + blocks[first - 1].2) };
+    let last = blocks.partition_point(|b| x0 + b.2 <= right).min(blocks.len().saturating_sub(1));
+    let (to, to_char) = blocks.get(last).map_or((0, 0), |b| (b.0, b.1));
+    (from, from_char, at, to, to_char)
+}
+
+/// O x do caractere `index` (contado do começo da linha) pelos blocos: o bloco dele e o
+/// pedaço até ele.
+fn x_of_char(blocks: &[Block], line: &str, index: usize, measure: &mut dyn FnMut(&str) -> f32) -> f32 {
+    let i = blocks.partition_point(|b| b.1 <= index);
+    let (start, chars, x) = if i == 0 { (0, 0, 0.0) } else { blocks[i - 1] };
+    let end = line[start..].char_indices().nth(index - chars).map_or(line.len(), |(b, _)| start + b);
+    x + measure(&line[start..end])
 }
 
 /// Tabulação vira 4 espaços na tela.
@@ -881,6 +947,59 @@ impl Memo {
     fn row_of(rows: &[Row], index: usize) -> usize {
         // Em ordem pelo começo: busca binária (andar a lista toda pesava num fonte enorme).
         rows.partition_point(|r| r.start <= index).saturating_sub(1)
+    }
+
+    /// Os blocos medidos da linha enorme que começa em `row_start`, guardados entre os
+    /// quadros. Mudou o texto: os blocos do começo igual valem como estão e os do fim igual,
+    /// deslocados (o byte, o caractere e a largura); só o meio é medido de novo (digitar numa
+    /// linha de 5 MB mede um bloco, e não a linha toda).
+    fn blocks_of(&self, key: u64, row_start: usize, font: u64, line: &str, measure: &mut dyn FnMut(&str) -> f32) -> Blocks {
+        let mut cache = self.long_blocks.borrow_mut();
+        if let Some(e) = cache.iter().find(|e| (e.key, e.row_start, e.font) == (key, row_start, font)) {
+            return e.blocks.clone();
+        }
+        let mut blocks: Vec<Block> = Vec::new();
+        let mut tail: Vec<Block> = Vec::new();
+        let mut middle_end = line.len();
+        if let Some(old) = cache.iter().find(|e| e.row_start == row_start && e.font == font) {
+            let (a, b) = (old.line.as_bytes(), line.as_bytes());
+            let prefix = a.iter().zip(b).take_while(|(x, y)| x == y).count();
+            let limit = a.len().min(b.len()) - prefix;
+            let suffix = a.iter().rev().zip(b.iter().rev()).take(limit).take_while(|(x, y)| x == y).count();
+            blocks = old.blocks.iter().copied().take_while(|b| b.0 <= prefix).collect();
+            // O primeiro bloco antigo que começa no fim igual, e o começo dele.
+            let old_tail_from = a.len() - suffix;
+            let mut prev: Block = (0, 0, 0.0);
+            let mut first_tail: Option<(Block, usize)> = None;
+            for (i, &block) in old.blocks.iter().enumerate() {
+                if prev.0 >= old_tail_from {
+                    first_tail = Some((prev, i));
+                    break;
+                }
+                prev = block;
+            }
+            if let Some(((start_old, chars_old, x_old), i)) = first_tail {
+                let shift = b.len() as isize - a.len() as isize;
+                let start_new = (start_old as isize + shift) as usize;
+                if line.is_char_boundary(start_new) && start_new >= blocks.last().map_or(0, |b| b.0) {
+                    // Os caracteres do fim igual não mudam: o deslocamento sai da contagem do
+                    // trecho novo (o meio), feita na hora de juntar.
+                    middle_end = start_new;
+                    tail = old.blocks[i..].iter().map(|&(end, chars, w)| ((end as isize + shift) as usize, chars - chars_old, w - x_old)).collect();
+                }
+            }
+        }
+        let (start, chars, x) = blocks.last().copied().unwrap_or((0, 0, 0.0));
+        blocks.extend(measure_blocks(&line[start..middle_end], measure).into_iter().map(|(end, c, w)| (start + end, chars + c, x + w)));
+        let (_, chars_mid, x_mid) = blocks.last().copied().unwrap_or((0, 0, 0.0));
+        blocks.extend(tail.into_iter().map(|(end, c, w)| (end, chars_mid + c, x_mid + w)));
+        let blocks: Blocks = std::rc::Rc::new(blocks);
+        cache.retain(|e| e.font == font && e.row_start != row_start);
+        if cache.len() >= 4 {
+            cache.remove(0);
+        }
+        cache.push(LongBlocks { key, row_start, font, line: line.into(), blocks: blocks.clone() });
+        blocks
     }
 
     /// Deslocamento horizontal de uma linha pelo alinhamento.
@@ -2169,8 +2288,28 @@ impl Memo {
         // Rola para manter o cursor visível.
         let crow = Self::row_of(&rows, self.caret);
         let row = rows[crow];
-        let caret_row_width = width_of(canvas, row.start, row.end);
-        let caret_x = width_of(canvas, row.start, self.caret) + self.shift(caret_row_width);
+        // Alinhado à esquerda, a largura da linha não muda nada: numa linha enorme (um JSON
+        // minificado), medir a linha inteira a cada quadro custava mais que a pintura.
+        let leading = matches!(self.h_align, TextAlign::Leading | TextAlign::Justify);
+        let caret_row_width = if leading { 0.0 } else { width_of(canvas, row.start, row.end) };
+        // O x do cursor na linha, guardado enquanto o texto, o cursor e a fonte não mudam.
+        let caret_key = (key, self.caret, font_key(&style));
+        let caret_in_row = match self.caret_x_cache.get() {
+            Some((k, c, f, x)) if (k, c, f) == caret_key => x,
+            _ => {
+                // Na linha enorme, pelos blocos: o bloco do cursor e o pedaço até ele.
+                let x = if leading && row.end - row.start > LONG_ROW {
+                    let line = self.slice(row.start, row.end);
+                    let blocks = self.blocks_of(key, row.start, caret_key.2, line, &mut |s: &str| canvas.measure_text(&expand_tabs(s), &style).width);
+                    x_of_char(&blocks, line, self.caret - row.start, &mut |s: &str| canvas.measure_text(&expand_tabs(s), &style).width)
+                } else {
+                    width_of(canvas, row.start, self.caret)
+                };
+                self.caret_x_cache.set(Some((caret_key.0, caret_key.1, caret_key.2, x)));
+                x
+            }
+        };
+        let caret_x = caret_in_row + self.shift(caret_row_width);
         let mut scroll = self.scroll.get();
         let caret_y = crow as f32 * lh;
         // Só quando o cursor andou ou o texto mudou; a roda do mouse e a barra de rolagem
@@ -2203,6 +2342,15 @@ impl Memo {
         // Crescendo com o texto (sem quebra): a caixa tem a largura medida, e a rolagem de lado
         // só existe se o `max_width` a cortou. A mesma conta do `auto_width` (exata: apagar
         // encolhe), com o lugar do cursor no lugar da folga de 8.
+        // A largura de uma linha inteira: a enorme pelos blocos guardados (só o trecho editado
+        // é medido de novo; medir 50 MB de texto a cada tecla levava 16 s).
+        let line_width = |canvas: &mut dyn Canvas, a: usize, b: usize| {
+            if b - a > LONG_ROW {
+                self.blocks_of(key, a, font_key(&style), self.slice(a, b), &mut |s: &str| canvas.measure_text(&expand_tabs(s), &style).width).last().map_or(0.0, |x| x.2)
+            } else {
+                width_of(canvas, a, b)
+            }
+        };
         let grows = self.base.auto_size() && !self.wrap;
         let widest = if grows {
             let mut measure = |t: &str| canvas.measure_text(t, &style).width;
@@ -2224,7 +2372,7 @@ impl Memo {
                 if top > 0 {
                     longest.select_nth_unstable_by_key(top - 1, |r| std::cmp::Reverse(r.end - r.start));
                 }
-                let w = longest[..top].iter().map(|r| width_of(canvas, r.start, r.end)).fold(0.0f32, f32::max);
+                let w = longest[..top].iter().map(|r| line_width(canvas, r.start, r.end)).fold(0.0f32, f32::max);
                 *cached = (font, key, w, Vec::new());
             } else if !cached.3.is_empty() {
                 // Editou: só as linhas editadas (pela tabela das linhas).
@@ -2233,7 +2381,7 @@ impl Memo {
                 let lines = std::mem::take(&mut cached.3);
                 for line in lines.into_iter().filter(|&l| l < table.len()) {
                     let end = table.get(line + 1).map_or(len, |next| next.0 - 1);
-                    cached.2 = cached.2.max(width_of(canvas, table[line].0, end));
+                    cached.2 = cached.2.max(line_width(canvas, table[line].0, end));
                 }
             }
             cached.2
@@ -2307,7 +2455,12 @@ impl Memo {
         }
         for (i, row) in rows.iter().enumerate().skip(first).take(visible + 1) {
             let y = inner.y + i as f32 * lh - scroll.y;
-            let row_width = width_of(canvas, row.start, row.end);
+            // A linha enorme alinhada à esquerda: sem medir a linha inteira, e o texto só da
+            // parte à vista (veja `visible_part`).
+            let long = leading && !trim && !row.folded && row.end - row.start > LONG_ROW;
+            let row_width = if long { 0.0 } else { width_of(canvas, row.start, row.end) };
+            // Os blocos medidos da linha enorme (guardados entre os quadros).
+            let blocks = long.then(|| self.blocks_of(key, row.start, font_key(&text_style), self.slice(row.start, row.end), &mut |s: &str| canvas.measure_text(&expand_tabs(s), &text_style).width));
             let x = inner.x - scroll.x + self.shift(row_width);
             let mut selected_rect = None;
             // Com o menu de texto aberto (ele tem o foco), a seleção continua à vista.
@@ -2346,7 +2499,16 @@ impl Memo {
                 canvas.fill_rect(b, 3.0, &Brush::Solid(ctx.theme.color("text").with_opacity(0.08)));
                 canvas.draw_text("⋯", b, &ts);
             }
-            self.paint_row_marks(canvas, ctx, &text_style, (row.start, row.end), x, y, lh, &occurrences, brackets);
+            // As marcas da linha enorme só na parte à vista (a palavra do cursor aparece
+            // milhares de vezes num JSON minificado, e cada marca mede o começo da linha).
+            let window = if long {
+                let (_, from, _, _, to) = visible_part(blocks.as_deref().map_or(&[][..], |b| &b[..]), x, inner.x, inner.right());
+                (row.start + from, row.start + to)
+            } else {
+                (row.start, row.end)
+            };
+            let marks_line = blocks.as_ref().map(|b| (&b[..], self.slice(row.start, row.end)));
+            self.paint_row_marks(canvas, ctx, &text_style, (row.start, row.end), window, marks_line, x, y, lh, &occurrences, brackets);
             let line = expand_tabs(self.slice(row.start, row.end)).into_owned();
             if line.is_empty() {
                 continue;
@@ -2358,6 +2520,13 @@ impl Memo {
                 // de novo a cada trecho.
                 let raw: Vec<char> = self.slice(row.start, row.end).chars().collect();
                 let (mut done, mut px) = (0usize, 0.0f32);
+                // Na linha enorme, começa no bloco da borda esquerda (medido aos blocos): os
+                // trechos de antes não são medidos um a um (rolado até o fim de um JSON de 1 MB,
+                // eram 200 mil medidas por quadro).
+                if long {
+                    let (_, from_char, at, _, _) = visible_part(blocks.as_deref().map_or(&[][..], |b| &b[..]), x, inner.x, inner.right());
+                    (done, px) = (from_char, at - x);
+                }
                 // Os tokens do controle repartem os trechos (só os da linha pintada); sem
                 // tokens, os trechos como vieram (sem lista nova por linha).
                 let refined = (!self.tokens.is_empty()).then(|| syntax::apply_tokens(line_spans, &raw, &self.tokens, &token_colors, tokens_ci));
@@ -2386,9 +2555,16 @@ impl Memo {
                     let piece = expand_tabs(&piece).into_owned();
                     let pw = canvas.measure_text(&piece, &text_style).width;
                     done = b;
-                    let mut ts = text_style.clone();
-                    ts.color = token_color.or_else(|| self.kind_color(span.kind)).unwrap_or_else(|| syntax::span_color(ct, span, dark, style.color));
-                    canvas.draw_text(&piece, RectF::new(x + px, y, pw + 8.0, lh), &ts);
+                    // Na linha enorme, só os trechos à vista: os de antes só contam a largura,
+                    // e o primeiro depois da borda direita encerra a linha.
+                    if long && x + px > inner.right() {
+                        break;
+                    }
+                    if !long || x + px + pw >= inner.x {
+                        let mut ts = text_style.clone();
+                        ts.color = token_color.or_else(|| self.kind_color(span.kind)).unwrap_or_else(|| syntax::span_color(ct, span, dark, style.color));
+                        canvas.draw_text(&piece, RectF::new(x + px, y, pw + 8.0, lh), &ts);
+                    }
                     px += pw;
                 }
             } else if let Some(words) = (justify && row.end < self.len() && self.char_at(row.end) != Some('\n'))
@@ -2405,6 +2581,13 @@ impl Memo {
                 ts.trimming = self.trimming;
                 ts.h_align = self.h_align;
                 canvas.draw_text(&line, RectF::new(inner.x, y, inner.width, lh), &ts);
+            } else if long {
+                let raw = self.slice(row.start, row.end);
+                let (from, _, at, to, _) = visible_part(blocks.as_deref().map_or(&[][..], |b| &b[..]), x, inner.x, inner.right());
+                let part = expand_tabs(&raw[from..to]);
+                let part = part.as_ref();
+                let w = canvas.measure_text(part, &text_style).width;
+                canvas.draw_text(part, RectF::new(at, y, w + 8.0, lh), &text_style);
             } else {
                 canvas.draw_text(&line, RectF::new(x, y, row_width + 8.0, lh), &text_style);
             }

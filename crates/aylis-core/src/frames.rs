@@ -22,6 +22,28 @@ pub(crate) struct FrameClock {
     /// Dos forms com `max_paint_rate`: quando pintaram pela última vez e o `input_serial` de
     /// então.
     pub(crate) painted: std::collections::HashMap<crate::ComponentId, (f64, u64)>,
+    /// A medição da latência da entrada ao quadro (desligada: `None`).
+    latency: Option<LatencyLog>,
+}
+
+/// A entrada mais antiga sem quadro e os tempos medidos (ms).
+#[derive(Debug, Default)]
+struct LatencyLog {
+    pending: Option<web_time::Instant>,
+    samples: Vec<f64>,
+}
+
+/// Quantas latências a medição guarda (as primeiras; o resto é descartado).
+const LATENCY_SAMPLES: usize = 100_000;
+
+/// O resumo da latência da entrada ao quadro ([`Ui::input_latency`]), em milissegundos.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct InputLatency {
+    pub count: usize,
+    pub p50_ms: f64,
+    pub p95_ms: f64,
+    pub p99_ms: f64,
+    pub max_ms: f64,
 }
 
 /// Depois de uma entrada, por quanto tempo (segundos) a pintura continua sem ritmo: o que a
@@ -50,6 +72,13 @@ impl Ui {
 
     /// A plataforma avisa que desenhou um quadro (no tempo atual do `Ui`).
     pub fn frame_drawn(&mut self) {
+        if let Some(log) = self.frames.latency.as_mut() {
+            if let Some(at) = log.pending.take() {
+                if log.samples.len() < LATENCY_SAMPLES {
+                    log.samples.push(at.elapsed().as_secs_f64() * 1000.0);
+                }
+            }
+        }
         let now = self.time;
         self.frames.times.push_back(now);
         while self.frames.times.front().is_some_and(|&t| now - t > 1.0) {
@@ -85,6 +114,32 @@ impl Ui {
     pub fn note_input(&mut self) {
         self.frames.input_serial += 1;
         self.frames.input_at = Some(self.time);
+        if let Some(log) = self.frames.latency.as_mut() {
+            log.pending.get_or_insert_with(web_time::Instant::now);
+        }
+    }
+
+    /// Liga (ou desliga e descarta) a medição da latência da entrada ao quadro: de cada
+    /// entrada do usuário (a primeira desde o último quadro) até a plataforma avisar o quadro
+    /// seguinte desenhado e apresentado ([`Ui::frame_drawn`]). Não conta a fila do sistema
+    /// antes do Aylis receber a entrada nem o compositor e o monitor depois da apresentação.
+    /// Uma entrada que não muda nada na tela fica esperando o próximo quadro que vier; meça
+    /// com entradas que mudam a tela. `AYLIS_LATENCY=1` liga pela plataforma, que imprime o
+    /// resumo ao fechar.
+    pub fn set_measure_input_latency(&mut self, on: bool) {
+        self.frames.latency = on.then(LatencyLog::default);
+    }
+
+    /// O resumo da latência medida (`None` com a medição desligada ou sem nenhuma amostra).
+    pub fn input_latency(&self) -> Option<InputLatency> {
+        let log = self.frames.latency.as_ref()?;
+        if log.samples.is_empty() {
+            return None;
+        }
+        let mut sorted = log.samples.clone();
+        sorted.sort_by(f64::total_cmp);
+        let at = |q: f64| sorted[((sorted.len() - 1) as f64 * q).round() as usize];
+        Some(InputLatency { count: sorted.len(), p50_ms: at(0.5), p95_ms: at(0.95), p99_ms: at(0.99), max_ms: at(1.0) })
     }
 
     /// O ritmo máximo de pintura do form `form` (a propriedade `max_paint_rate`; 0 = sem

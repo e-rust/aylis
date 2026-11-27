@@ -624,6 +624,13 @@ pub trait AccessibleItems {
     fn access_action(&mut self, _ctx: &mut EventCtx<'_>, _index: usize, _action: crate::automation::ItemAction) -> bool {
         false
     }
+
+    /// Numa tabela que só entrega as linhas visíveis (o grid virtualizado): quantas linhas e
+    /// colunas ela tem ao todo, para o leitor de tela dizer "linha 5 de 10 milhões" e não
+    /// "de 30". `None`: os itens são todos.
+    fn access_table_size(&self, _ui: &crate::Ui) -> Option<(usize, usize)> {
+        None
+    }
 }
 
 /// O componente que aparece por cima e some (o popover, o menu, o editor de título): fecha

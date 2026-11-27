@@ -1,0 +1,82 @@
+{
+  "descricao": "O texto patológico (26/11): crates/aylis-dbcontrols/examples/pathological_text.rs, Skia na CPU sem janela, 1600 x 900, release, na máquina do autor (com compilações de outras sessões rodando: os tempos variam). Quadro em ms (média de 20 a 30); 'digitar' é uma letra no fim. A linha é um JSON minificado no CodeEditor (com o realce json, o padrão do exemplo); o log, linhas de ~120 caracteres no Memo; o grid, 4 colunas de árabe, devanágari, emoji e bidi.",
+  "linha_1_mb": {
+    "antes": {
+      "primeiro_quadro_ms": 1930,
+      "rolar_ms": 1698,
+      "digitar_ms": 1708,
+      "memoria_mb": 104,
+      "nota": "com o realce json"
+    },
+    "depois": {
+      "primeiro_quadro_ms": 297,
+      "rolar_ms": 5.06,
+      "ctrl_end_ms": 7.72,
+      "digitar_ms": 9.92,
+      "memoria_mb": 203
+    },
+    "no_meio": "com só a pintura corrigida, a memória foi a 9 GB: o cache de parágrafos do Skia guardava cada prefixo da linha até o cursor (um parágrafo de 1 MB de texto passa de 1 GB)"
+  },
+  "linha_50_mb": {
+    "antes": {
+      "primeiro_quadro_ms": 135682,
+      "nota": "não passou do primeiro quadro em 15 min"
+    },
+    "depois": {
+      "primeiro_quadro_ms": 18982,
+      "rolar_ms": 231.6,
+      "ctrl_end_ms": 360.6,
+      "digitar_ms": 467.9,
+      "memoria_mb": 403,
+      "nota": "o primeiro quadro mede a linha inteira uma vez (a formação do texto no Skia)"
+    }
+  },
+  "log_200_mb": {
+    "carregar_ms": 248,
+    "primeiro_quadro_ms": 110,
+    "rolar_ms": 1.08,
+    "ctrl_end_ms": 1.75,
+    "digitar_evento_ms": 21.3,
+    "memoria_mb": 491
+  },
+  "log_2_gb": {
+    "carregar_ms": 5513,
+    "primeiro_quadro_ms": 2603,
+    "rolar_ms": 4.65,
+    "ctrl_end_ms": 5.25,
+    "digitar_evento_ms": 269,
+    "digitar_pior_ms": 1156,
+    "memoria_mb": 5466
+  },
+  "grid_1_milhao_multilingue": {
+    "carregar_ms": 14688,
+    "primeiro_quadro_ms": 134.5,
+    "rolar_ms": 5.77,
+    "rolar_para_o_lado_ms": 3.92,
+    "ctrl_end_home_ms": 7.03,
+    "pior_ms": 21.3,
+    "memoria_mb": 823
+  },
+  "linha_5_mb": {
+    "depois": {
+      "primeiro_quadro_ms": 1867,
+      "rolar_ms": 23.4,
+      "ctrl_end_ms": 36.3,
+      "digitar_ms": 47,
+      "memoria_mb": 176
+    }
+  },
+  "linha_20_mb": {
+    "antes": {
+      "quadro_ms": 11300,
+      "nota": "o par do colchete no fim da linha medido do começo a cada quadro (os blocos do Skia não cabiam no cache dele)"
+    },
+    "depois": {
+      "primeiro_quadro_ms": 7612,
+      "rolar_ms": 93,
+      "ctrl_end_ms": 144.5,
+      "digitar_ms": 187.8,
+      "memoria_mb": 250
+    }
+  }
+}

@@ -13,3 +13,7 @@ aylis-core = { version = "0.12.0", path = "../aylis-core" }
 # GeoJSON do mapa coroplético e os registros (séries, marcadores, ofertas) em JSON.
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+
+[dev-dependencies]
+# A pintura de verdade na medição da série enorme (tests/huge_series.rs).
+aylis-skia = { path = "../aylis-skia" }

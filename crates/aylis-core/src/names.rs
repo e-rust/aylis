@@ -19,8 +19,9 @@ pub(crate) struct NameIndex {
     /// Escopo → (nome → o componente): os nomes de cada form, montados
     /// um escopo por vez.
     scoped: HashMap<ComponentId, HashMap<String, ComponentId>>,
-    /// Nome → o primeiro na ordem da árvore, em qualquer form (o `find`).
-    global: Option<HashMap<String, ComponentId>>,
+    /// Nome → o primeiro na ordem da árvore, em qualquer form (o `find`), e quantos têm o
+    /// nome (o `count_named`).
+    global: Option<HashMap<String, (ComponentId, usize)>>,
     /// (escopo, nome base) → o próximo número a tentar no `free_name_in`: o frame repetido
     /// não testa `fraX2`, `fraX3`... desde o começo a cada instância.
     next_suffix: HashMap<(ComponentId, String), u32>,
@@ -111,12 +112,7 @@ impl Ui {
 
     /// O primeiro componente com o nome, em qualquer form.
     pub(crate) fn indexed_find(&self, name: &str) -> Option<ComponentId> {
-        let key = name.to_ascii_lowercase();
-        if self.names.borrow().global.is_none() {
-            let global = self.build_global();
-            self.names.borrow_mut().global = Some(global);
-        }
-        let found = self.names.borrow().global.as_ref().and_then(|g| g.get(&key).copied());
+        let found = self.global_entry(name).map(|e| e.0);
         if cfg!(debug_assertions) {
             let fresh = self.roots().iter().find_map(|&r| self.find_deep(r, name));
             if fresh != found {
@@ -124,6 +120,40 @@ impl Ui {
             }
         }
         found
+    }
+
+    /// A entrada do índice global (montado na primeira procura depois de uma mudança).
+    fn global_entry(&self, name: &str) -> Option<(ComponentId, usize)> {
+        let key = name.to_ascii_lowercase();
+        if self.names.borrow().global.is_none() {
+            let global = self.build_global();
+            self.names.borrow_mut().global = Some(global);
+        }
+        self.names.borrow().global.as_ref().and_then(|g| g.get(&key).copied())
+    }
+
+    /// Quantos componentes têm o nome `name` (sem diferenciar maiúsculas), em todos os forms,
+    /// pelo índice: o protocolo confere que um nome solto é único sem percorrer a árvore a
+    /// cada comando.
+    pub fn count_named(&self, name: &str) -> usize {
+        if name.is_empty() {
+            return 0;
+        }
+        let count = self.global_entry(name).map_or(0, |e| e.1);
+        if cfg!(debug_assertions) {
+            let mut fresh = 0;
+            let mut stack: Vec<ComponentId> = self.roots().to_vec();
+            while let Some(id) = stack.pop() {
+                fresh += usize::from(self.name(id).is_some_and(|n| n.eq_ignore_ascii_case(name)));
+                stack.extend(self.children(id).iter().copied());
+            }
+            if fresh != count {
+                crate::stderr_line!("aylis: índice de nomes desatualizado para '{name}'");
+                self.forget_names();
+                return fresh;
+            }
+        }
+        count
     }
 
     /// O componente com o nome no form `scope` (que é um escopo de nomes).
@@ -167,12 +197,12 @@ impl Ui {
         index
     }
 
-    fn build_global(&self) -> HashMap<String, ComponentId> {
+    fn build_global(&self) -> HashMap<String, (ComponentId, usize)> {
         let mut index = HashMap::new();
         let mut stack: Vec<ComponentId> = self.roots().iter().rev().copied().collect();
         while let Some(id) = stack.pop() {
             if let Some(name) = self.name(id).filter(|n| !n.is_empty()) {
-                index.entry(name.to_ascii_lowercase()).or_insert(id);
+                index.entry(name.to_ascii_lowercase()).or_insert((id, 0)).1 += 1;
             }
             stack.extend(self.children(id).iter().rev());
         }

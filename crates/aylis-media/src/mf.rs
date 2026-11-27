@@ -24,7 +24,7 @@ use windows::Win32::System::Com::{COINIT_APARTMENTTHREADED, CoInitializeEx};
 use windows::core::{GUID, HSTRING, Interface, PCWSTR};
 
 use crate::audio::{AudioOpener, AudioSource};
-use crate::video::{Frame, GpuFrame, GpuFrameSource, MediaSource, VideoDecoder, VideoDecoderFactory, VideoInfo};
+use crate::video::{AUTO_CPU_MAX_PIXELS, Frame, GpuFrame, GpuFrameSource, MediaSource, VideoDecode, VideoDecoder, VideoDecoderFactory, VideoInfo};
 
 const VIDEO: u32 = MF_SOURCE_READER_FIRST_VIDEO_STREAM.0 as u32;
 const AUDIO: u32 = MF_SOURCE_READER_FIRST_AUDIO_STREAM.0 as u32;
@@ -604,6 +604,8 @@ struct MfVideo {
     /// Câmera: a qualidade pedida e o que ela oferece (lido ao abrir).
     request: crate::camera::CameraRequest,
     caps: Option<crate::camera::CameraCaps>,
+    /// Onde decodificar (a propriedade `decoder` do player).
+    decode: VideoDecode,
 }
 
 impl MfVideo {
@@ -629,6 +631,7 @@ impl MfVideo {
             skip_until: None,
             request,
             caps: None,
+            decode: VideoDecode::Auto,
         }
     }
 
@@ -651,8 +654,16 @@ impl MfVideo {
     fn open(&mut self) -> Result<(), String> {
         init();
         // Arquivos: decodifica e converte as cores na placa (um 4K a 60 quadros por segundo
-        // não cabe no processador); se a placa recusar o formato, pelo processador.
-        if self.camera.is_none() {
+        // não cabe no processador); se a placa recusar o formato, pelo processador. O `auto`
+        // abre primeiro pela CPU: até 480p fica nela (a sessão do decodificador da placa pesa
+        // ~16 MB por vídeo); maior, ou num formato que a CPU não decodifica, vai para a placa.
+        if self.camera.is_none() && self.decode == VideoDecode::Auto {
+            match self.open_with(None) {
+                Ok(()) if self.native.is_some_and(|(w, h)| u64::from(w) * u64::from(h) <= AUTO_CPU_MAX_PIXELS) => return Ok(()),
+                _ => self.reader = None,
+            }
+        }
+        if self.camera.is_none() && self.decode != VideoDecode::Cpu {
             if let Some((gpu, manager)) = VideoGpu::get(self.luid).and_then(|g| g.manager().map(|m| (g, m))) {
                 if self.open_with(Some(&manager)).is_ok() {
                     self.gpu = Some(manager);
@@ -942,6 +953,11 @@ impl VideoDecoder for MfVideo {
         if self.set_type(&MFVideoFormat_RGB32, Some(out)).is_ok() {
             let _ = self.read_format();
         }
+    }
+
+    fn set_decode(&mut self, decode: VideoDecode) {
+        // Vale para a próxima abertura (o player escolhe antes de abrir).
+        self.decode = decode;
     }
 
     fn set_gpu_device(&mut self, device: Option<GpuDevice>) {

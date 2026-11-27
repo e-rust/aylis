@@ -1,0 +1,27 @@
+{
+  "descricao": "A enxurrada de mudanças do backend (26/11): 50 painéis de 20 cotações (1000 Label) num form de 1920 x 1080, e um backend que manda 1 milhão de `set` de texto sem esperar a tela (o JSON interpretado numa thread, como no aylis-host). A tela trata e pinta só o que mudou (Skia na CPU, sem janela), release, na máquina do autor. 'antes': o canal sem limite esvaziado inteiro antes de pintar; 'depois': a fila de 4096 mensagens e o orçamento de 8 ms por rodada (aylis_remote::inbox). crates/aylis-remote/tests/flood.rs.",
+  "antes": {
+    "mensagens": 1000000,
+    "mensagens_por_s": 60235.0,
+    "total_ms": 16601.72,
+    "quadros": 1,
+    "quadros_por_s": 0.06,
+    "intervalo_mediano_ms": 16601.62,
+    "pior_intervalo_ms": 16601.62,
+    "pintura_p50_ms": 86.74,
+    "pico_da_fila": 723509,
+    "maior_rodada": 1000000
+  },
+  "depois": {
+    "mensagens": 1000000,
+    "mensagens_por_s": 27643.0,
+    "total_ms": 36175.69,
+    "quadros": 1845,
+    "quadros_por_s": 51.0,
+    "intervalo_mediano_ms": 18.36,
+    "pior_intervalo_ms": 72.2,
+    "pintura_p50_ms": 10.27,
+    "pico_da_fila": 4096,
+    "maior_rodada": 784
+  }
+}

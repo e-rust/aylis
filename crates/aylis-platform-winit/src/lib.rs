@@ -635,6 +635,10 @@ fn run_on(
             let _ = p.send_event(());
         }
     }));
+    // `AYLIS_LATENCY=1`: a latência da entrada ao quadro, impressa ao fechar.
+    if diag::diagnostic_setting("AYLIS_LATENCY").is_some() {
+        ui.set_measure_input_latency(true);
+    }
     // Os argumentos das outras aberturas (o `single_instance` do projeto) chegam por aqui.
     #[cfg(not(any(web, mobile)))]
     single_instance::attach(ui.poster());
@@ -961,6 +965,10 @@ struct FormWindow {
     /// Windows: o mouse está preso no monitor por esta janela (`confine_cursor = monitor`).
     #[cfg_attr(not(windows), allow(dead_code))]
     clipped_monitor: bool,
+    /// O `WindowSettings` mudou com a janela escondida: as opções esperam o `Show` (mexer na
+    /// janela escondida pode trazer a imagem dela de volta à tela).
+    #[cfg_attr(any(web, mobile), allow(dead_code))]
+    options_pending: bool,
 }
 
 struct App {
@@ -1365,6 +1373,31 @@ impl App {
         }
     }
 
+    /// O quadro da janela `index` saiu: o leitor de tela recebe a árvore (já, ou no prazo do
+    /// ritmo; veja `access::Adapter::frame`).
+    #[cfg(not(web))]
+    fn send_access_tree(&mut self, index: usize) {
+        let Some(w) = self.windows.get_mut(index) else { return };
+        let system = if self.ui.physical_pixels(w.form) { 1.0 } else { w.window.scale_factor() };
+        let (form, scale) = (w.form, system * self.ui.form_zoom(w.form) as f64);
+        let ui = &self.ui;
+        if let Some(access) = w.access.as_mut() {
+            access.frame(|| access::tree(ui, form, scale));
+        }
+    }
+
+    /// As árvores que esperavam o prazo do ritmo e o prazo já venceu; devolve o próximo prazo.
+    #[cfg(not(web))]
+    fn flush_access_trees(&mut self) -> Option<Instant> {
+        let now = Instant::now();
+        for index in 0..self.windows.len() {
+            if self.windows[index].access.as_ref().and_then(access::Adapter::due).is_some_and(|at| at <= now) {
+                self.send_access_tree(index);
+            }
+        }
+        self.windows.iter().filter_map(|w| w.access.as_ref().and_then(access::Adapter::due)).min()
+    }
+
     fn fail(&mut self, event_loop: &ActiveEventLoop, error: Error) {
         #[cfg(web)]
         web::report(&error);
@@ -1465,6 +1498,9 @@ fn create_backend(
 #[cfg(not(any(web, mobile)))]
 pub(crate) fn apply_window_options(window: &Window, o: &aylis_core::WindowOptions) {
     use winit::window::WindowButtons;
+    #[cfg(windows)]
+    win32::set_content_protected(window, o.capture_excluded);
+    #[cfg(not(windows))]
     window.set_content_protected(o.capture_excluded);
     let _ = window.set_cursor_hittest(!o.click_through);
     let mut buttons = WindowButtons::CLOSE;
@@ -1631,7 +1667,12 @@ impl ApplicationHandler for App {
         self.after_input();
         if self.ui.close_requested() {
             event_loop.exit();
+            return;
         }
+        // Um backend que manda sem parar (ou um `post` atrás do outro) também nunca deixa a
+        // fila vazia: pinta no meio, como na enxurrada de entrada.
+        #[cfg(not(web))]
+        self.paint_if_starved(event_loop);
     }
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, id: WindowId, event: WindowEvent) {
@@ -1722,16 +1763,10 @@ impl ApplicationHandler for App {
                 self.sync_system_bars();
                 #[cfg(mobile)]
                 self.sync_orientation();
-                // A tela mudou: o leitor de tela recebe a árvore nova (só se estiver ativo).
+                // A tela mudou: o leitor de tela recebe a árvore nova (só se estiver ativo, e
+                // no máximo a cada `access::ACCESS_EVERY`).
                 #[cfg(not(web))]
-                if let Some(w) = self.windows.get_mut(index) {
-                    let system = if self.ui.physical_pixels(w.form) { 1.0 } else { w.window.scale_factor() };
-                    let (form, scale) = (w.form, system * self.ui.form_zoom(w.form) as f64);
-                    let ui = &self.ui;
-                    if let Some(access) = w.access.as_mut() {
-                        access.update_if_active(|| access::tree(ui, form, scale));
-                    }
-                }
+                self.send_access_tree(index);
             }
             other => {
                 self.handle_input(index, &other);
@@ -1785,6 +1820,16 @@ impl ApplicationHandler for App {
         #[cfg(not(any(web, mobile)))]
         self.placements.flush();
         self.ui.fire_terminate();
+        if let Some(l) = self.ui.input_latency() {
+            aylis_core::stderr_line!(
+                "AYLIS_LATENCY entradas={} p50_ms={:.2} p95_ms={:.2} p99_ms={:.2} max_ms={:.2}",
+                l.count,
+                l.p50_ms,
+                l.p95_ms,
+                l.p99_ms,
+                l.max_ms
+            );
+        }
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
@@ -1995,7 +2040,13 @@ impl ApplicationHandler for App {
             // Linux com WebView: o laço do GTK anda junto (a cada 16 ms).
             #[cfg(any(native_webview, web_webview, android_webview))]
             let watch = watch.or_else(|| self.native.needs_pump().then(|| Instant::now() + Duration::from_millis(16)));
-            match wake.into_iter().chain(watch).min() {
+            // A árvore do leitor de tela que esperava o ritmo (o último quadro de uma
+            // animação sai no prazo).
+            #[cfg(not(web))]
+            let access_due = self.flush_access_trees();
+            #[cfg(web)]
+            let access_due: Option<Instant> = None;
+            match wake.into_iter().chain(watch).chain(access_due).min() {
                 Some(at) => event_loop.set_control_flow(ControlFlow::WaitUntil(at)),
                 None => event_loop.set_control_flow(ControlFlow::Wait),
             }

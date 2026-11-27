@@ -535,6 +535,9 @@ const PALETTE: [&str; 7] = ["#F59E0B", "#10B981", "#EF4444", "#8B5CF6", "#06B6D4
 /// Duração da animação ao trocar os dados, em segundos.
 const ANIMATION: f64 = 0.45;
 
+/// Até quantos pontos por série a troca dos dados anima.
+const ANIMATE_UP_TO: usize = 100_000;
+
 /// Uma área sensível do desenho: o que a dica mostra e o `on_click` informa.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Hit {
@@ -686,6 +689,10 @@ pub struct Chart {
     /// A janela que este gráfico mandou ao `sync` (ao voltar, não a refaz pelos valores: no
     /// eixo de categorias, arredondar travaria a roda).
     published_range: RefCell<Option<(String, String)>>,
+    /// Sobe a cada troca das séries (a redução guardada das linhas enormes vale até a troca).
+    data_version: u64,
+    /// As linhas enormes reduzidas por pixel na última pintura ([`cartesian::Reduced`]).
+    reduced: RefCell<Vec<cartesian::Reduced>>,
 }
 
 impl Default for Chart {
@@ -747,6 +754,8 @@ impl Default for Chart {
             hover_index: Cell::new(None),
             warned: Cell::new(false),
             published_range: RefCell::new(None),
+            data_version: 0,
+            reduced: RefCell::new(Vec::new()),
         };
         c.sync("series");
         c
@@ -766,6 +775,7 @@ impl Chart {
         self.json.clear();
         self.data_labels = labels;
         self.data = series;
+        self.data_version += 1;
         self.hidden_labels.clear();
     }
 
@@ -802,7 +812,10 @@ impl Chart {
     }
 
     fn start_animation(&mut self) {
-        if self.animate && self.painted.get() && !self.data.is_empty() {
+        // Uma série enorme não anima: interpolar milhões de valores a cada quadro seguraria a
+        // tela (e a linha reduzida por pixel já não mostra cada ponto andando).
+        let huge = self.data.iter().any(|s| s.values.len() > ANIMATE_UP_TO);
+        if self.animate && self.painted.get() && !self.data.is_empty() && !huge {
             *self.anim_from.borrow_mut() = self.data.iter().map(|s| s.values.clone()).collect();
             self.anim_start.set(None);
         }
@@ -814,6 +827,7 @@ impl Chart {
                 self.start_animation();
                 self.data_labels = if self.labels.is_empty() { Vec::new() } else { self.labels.split(';').map(|s| s.trim().to_string()).collect() };
                 self.data = parse_series(&self.series);
+                self.data_version += 1;
                 self.hidden_labels.clear();
             }
             "json" if !self.json.trim().is_empty() => {
@@ -821,6 +835,7 @@ impl Chart {
                     self.start_animation();
                     self.data_labels = labels;
                     self.data = series;
+                    self.data_version += 1;
                     self.hidden_labels.clear();
                 }
             }
@@ -859,21 +874,23 @@ impl Chart {
     }
 
     /// As séries como aparecem neste quadro: no meio da animação, os valores vão dos de
-    /// antes aos novos.
-    fn shown(&self, ctx: &PaintCtx<'_>) -> Vec<Series> {
+    /// antes aos novos. Fora da animação, as próprias séries (sem copiar: com milhões de
+    /// pontos, a cópia a cada quadro custava mais que a pintura).
+    fn shown(&self, ctx: &PaintCtx<'_>) -> std::borrow::Cow<'_, [Series]> {
         let from = self.anim_from.borrow();
         if from.is_empty() {
-            return self.data.clone();
+            return std::borrow::Cow::Borrowed(&self.data);
         }
         let start = self.anim_start.get().unwrap_or_else(|| {
             self.anim_start.set(Some(ctx.time));
             ctx.time
         });
         let t = ((ctx.time - start) / ANIMATION).clamp(0.0, 1.0);
-        if t >= 1.0 {
+        // A série nova é enorme: sem animar (veja o `start_animation`).
+        if t >= 1.0 || self.data.iter().any(|s| s.values.len() > ANIMATE_UP_TO) {
             drop(from);
             self.anim_from.borrow_mut().clear();
-            return self.data.clone();
+            return std::borrow::Cow::Borrowed(&self.data);
         }
         ctx.request_frame();
         // Desacelerando no fim (cúbica).
@@ -890,7 +907,8 @@ impl Chart {
                 }
                 s
             })
-            .collect()
+            .collect::<Vec<_>>()
+            .into()
     }
 
     /// Esconde ou mostra o item da legenda `index` (uma série ou, nos tipos por rótulo, um

@@ -44,8 +44,14 @@ fn frames_come_as_textures_and_match_the_pixel_path() {
     let Some(gpu) = adapter() else { return };
     let mut cpu = open_video(&sample()).unwrap();
     let mut tex = open_video(&sample()).unwrap();
+    // O vídeo de teste é pequeno (320 × 240): o `auto` o decodificaria na CPU.
+    tex.set_decode(VideoDecode::Gpu);
     tex.set_gpu_device(Some(gpu));
     assert!(tex.max_queued().is_some(), "a fila é limitada pelas texturas");
+    let mut auto = open_video(&sample()).unwrap();
+    auto.set_gpu_device(Some(gpu));
+    assert!(auto.max_queued().is_none(), "o `auto` decodifica o vídeo de 320 × 240 na CPU, sem texturas");
+    assert!(auto.next_frame().is_some_and(|f| f.gpu.is_none()));
 
     let a = cpu.next_frame().expect("quadro pela CPU");
     let b = tex.next_frame().expect("quadro na placa");
@@ -163,6 +169,7 @@ fn the_player_composes_textures_where_the_canvas_can_and_pixels_elsewhere() {
     ui.control_mut(player).unwrap().set_rect(0.0, 0.0, 320.0, 240.0);
     ui.set_prop(player, "muted", true).unwrap();
     ui.set_prop(player, "looping", true).unwrap();
+    ui.set_prop(player, "decoder", "gpu").unwrap();
     ui.set_time(10.0);
     let errors = Rc::new(RefCell::new(Vec::<String>::new()));
     let er = errors.clone();
