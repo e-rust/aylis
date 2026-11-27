@@ -14,7 +14,7 @@ default = []
 gl = ["skia-safe/gl"]
 
 [dependencies]
-aylis-core = { version = "0.12.0", path = "../aylis-core" }
+aylis-core = { version = "0.12.1", path = "../aylis-core" }
 skia-safe = { version = "0.153", features = ["textlayout", "embed-icudtl"] }
 # Quais símbolos são emoji de apresentação de texto (`⚠`, `ℹ`): saem monocromáticos, como no
 # navegador. Só tabelas, sem dependências.
